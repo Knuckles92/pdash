@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --color-bg: light-dark(#fafafa, #0a0a0a);
+  --color-fg: light-dark(#0a0a0a, #fafafa);
+  --color-muted: light-dark(#f4f4f5, #18181b);
+  --color-muted-fg: light-dark(#52525b, #a1a1aa);
+  --color-border: light-dark(#e4e4e7, #27272a);
+  --color-card: light-dark(#ffffff, #0f0f10);
+  --color-accent: light-dark(#2563eb, #3b82f6);
+  --color-accent-fg: #ffffff;
+  --color-danger: light-dark(#dc2626, #ef4444);
+  --color-danger-fg: #ffffff;
+  --color-warning: light-dark(#d97706, #f59e0b);
+  --color-success: light-dark(#16a34a, #22c55e);
+  --color-info: light-dark(#0284c7, #38bdf8);
+}
+
+:root {
+  color-scheme: light;
+  --bg: #fafafa;
+  --fg: #0a0a0a;
+  --muted: #f4f4f5;
+  --muted-fg: #52525b;
+  --border: #e4e4e7;
+  --card: #ffffff;
+  --accent: #2563eb;
+  --accent-fg: #ffffff;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --success: #16a34a;
+  --info: #0284c7;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0a0a0a;
+  --fg: #fafafa;
+  --muted: #18181b;
+  --muted-fg: #a1a1aa;
+  --border: #27272a;
+  --card: #0f0f10;
+  --accent: #3b82f6;
+  --accent-fg: #ffffff;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --success: #22c55e;
+  --info: #38bdf8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    color-scheme: dark;
+    --bg: #0a0a0a;
+    --fg: #fafafa;
+    --muted: #18181b;
+    --muted-fg: #a1a1aa;
+    --border: #27272a;
+    --card: #0f0f10;
+    --accent: #3b82f6;
+    --accent-fg: #ffffff;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --success: #22c55e;
+    --info: #38bdf8;
+  }
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+
+* {
+  border-color: var(--border);
+}
+
+/* Markdown defaults */
+.prose-pdash :where(h1, h2, h3, h4) {
+  font-weight: 600;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  line-height: 1.25;
+}
+.prose-pdash h1 { font-size: 1.6em; }
+.prose-pdash h2 { font-size: 1.35em; }
+.prose-pdash h3 { font-size: 1.15em; }
+.prose-pdash h4 { font-size: 1em; }
+.prose-pdash p { margin: 0.6em 0; line-height: 1.6; }
+.prose-pdash :where(ul, ol) { margin: 0.6em 0; padding-left: 1.5em; }
+.prose-pdash li { margin: 0.2em 0; }
+.prose-pdash code {
+  background: var(--muted);
+  padding: 0.15em 0.35em;
+  border-radius: 0.25em;
+  font-size: 0.9em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Cascadia Mono", monospace;
+}
+.prose-pdash pre {
+  background: var(--muted);
+  padding: 0.75em 1em;
+  border-radius: 0.5em;
+  overflow-x: auto;
+  font-size: 0.85em;
+  margin: 0.75em 0;
+}
+.prose-pdash pre code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+.prose-pdash blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1em;
+  color: var(--muted-fg);
+  margin: 0.75em 0;
+}
+.prose-pdash a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-pdash table {
+  border-collapse: collapse;
+  margin: 0.75em 0;
+  font-size: 0.9em;
+}
+.prose-pdash th, .prose-pdash td {
+  border: 1px solid var(--border);
+  padding: 0.4em 0.7em;
+}
+.prose-pdash hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 1em 0;
+}

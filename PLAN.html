@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Base — Build Plan (v1)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.15);
+      --accent-border: #2563eb;
+      --border-color: #374151;
+      --card-bg: rgba(17, 24, 39, 0.7);
+      --glass-bg: rgba(17, 24, 39, 0.5);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #06b6d4;
+    }
+
+    :root.light-theme {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --accent: #2563eb;
+      --accent-glow: rgba(37, 99, 235, 0.08);
+      --accent-border: #3b82f6;
+      --border-color: #cbd5e1;
+      --card-bg: rgba(255, 255, 255, 0.9);
+      --glass-bg: rgba(255, 255, 255, 0.8);
+      --glass-border: rgba(0, 0, 0, 0.06);
+    }
+
+    :root.light-theme h1 {
+      background: linear-gradient(135deg, #0f172a, #2563eb);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    :root.light-theme h2 {
+      border-bottom: 1px solid #e2e8f0;
+      color: #1e293b;
+    }
+    :root.light-theme h3,
+    :root.light-theme h4 {
+      color: #1e293b;
+    }
+    :root.light-theme .brand-title {
+      background: linear-gradient(135deg, #0f172a, #475569);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    :root.light-theme pre {
+      background-color: #f1f5f9;
+      border-color: #e2e8f0;
+    }
+    :root.light-theme code {
+      color: #0f172a;
+    }
+    :root.light-theme .diagram-container {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    :root.light-theme .diagram-container code {
+      color: #2563eb;
+    }
+    :root.light-theme .status-banner {
+      background: rgba(245, 158, 11, 0.05);
+      border-color: rgba(245, 158, 11, 0.4);
+      color: #b45309;
+    }
+    :root.light-theme tr:hover td {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+    :root.light-theme p code, 
+    :root.light-theme li code {
+      background-color: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .theme-btn:hover {
+      background-color: var(--bg-tertiary) !important;
+      color: var(--text-primary) !important;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Grid Layout */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Sidebar Navigation */
+    aside {
+      width: 320px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 1.5rem;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    aside::-webkit-scrollbar {
+      width: 4px;
+    }
+    aside::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    }
+
+    .brand-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: 1.25rem;
+      background: linear-gradient(135deg, #fff, var(--text-secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .toc-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
+    .toc-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toc-item a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      display: block;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toc-item a:hover {
+      color: var(--text-primary);
+      background-color: var(--bg-tertiary);
+    }
+
+    .toc-item.active a {
+      color: var(--text-primary);
+      background-color: var(--accent-glow);
+      border-left: 3px solid var(--accent);
+      font-weight: 600;
+    }
+
+    .toc-sub-item {
+      padding-left: 1.25rem;
+    }
+
+    .toc-sub-item a {
+      font-size: 0.8rem;
+    }
+
+    /* Main Content Area */
+    main {
+      flex-grow: 1;
+      padding: 3rem 4rem;
+      max-width: 1100px;
+      overflow-x: hidden;
+    }
+
+    /* Typography */
+    h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, #ffffff, #93c5fd);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    h2 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-top: 3.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+      color: #e5e7eb;
+    }
+
+    h3 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      color: #f3f4f6;
+    }
+
+    h4 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      color: #f3f4f6;
+    }
+
+    p {
+      color: var(--text-secondary);
+      margin-bottom: 1.25rem;
+      font-size: 1rem;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    a:hover {
+      color: #60a5fa;
+      text-decoration: underline;
+    }
+
+    hr {
+      border: 0;
+      height: 1px;
+      background-color: var(--border-color);
+      margin: 3rem 0;
+    }
+
+    /* Status Callout */
+    .status-banner {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      color: #fbd38d;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-modify { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-new { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-delete { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    /* Tables */
+    .table-container {
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background-color: rgba(31, 41, 55, 0.5);
+      color: var(--text-primary);
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background-color: rgba(31, 41, 55, 0.2);
+    }
+
+    /* Code Blocks */
+    pre {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.25rem;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      color: #e5e7eb;
+    }
+
+    p code, li code {
+      background-color: var(--bg-tertiary);
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: #f3f4f6;
+    }
+
+    /* Lists */
+    ul, ol {
+      margin-left: 1.5rem;
+      margin-bottom: 1.25rem;
+      color: var(--text-secondary);
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    /* Alerts */
+    .alert {
+      padding: 1rem 1.25rem;
+      border-left: 4px solid var(--accent);
+      background: rgba(59, 130, 246, 0.05);
+      border-radius: 0 8px 8px 0;
+      margin: 1.5rem 0;
+    }
+    .alert-note {
+      border-left-color: var(--info);
+      background: rgba(6, 182, 212, 0.05);
+    }
+    .alert-tip {
+      border-left-color: var(--success);
+      background: rgba(16, 185, 129, 0.05);
+    }
+    .alert-important {
+      border-left-color: var(--accent);
+      background: rgba(59, 130, 246, 0.05);
+    }
+    .alert-warning {
+      border-left-color: var(--warning);
+      background: rgba(245, 158, 11, 0.05);
+    }
+    .alert-caution {
+      border-left-color: var(--danger);
+      background: rgba(239, 68, 68, 0.05);
+    }
+
+    .alert-title {
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .alert-note .alert-title { color: #22d3ee; }
+    .alert-tip .alert-title { color: #34d399; }
+    .alert-important .alert-title { color: #60a5fa; }
+    .alert-warning .alert-title { color: #fbbf24; }
+    .alert-caution .alert-title { color: #f87171; }
+
+    /* Custom Diagram Box */
+    .diagram-container {
+      background: #0d1117;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      aside {
+        display: none; /* Hide TOC sidebar on smaller screens for simplicity */
+      }
+      main {
+        padding: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- TOC Sidebar -->
+  <aside>
+    <div class="brand">
+      <div class="brand-icon"></div>
+      <div class="brand-title">Home Base Plan</div>
+      <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme" style="margin-left: auto; background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+        <!-- Moon Icon -->
+        <svg id="theme-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc-list">
+      <li class="toc-item"><a href="#top-matter">0. Top matter</a></li>
+      <li class="toc-item"><a href="#architecture">1. Architecture</a></li>
+      <li class="toc-item"><a href="#realtime-sse">2. Realtime Transport — SSE</a></li>
+      <li class="toc-item"><a href="#data-model">3. Data Model (SQLite)</a></li>
+      <li class="toc-item"><a href="#module-catalog">4. Module Catalog</a></li>
+      <li class="toc-item"><a href="#http-api">5. HTTP API Surface</a></li>
+      <li class="toc-item"><a href="#mcp-tool">6. MCP Tool Surface</a></li>
+      <li class="toc-item"><a href="#approval-engine">7. Approval Engine</a></li>
+      <li class="toc-item"><a href="#frontend">8. Frontend</a></li>
+      <li class="toc-item"><a href="#roadmap">9. Phase Roadmap</a></li>
+      <li class="toc-item"><a href="#open-questions">10. Open Questions & Risks</a></li>
+      <li class="toc-item"><a href="#appendix-a">Appendix A — Flow Reference</a></li>
+      <li class="toc-item"><a href="#appendix-b">Appendix B — Pre-flight</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main>
+    <header>
+      <h1>Home Base — Build Plan (v1)</h1>
+      <div class="status-banner">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span><strong>Status: planning.</strong> No code yet. Review and revise before implementation begins.</span>
+      </div>
+      <p class="lead" style="font-size: 1.15rem; color: #e5e7eb;">A self-hosted personal command center and agent integration surface, served on Tailscale-only, composed of typed JSON-rendered modules and gated by a per-agent approval engine.</p>
+    </header>
+
+    <hr>
+
+    <!-- Section 0 -->
+    <section id="top-matter">
+      <h2>0. Top matter</h2>
+      <h3>Hard constraints (reaffirmed)</h3>
+      <ul>
+        <li><strong>Tailscale-only.</strong> Never on the public internet. Caddy fronts the app; Tailscale is the network boundary. Auth is pragmatic: single admin session cookie for the user, per-agent API keys for the MCP server.</li>
+        <li><strong>No agent-supplied code or markup.</strong> Agents send JSON conforming to typed module schemas. The frontend is server-trusted code only. Markdown is rendered through a sanitizing renderer with no raw-HTML passthrough.</li>
+        <li><strong>Every agent-initiated state change is approvable.</strong> Admin mutations bypass approval entirely.</li>
+        <li><strong>iframes are allowlisted, server-side.</strong> Allowlist is admin-only data; agents reference allowlisted hosts, they don't add them.</li>
+        <li><strong>SQLite (WAL mode) on a homelab box.</strong> Single user, low write rate. Docker Compose, Caddy reverse proxy.</li>
+        <li><strong>Modules have stable IDs.</strong> ULID-based with type prefixes (e.g. <code>mod_01HZX...</code>).</li>
+      </ul>
+
+      <h3>Tech stack (confirmed)</h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>Choice</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Backend</td>
+              <td>Python, FastAPI, Pydantic v2, SQLite (WAL), Alembic migrations</td>
+            </tr>
+            <tr>
+              <td>MCP server</td>
+              <td>Separate Python process, official <code>mcp</code> SDK, HTTP-streamable transport</td>
+            </tr>
+            <tr>
+              <td>Frontend</td>
+              <td>Next.js (App Router), TypeScript, Tailwind, shadcn-style components, <code>react-markdown</code> + <code>rehype-sanitize</code>, dnd-kit, Recharts, Zustand for client state, <code>@rjsf/core</code> for schema-driven forms</td>
+            </tr>
+            <tr>
+              <td>Realtime</td>
+              <td><strong>SSE</strong> (<code>sse-starlette</code>) — see §2</td>
+            </tr>
+            <tr>
+              <td>Reverse proxy</td>
+              <td>Caddy</td>
+            </tr>
+            <tr>
+              <td>Deployment</td>
+              <td>Docker Compose on homelab; Tailscale serves identity</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Repo layout (suggested)</h3>
+      <pre><code>pdash/
+├─ backend/         # FastAPI app + Alembic migrations + module schema registry
+├─ mcp/             # MCP server (thin translator over /internal)
+├─ frontend/        # Next.js App Router
+├─ docker-compose.yml
+├─ Caddyfile
+└─ docs/</code></pre>
+    </section>
+
+    <!-- Section 1 -->
+    <section id="architecture">
+      <h2>1. Architecture</h2>
+      <div class="diagram-container">
+        <pre style="border: none; padding: 0; margin: 0; background: none;"><code style="color: #60a5fa; font-size: 0.85rem;">                ┌─────────────────────────────────────────────────────────┐
+                │  Tailscale (the network boundary)                       │
+                │                                                         │
+   admin ──────►│  Caddy (TLS, HTTP/2)                                    │
+   (browser)    │     │                                                   │
+                │     ├──► Next.js (SSR + client) ──fetch──┐              │
+                │     │                                    ▼              │
+                │     └──► FastAPI ◄──────────────┐  /api/v1/* (session)  │
+                │             │                   │                       │
+                │             │ EventBus (asyncio)│                       │
+                │             ▼                   │                       │
+                │           SQLite (WAL)          │                       │
+                │             ▲                   │                       │
+                │             │                   │                       │
+                │           MCP server ───────────┘  /api/v1/internal/*   │
+                │             ▲                       (service token +    │
+                │             │ HTTP-streamable        X-Agent-Id)        │
+                │             │ (MCP transport)                           │
+                └─────────────┼───────────────────────────────────────────┘
+                              │
+            agents (Claude Code, Claude Desktop, ChatGPT, OpenClaw, Hermes, …)
+            authenticate with per-agent API keys</code></pre>
+      </div>
+
+      <p><strong>Key flow distinctions:</strong></p>
+      <ul>
+        <li><strong>Admin browser path:</strong> Next.js Server Components fetch FastAPI with the session cookie. CSRF via double-submit token for mutations. Admin writes bypass the approval engine.</li>
+        <li><strong>Agent path:</strong> Agent → MCP server (HTTP-streamable, <code>Authorization: Bearer &lt;agent-api-key&gt;</code>) → FastAPI <code>/api/v1/internal/...</code> (service token + <code>X-Agent-Id</code>). All writes route through the approval engine. The MCP server is a thin translation layer; no business logic.</li>
+        <li><strong>Realtime:</strong> Single SSE endpoint <code>/api/v1/events?topics=...</code> driven by an in-process <code>EventBus</code> populated by every write path. Browser subscribes; the MCP server also subscribes to <code>/api/v1/internal/events?topics=approvals</code> to keep a fresh decision cache.</li>
+        <li><strong>Single SQLite file</strong> for everything. Both Next.js and MCP server go through FastAPI — no direct DB access from either, so there's one writer with WAL letting readers proceed.</li>
+      </ul>
+    </section>
+
+    <!-- Section 2 -->
+    <section id="realtime-sse">
+      <h2>2. Realtime transport choice — SSE</h2>
+      <p>Picked over WebSocket for these reasons:</p>
+      <ol>
+        <li><strong>All channels are server→client.</strong> Mutations are REST. No bidirectional need.</li>
+        <li><strong>Browser-native reconnect + <code>Last-Event-Id</code> resume</strong> are exactly what we need for an admin phone that suspends and resumes on Tailscale. WebSocket forces us to write that ourselves.</li>
+        <li><strong>HTTP/2 multiplexing under Caddy</strong> removes the old SSE connection-limit complaint.</li>
+        <li><strong><code>sse-starlette</code> is ~20 lines of server code.</strong> Equivalent WebSocket scaffolding (heartbeat, reconnect, replay) is at least 2× the code.</li>
+        <li><strong>The MCP server can subscribe over plain HTTP</strong> with an <code>httpx</code> streaming client — no browser API constraints.</li>
+      </ol>
+      <p>Tradeoffs accepted: SSE is text-only (fine, all our payloads are JSON), and <code>EventSource</code> can't set custom headers (fine — same-origin cookies authenticate the admin, and the MCP server uses an HTTP client that <em>can</em> set headers).</p>
+
+      <h3>Channel design</h3>
+      <p>Single endpoint: <code>GET /api/v1/events?topics=&lt;csv&gt;&amp;last_event_id=...</code> (admin), plus <code>GET /api/v1/internal/events?topics=...</code> (MCP server, service-token auth).</p>
+      <p>Wire envelope:</p>
+      <pre><code>id: 12345
+event: module_update
+data: {"topic":"page:pg_01HZX...","ts":"2026-05-25T14:00:00Z","payload":{...}}</code></pre>
+
+      <p>Topics:</p>
+      <ul>
+        <li><code>page:&lt;page_id&gt;</code> — module add/update/remove/reorder on that page (the common subscription).</li>
+        <li><code>module:&lt;module_id&gt;</code> — fine-grained, used by detail views and by the MCP server.</li>
+        <li><code>approvals</code> — pending-queue add/decide/expire. Always-on for the browser; subscribed by the MCP server's internal feed.</li>
+        <li><code>activity</code> — audit-row inserts. Subscribed by <code>/activity</code> when open.</li>
+        <li><code>log_stream:&lt;module_id&gt;</code> — high-frequency append deltas. Only subscribed when a log_stream module is visible.</li>
+      </ul>
+      <p>Server-side ring buffer per topic: 5 minutes / 1000 events. On <code>Last-Event-Id</code> miss, server emits <code>kind: resync_required</code> and the client refetches via REST.</p>
+    </section>
+
+    <!-- Section 3 -->
+    <section id="data-model">
+      <h2>3. Data model (SQLite)</h2>
+      <h3>Tables</h3>
+
+      <h4><code>agents</code></h4>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>id</td><td>TEXT PK</td><td><code>agt_&lt;ulid&gt;</code></td></tr>
+            <tr><td>display_name</td><td>TEXT NOT NULL UNIQUE</td><td></td></tr>
+            <tr><td>description</td><td>TEXT</td><td></td></tr>
+            <tr><td>api_key_hash</td><td>TEXT NOT NULL UNIQUE</td><td>argon2id encoded string</td></tr>
+            <tr><td>permissions</td><td>TEXT NOT NULL Check</td><td>JSON: allowed module types, allowed page IDs, scopes</td></tr>
+            <tr><td>status</td><td>TEXT NOT NULL</td><td><code>active</code> / <code>disabled</code> / <code>revoked</code></td></tr>
+            <tr><td>created_at</td><td>TEXT NOT NULL</td><td>ISO 8601 UTC</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4><code>pages</code></h4>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>id</td><td>TEXT PK</td><td><code>pg_&lt;ulid&gt;</code></td></tr>
+            <tr><td>slug</td><td>TEXT NOT NULL UNIQUE</td><td>URL-safe</td></tr>
+            <tr><td>name</td><td>TEXT NOT NULL</td><td></td></tr>
+            <tr><td>kind</td><td>TEXT NOT NULL</td><td><code>home</code> / <code>agent</code> / <code>custom</code> / <code>system</code></td></tr>
+            <tr><td>owner_id</td><td>TEXT</td><td>FK to <code>agents.id</code> when owner_kind=agent</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4><code>modules</code></h4>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>id</td><td>TEXT PK</td><td><code>mod_&lt;ulid&gt;</code></td></tr>
+            <tr><td>type</td><td>TEXT NOT NULL</td><td>One of nine v1 types</td></tr>
+            <tr><td>title</td><td>TEXT</td><td></td></tr>
+            <tr><td>page_id</td><td>TEXT NOT NULL</td><td>FK <code>pages.id</code> ON DELETE CASCADE</td></tr>
+            <tr><td>position</td><td>INTEGER NOT NULL</td><td>Sort order</td></tr>
+            <tr><td>data</td><td>TEXT NOT NULL</td><td>Type-specific JSON</td></tr>
+            <tr><td>config</td><td>TEXT NOT NULL</td><td>Type-specific JSON</td></tr>
+            <tr><td>version</td><td>INTEGER NOT NULL</td><td>Optimistic concurrency counter</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4><code>approval_requests</code></h4>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>id</td><td>TEXT PK</td><td><code>apr_&lt;ulid&gt;</code></td></tr>
+            <tr><td>agent_id</td><td>TEXT NOT NULL</td><td>FK <code>agents.id</code></td></tr>
+            <tr><td>action_type</td><td>TEXT NOT NULL</td><td>e.g., <code>create_module</code>, <code>update_module_data</code></td></tr>
+            <tr><td>proposed_payload</td><td>TEXT NOT NULL</td><td>JSON schema payload</td></tr>
+            <tr><td>status</td><td>TEXT NOT NULL</td><td><code>pending</code> / <code>approved</code> / <code>denied</code> / <code>applied</code> / <code>expired</code></td></tr>
+            <tr><td>created_at</td><td>TEXT NOT NULL</td><td>ISO 8601 UTC</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Indexes</h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Index</th><th>Table</th><th>Columns</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>idx_modules_page_position</code></td><td>modules</td><td>(page_id, position) WHERE deleted_at IS NULL</td></tr>
+            <tr><td><code>idx_modules_owner</code></td><td>modules</td><td>(owner_kind, owner_id) WHERE deleted_at IS NULL</td></tr>
+            <tr><td><code>idx_approvals_status_created</code></td><td>approval_requests</td><td>(status, created_at DESC)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Section 4 -->
+    <section id="module-catalog">
+      <h2>4. v1 module type catalog (JSON schemas)</h2>
+      <p>Nine module types are supported. Each defines specific schemas for its <code>data</code> and <code>config</code> properties.</p>
+      
+      <h3>4.1 markdown</h3>
+      <p>Rendered with <code>react-markdown</code> + <code>rehype-sanitize</code> (no raw HTML). Code highlighting via server-rendered Shiki.</p>
+      <pre><code>{
+  "data": {
+    "type": "object", "required": ["body"],
+    "properties": { "body": { "type": "string", "maxLength": 50000 } }
+  }
+}</code></pre>
+
+      <h3>4.2 key_value</h3>
+      <p>For high-frequency status snapshots.</p>
+      <pre><code>{
+  "data": {
+    "type": "object", "required": ["fields"],
+    "properties": {
+      "fields": {
+        "type": "array", "maxItems": 40,
+        "items": {
+          "type": "object", "required": ["key","value"],
+          "properties": {
+            "key": { "type": "string", "maxLength": 80 },
+            "value": { "type": ["string","number","boolean","null"] }
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+
+      <h3>Other Modules:</h3>
+      <ul>
+        <li><strong>4.3 table:</strong> Grid rendering (max 500 rows, 12 columns).</li>
+        <li><strong>4.4 timeseries:</strong> Interactive chart rendering via Recharts (max 2000 points).</li>
+        <li><strong>4.5 log_stream:</strong> Virtualized fast-append monospace scroll list.</li>
+        <li><strong>4.6 link_list:</strong> Styled anchors list with safety checks.</li>
+        <li><strong>4.7 iframe:</strong> Safe cross-origin embed check with strict allowlist.</li>
+        <li><strong>4.8 action_button:</strong> Trigger webhooks, local scripts, or tool tasks.</li>
+        <li><strong>4.9 notification:</strong> Temporary dismissible banner alerts.</li>
+      </ul>
+    </section>
+
+    <!-- Section 5 -->
+    <section id="http-api">
+      <h2>5. HTTP API surface</h2>
+      <p>Prefixes: <code>/api/v1/...</code> (admin authenticated by session cookie) and <code>/api/v1/internal/...</code> (MCP proxy authenticated via token + <code>X-Agent-Id</code>).</p>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Method</th><th>Path</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>POST</td><td><code>/api/v1/auth/login</code></td><td>Authenticates single administrator</td></tr>
+            <tr><td>GET</td><td><code>/api/v1/modules/{id}</code></td><td>Gets module payload & ETag</td></tr>
+            <tr><td>PATCH</td><td><code>/api/v1/modules/{id}</code></td><td>Partially updates module fields</td></tr>
+            <tr><td>POST</td><td><code>/api/v1/internal/propose-module</code></td><td>Allows agents to request new modules</td></tr>
+            <tr><td>POST</td><td><code>/api/v1/internal/append-log</code></td><td>Append to log stream (auto-approved path)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Section 6 -->
+    <section id="mcp-tool">
+      <h2>6. MCP tool surface</h2>
+      <p>A thin translation layer mapped to backend internal endpoints. Uses standard HTTP-streamable bindings.</p>
+      <ul>
+        <li><code>propose_module(...)</code>: Requests creation of a module on a page. Returns status (applied / pending / denied).</li>
+        <li><code>update_module(...)</code>: Replaces module config/data. Requires optimistic lock token.</li>
+        <li><code>append_log(...)</code>: Fast-path append for the log-stream module.</li>
+        <li><code>list_my_pending_requests(...)</code>: Polling endpoint for agents to reconcile state.</li>
+      </ul>
+    </section>
+
+    <!-- Section 7 -->
+    <section id="approval-engine">
+      <h2>7. Approval engine</h2>
+      <p>The core security barrier of Home Base. Rules use wildcard mappings matched by specificity score to decide auto-approval, prompt (default), or denial.</p>
+      <div class="alert alert-important">
+        <div class="alert-title">Specificity Tiebreaker Rules</div>
+        <p>Specificity matches are additive. Tiebreaker order: lower priority wins → newer rule wins → denial wins on exact match conflict.</p>
+      </div>
+      <p>Seeded default built-in rules grant auto-approvals for agents modifying modules they own (data updates, log appends), while requiring approval prompts for creating modules, changing configs, and deleting elements.</p>
+    </section>
+
+    <!-- Section 8 -->
+    <section id="frontend">
+      <h2>8. Frontend</h2>
+      <p>Built with Next.js (App Router), Tailwind CSS, shadcn, and Zustand. Integrates a drag-and-drop page editor (using dnd-kit) and handles live UI updates over a single SSE channel mapped to Zustand states.</p>
+    </section>
+
+    <!-- Section 9 -->
+    <section id="roadmap">
+      <h2>9. Phase-by-phase roadmap</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Phase</th><th>Name</th><th>Deliverables</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Phase 1</strong></td>
+              <td>Backend Skeleton</td>
+              <td>FastAPI boilerplate, SQLite/Alembic init, admin auth, schema registry, tests.</td>
+            </tr>
+            <tr>
+              <td><strong>Phase 2</strong></td>
+              <td>Frontend Basics</td>
+              <td>Next.js app setup, page grids, rendering markdown/key_value/table/link_list.</td>
+            </tr>
+            <tr>
+              <td><strong>Phase 3</strong></td>
+              <td>MCP + Approvals</td>
+              <td>Rules engine, internal APIs, approval queue UI, MCP HTTP server.</td>
+            </tr>
+            <tr>
+              <td><strong>Phase 4</strong></td>
+              <td>Module Catalog</td>
+              <td>Remaining modules (timeseries, log_stream, iframe, notification, action buttons).</td>
+            </tr>
+            <tr>
+              <td><strong>Phase 5</strong></td>
+              <td>Realtime SSE</td>
+              <td>EventBus, SSE stream integration for instant UI updates.</td>
+            </tr>
+            <tr>
+              <td><strong>Phase 6</strong></td>
+              <td>Polish & Deploy</td>
+              <td>FTS5 log search, swipe gestures, docker-compose, backup scripts.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Section 10 -->
+    <section id="open-questions">
+      <h2>10. Open questions and risks</h2>
+      <div class="alert alert-warning">
+        <div class="alert-title">Critical Risk: SQLite Lock Contention</div>
+        <p>FastAPI handles all SQLite connections through a single-writer pattern using WAL. Aggressive write cycles from active agents will challenge concurrency. busy_timeout is set to 5000ms.</p>
+      </div>
+      <p>Other P0 decisions resolved during planning include keeping revoked agents' modules readable but soft-deleting the agent's editing permissions, set payload caps to 32KB before offloading to audit blobs, and enforce a 7-day TTL on pending request expiry.</p>
+    </section>
+
+    <hr>
+
+    <section id="appendix-a">
+      <h2>Appendix A — Flow Reference</h2>
+      <p>Quick lookup matrix for tool action types mapping to approval flow rules:</p>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>MCP tool</th><th>action_type</th><th>Owner Outcome</th><th>Non-owner Outcome</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>propose_module</code></td><td><code>create_module</code></td><td>prompt</td><td>prompt</td></tr>
+            <tr><td><code>update_module</code> (data)</td><td><code>update_module_data</code></td><td><strong>auto_approve</strong></td><td>prompt</td></tr>
+            <tr><td><code>update_module</code> (config)</td><td><code>update_module_config</code></td><td>prompt</td><td>prompt</td></tr>
+            <tr><td><code>append_log</code></td><td><code>update_module_data</code></td><td><strong>auto_approve</strong></td><td>prompt</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="appendix-b">
+      <h2>Appendix B — Pre-flight checklist</h2>
+      <ul>
+        <li>[ ] Confirm SQLite ≥ 3.35 available in the deployment image.</li>
+        <li>[ ] Decide the P0 open questions.</li>
+        <li>[ ] Reserve Tailscale hostname (<code>homebase.&lt;tailnet&gt;.ts.net</code>).</li>
+        <li>[ ] Generate credentials and keys.</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // Simple Table of Contents highlighting on scroll
+  const sections = document.querySelectorAll('section');
+  const tocItems = document.querySelectorAll('.toc-item');
+
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(section => {
+      const sectionTop = section.offsetTop;
+      if (pageYOffset >= sectionTop - 120) {
+        current = section.getAttribute('id');
+      }
+    });
+
+    tocItems.forEach(item => {
+      item.classList.remove('active');
+      const href = item.querySelector('a').getAttribute('href');
+      if (href === '#' + current) {
+        item.classList.add('active');
+      }
+    });
+  });
+
+  // Theme Toggling Logic
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const rootEl = document.documentElement;
+
+  // SVG Paths
+  const moonSvg = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`;
+  const sunSvg = `<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>`;
+
+  // Set initial theme based on system/preference
+  if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+    rootEl.classList.add('light-theme');
+    themeIcon.innerHTML = sunSvg;
+  } else {
+    rootEl.classList.remove('light-theme');
+    themeIcon.innerHTML = moonSvg;
+  }
+
+  themeToggle.addEventListener('click', () => {
+    if (rootEl.classList.contains('light-theme')) {
+      rootEl.classList.remove('light-theme');
+      themeIcon.innerHTML = moonSvg;
+      localStorage.setItem('theme', 'dark');
+    } else {
+      rootEl.classList.add('light-theme');
+      themeIcon.innerHTML = sunSvg;
+      localStorage.setItem('theme', 'light');
+    }
+  });
+</script>
+</body>
+</html>

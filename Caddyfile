@@ -1,0 +1,88 @@
+# pdash Caddyfile.
+#
+# Reverse-proxies for the three services. Two ways to terminate TLS — pick
+# one and uncomment the appropriate block. Tailscale handles network-level
+# identity (the box must be on your tailnet), so Caddy's job is just routing
+# and (optionally) TLS.
+
+# ---------------------------------------------------------------------------
+# Option A — Tailscale-issued certificates (recommended).
+#
+# 1. Run `tailscale cert <hostname>.<tailnet>.ts.net` on the host to populate
+#    /var/lib/tailscale/certs/.
+# 2. Uncomment the volume mount in docker-compose.yml and the `tls` directive
+#    below.
+# 3. Replace <YOUR-TAILNET-HOSTNAME> with the actual cert filenames.
+
+# https://<YOUR-TAILNET-HOSTNAME>.ts.net {
+#     tls /tailscale-certs/<YOUR-TAILNET-HOSTNAME>.ts.net.crt /tailscale-certs/<YOUR-TAILNET-HOSTNAME>.ts.net.key
+#     import pdash_routes
+# }
+
+# ---------------------------------------------------------------------------
+# Option B — Caddy's `tls internal` (development-grade certs).
+#
+# Auto-issues a local CA cert. Useful for testing. Browsers will warn unless
+# you install the CA. The Tailscale `serve` mode also works fine here because
+# Tailscale acts as the front door.
+
+:443 {
+    tls internal
+    import pdash_routes
+}
+
+# Plain HTTP — Tailscale Serve already proxies on 80; Caddy mirrors so a
+# direct connection from the LAN still gets routed.
+:80 {
+    import pdash_routes
+}
+
+# ---------------------------------------------------------------------------
+# Shared routes.
+(pdash_routes) {
+    encode gzip zstd
+
+    # Long-lived idle timeouts so SSE streams don't drop unexpectedly.
+    # `flush_interval -1` makes Caddy stream the response without buffering.
+    @sse path /api/v1/events /api/v1/internal/events
+    handle @sse {
+        reverse_proxy backend:8080 {
+            flush_interval -1
+            transport http {
+                read_timeout 24h
+            }
+        }
+    }
+
+    # MCP server (streamable HTTP). Same flush + long-timeout posture.
+    handle /mcp* {
+        reverse_proxy mcp:8090 {
+            flush_interval -1
+            transport http {
+                read_timeout 24h
+            }
+        }
+    }
+
+    # All other API traffic.
+    handle /api/* {
+        reverse_proxy backend:8080 {
+            transport http {
+                read_timeout 5m
+            }
+        }
+    }
+
+    # OpenAPI / docs.
+    handle /healthz {
+        reverse_proxy backend:8080
+    }
+    handle /readyz {
+        reverse_proxy backend:8080
+    }
+
+    # Everything else → Next.js.
+    handle {
+        reverse_proxy frontend:3000
+    }
+}

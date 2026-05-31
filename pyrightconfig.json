@@ -1,0 +1,35 @@
+{
+  "include": ["backend/app", "backend/tests", "mcp/app", "mcp/tests"],
+  "exclude": [
+    "**/__pycache__",
+    "**/.venv",
+    "**/.pytest_cache",
+    "**/node_modules",
+    "frontend/.next"
+  ],
+  "pythonVersion": "3.12",
+  "executionEnvironments": [
+    {
+      "root": "backend",
+      "extraPaths": [
+        "backend",
+        "backend/.venv/lib/python3.12/site-packages"
+      ]
+    },
+    {
+      "root": "mcp",
+      "extraPaths": [
+        "mcp",
+        "mcp/.venv/lib/python3.12/site-packages"
+      ]
+    }
+  ],
+  "extraPaths": [
+    "backend",
+    "backend/.venv/lib/python3.12/site-packages",
+    "mcp",
+    "mcp/.venv/lib/python3.12/site-packages"
+  ],
+  "reportMissingImports": "error",
+  "reportMissingTypeStubs": "none"
+}

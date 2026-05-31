@@ -1,0 +1,8 @@
+node_modules
+.next
+.turbo
+.vercel
+*.log
+.env
+.env.*
+README.md

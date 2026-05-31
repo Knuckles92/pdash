@@ -1,0 +1,10 @@
+.venv
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+tests
+*.egg-info
+.env
+.env.*
+README.md

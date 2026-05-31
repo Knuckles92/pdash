@@ -1,0 +1,10 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "pythonVersion": "3.12",
+  "include": ["app", "tests"],
+  "exclude": ["**/__pycache__", "**/.venv", "**/.pytest_cache"],
+  "extraPaths": [".", ".venv/lib/python3.12/site-packages"],
+  "reportMissingImports": "error",
+  "reportMissingTypeStubs": "none"
+}
