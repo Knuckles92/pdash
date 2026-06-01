@@ -4,11 +4,13 @@ import { Check, ChevronDown, ChevronUp, ShieldCheck, ShieldX, X } from "lucide-r
 import { useRef, useState } from "react";
 
 import { AgentBadge } from "@/components/agents/AgentBadge";
+import { ApprovalActionPreview } from "@/components/approvals/ApprovalActionPreview";
+import { ApprovalFilePreview } from "@/components/approvals/ApprovalFilePreview";
 import { ApprovalPagePreview } from "@/components/approvals/ApprovalPagePreview";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import type { Agent, ApprovalRequest, DashboardPreview, IframeAllowlistEntry, Module, Page } from "@/lib/api";
+import type { ActionPreview, Agent, ApprovalRequest, DashboardPreview, FilePreview, IframeAllowlistEntry, Module, Page } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { relativeTime, formatDateTime } from "@/lib/time";
 
@@ -23,6 +25,8 @@ type ApprovalCardProps = {
   request: ApprovalRequest;
   diffPreview?: Record<string, unknown> | null;
   dashboardPreview?: DashboardPreview | null;
+  actionPreview?: ActionPreview | null;
+  filePreview?: FilePreview | null;
   detailLoading?: boolean;
   detailFetched?: boolean;
   iframeAllowlist?: IframeAllowlistEntry[];
@@ -127,6 +131,8 @@ export function ApprovalCard({
   request,
   diffPreview,
   dashboardPreview,
+  actionPreview,
+  filePreview,
   detailLoading,
   detailFetched,
   iframeAllowlist,
@@ -320,11 +326,21 @@ export function ApprovalCard({
                   iframeAllowlist={iframeAllowlist}
                 />
               )}
-              {!detailLoading && !dashboardPreview && detailFetched && (
-                <p className="text-xs text-[var(--muted-fg)]">
-                  No visual page preview for this action type.
-                </p>
+              {!detailLoading && actionPreview && (
+                <ApprovalActionPreview preview={actionPreview} />
               )}
+              {!detailLoading && filePreview && (
+                <ApprovalFilePreview preview={filePreview} />
+              )}
+              {!detailLoading &&
+                !dashboardPreview &&
+                !actionPreview &&
+                !filePreview &&
+                detailFetched && (
+                  <p className="text-xs text-[var(--muted-fg)]">
+                    No visual preview for this action type.
+                  </p>
+                )}
 
               <button
                 type="button"

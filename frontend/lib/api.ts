@@ -294,17 +294,43 @@ export type ApprovalRequest = {
 export type ApprovalRequestDetail = ApprovalRequest & {
   diff_preview: Record<string, unknown> | null;
   dashboard_preview: DashboardPreview | null;
+  action_preview: ActionPreview | null;
+  file_preview: FilePreview | null;
+};
+
+export type ActionPreview = {
+  target: {
+    id: string;
+    name: string;
+    kind: ActionTargetKind;
+    mode: ActionTargetMode;
+    enabled: boolean;
+  };
+  destination: string | null;
+  payload: Record<string, unknown>;
+  uses_target_default: boolean;
+};
+
+export type FilePreview = {
+  display_name: string | null;
+  inbox_name: string | null;
+  kind: FileKind | null;
+  mime: string | null;
+  size_bytes: number | null;
+  purpose: string | null;
+  sha256: string | null;
+  page: { id: string; name: string; slug: string } | null;
 };
 
 export type DashboardPreviewHighlight = {
   module_ids: string[];
   removed_module_ids: string[];
   removed_modules?: Module[];
-  change: "create" | "update" | "delete";
+  change: "create" | "update" | "delete" | "create_page";
 };
 
 export type DashboardPreview = {
-  page: { id: string; name: string; slug: string };
+  page: { id: string; name: string; slug: string; description?: string | null; kind?: string };
   modules: Module[];
   highlight: DashboardPreviewHighlight;
 };

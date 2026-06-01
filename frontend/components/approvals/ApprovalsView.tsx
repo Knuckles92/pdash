@@ -15,11 +15,13 @@ import {
   APPROVAL_ACTION_TYPES,
   api,
   errorMessage,
+  type ActionPreview,
   type Agent,
   type ApprovalActionType,
   type ApprovalRequest,
   type ApprovalRuleDraft,
   type DashboardPreview,
+  type FilePreview,
   type IframeAllowlistEntry,
   type Module,
   type Page,
@@ -83,6 +85,8 @@ export function ApprovalsView({
   const [dashboardPreviews, setDashboardPreviews] = useState<Map<string, DashboardPreview>>(
     new Map(),
   );
+  const [actionPreviews, setActionPreviews] = useState<Map<string, ActionPreview>>(new Map());
+  const [filePreviews, setFilePreviews] = useState<Map<string, FilePreview>>(new Map());
   const [detailLoadingIds, setDetailLoadingIds] = useState<Set<string>>(new Set());
   const [detailFetchedIds, setDetailFetchedIds] = useState<Set<string>>(new Set());
   const [ruleDialog, setRuleDialog] = useState<RuleDialogState>({ open: false });
@@ -230,6 +234,20 @@ export function ApprovalsView({
         setDashboardPreviews((prev) => {
           const next = new Map(prev);
           next.set(id, d.dashboard_preview as DashboardPreview);
+          return next;
+        });
+      }
+      if (d.action_preview) {
+        setActionPreviews((prev) => {
+          const next = new Map(prev);
+          next.set(id, d.action_preview as ActionPreview);
+          return next;
+        });
+      }
+      if (d.file_preview) {
+        setFilePreviews((prev) => {
+          const next = new Map(prev);
+          next.set(id, d.file_preview as FilePreview);
           return next;
         });
       }
@@ -499,6 +517,8 @@ export function ApprovalsView({
                 request={r}
                 diffPreview={diffPreviews.get(r.id)}
                 dashboardPreview={dashboardPreviews.get(r.id) ?? null}
+                actionPreview={actionPreviews.get(r.id) ?? null}
+                filePreview={filePreviews.get(r.id) ?? null}
                 detailLoading={detailLoadingIds.has(r.id)}
                 detailFetched={detailFetchedIds.has(r.id)}
                 iframeAllowlist={iframeAllowlist}

@@ -5,6 +5,7 @@ import { useMemo } from "react";
 
 import { ModuleHost } from "@/components/modules/ModuleHost";
 import { ModuleRenderer } from "@/components/modules/ModuleRenderer";
+import { NewPagePreview } from "@/components/approvals/NewPagePreview";
 import { Badge } from "@/components/ui/Badge";
 import type { DashboardPreview, IframeAllowlistEntry, Module } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -75,6 +76,10 @@ export function ApprovalPagePreview({
   );
 
   const items = useMemo(() => buildDisplayItems(preview), [preview]);
+
+  if (preview.highlight.change === "create_page") {
+    return <NewPagePreview preview={preview} />;
+  }
 
   const changeLabel =
     preview.highlight.change === "create"

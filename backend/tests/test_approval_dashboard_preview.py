@@ -141,17 +141,22 @@ def test_dashboard_preview_delete_module(admin_client: TestClient) -> None:
     assert removed[0]["title"] == "Remove me"
 
 
-def test_dashboard_preview_unsupported_action(admin_client: TestClient) -> None:
+def test_dashboard_preview_create_page(admin_client: TestClient) -> None:
     agent_id, _ = register_agent(admin_client, name="preview-page")
     secret = get_service_secret()
 
     r = admin_client.post(
         "/api/v1/internal/propose-page",
-        json={"name": "Ops", "slug": "ops-preview-test"},
+        json={"name": "Ops", "slug": "ops-preview-test", "description": "Ops board"},
         headers=internal_headers(agent_id, secret, idempotency_key="preview-page-1"),
     )
     assert r.status_code == 202, r.text
     req_id = r.json()["request_id"]
 
     preview = _detail(admin_client, req_id)["dashboard_preview"]
-    assert preview is None
+    assert preview is not None
+    assert preview["page"]["name"] == "Ops"
+    assert preview["page"]["slug"] == "ops-preview-test"
+    assert preview["page"]["description"] == "Ops board"
+    assert preview["modules"] == []
+    assert preview["highlight"]["change"] == "create_page"

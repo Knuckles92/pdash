@@ -4,6 +4,7 @@ import { CommandPaletteProvider } from "@/components/layout/CommandPaletteProvid
 import { MobileCommandButton } from "@/components/layout/MobileCommandButton";
 import { BottomNav } from "@/components/nav/BottomNav";
 import { MobilePagesDrawer } from "@/components/nav/MobilePagesDrawer";
+import { PageListRefresher } from "@/components/nav/PageListRefresher";
 import { Sidebar } from "@/components/nav/Sidebar";
 import { api, type Page } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -16,6 +17,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <CommandPaletteProvider>
+      <PageListRefresher />
       <div className="flex min-h-screen">
         <Sidebar pages={pages} />
         <div className="flex-1 flex flex-col min-w-0">

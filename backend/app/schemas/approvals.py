@@ -37,10 +37,17 @@ class ApprovalRequestListOut(BaseModel):
 
 
 class ApprovalRequestDetailOut(ApprovalRequestOut):
-    """Includes a diff preview vs. current target state when applicable."""
+    """Includes a preview of the proposed change when applicable.
+
+    At most one of the ``*_preview`` fields is populated, keyed off the
+    request's ``action_type`` (module/page changes → ``dashboard_preview``,
+    fire_action_button → ``action_preview``, register_file → ``file_preview``).
+    """
 
     diff_preview: dict[str, Any] | None = None
     dashboard_preview: dict[str, Any] | None = None
+    action_preview: dict[str, Any] | None = None
+    file_preview: dict[str, Any] | None = None
 
 
 # ---------------------------------------------------------------------------

@@ -12,7 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..approval import bump_rules_version, lifecycle
 from ..approval.apply import ApplyError, apply_request
 from ..approval.engine import DecisionRequest, decide
-from ..approval.preview import build_dashboard_preview
+from ..approval.preview import (
+    build_action_preview,
+    build_dashboard_preview,
+    build_file_preview,
+)
 from ..auth.deps import CurrentUser, require_csrf, require_session
 from ..db import get_session, read_session
 from ..errors import bad_request, not_found
@@ -181,10 +185,14 @@ async def get_request(
                 current = json.loads(mod.config or "{}")
                 diff_preview = {"config": _shallow_diff(current, patch["config"])}
     dashboard_preview = await build_dashboard_preview(session, row)
+    action_preview = await build_action_preview(session, row)
+    file_preview = await build_file_preview(session, row)
     return ApprovalRequestDetailOut(
         **out.model_dump(),
         diff_preview=diff_preview,
         dashboard_preview=dashboard_preview,
+        action_preview=action_preview,
+        file_preview=file_preview,
     )
 
 

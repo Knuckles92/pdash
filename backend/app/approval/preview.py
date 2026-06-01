@@ -10,7 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import modules as module_registry
-from ..models import ApprovalRequest, Module, Page, utcnow_iso
+from ..models import ActionTarget, ApprovalRequest, Module, Page, utcnow_iso
+from ..services.redact import redact
 
 
 def _module_to_dict(row: Module) -> dict[str, Any]:
@@ -126,6 +127,24 @@ async def build_dashboard_preview(
     payload = json.loads(request.proposed_payload or "{}")
     action = request.action_type
 
+    if action == "create_page":
+        pid = payload.get("provisional_id") or request.target_id or "pg_preview"
+        return {
+            "page": {
+                "id": pid,
+                "name": payload.get("name") or "Untitled page",
+                "slug": payload.get("slug") or "",
+                "description": payload.get("description"),
+                "kind": payload.get("kind") or "custom",
+            },
+            "modules": [],
+            "highlight": {
+                "module_ids": [],
+                "removed_module_ids": [],
+                "change": "create_page",
+            },
+        }
+
     if action == "create_module":
         page_id, synthetic, highlight = _build_create_module(request, payload)
         page = await session.get(Page, page_id)
@@ -198,4 +217,107 @@ async def build_dashboard_preview(
     return None
 
 
-__all__ = ["build_dashboard_preview"]
+# ---------------------------------------------------------------------------
+# fire_action_button — "what will be called" preview
+# ---------------------------------------------------------------------------
+
+
+def _action_destination(kind: str, cfg: dict[str, Any]) -> str | None:
+    """Human-readable summary of where a fire_action will go.
+
+    Mirrors the field names the dispatcher reads in ``apply.py`` so the admin
+    sees the same target the apply step will hit.
+    """
+    if kind == "webhook":
+        url = cfg.get("url")
+        if not url:
+            return None
+        method = str(cfg.get("method", "POST")).upper()
+        return f"{method} {url}"
+    if kind == "mcp_tool":
+        url = cfg.get("url")
+        tool = cfg.get("tool_name")
+        if url and tool:
+            return f"{tool} @ {url}"
+        return url or tool
+    if kind == "local_script":
+        cmd = cfg.get("command")
+        if isinstance(cmd, list):
+            return " ".join(str(part) for part in cmd)
+        return cmd
+    if kind == "agent_message":
+        to = cfg.get("to_agent_id")
+        return f"message → {to}" if to else None
+    return None
+
+
+async def build_action_preview(
+    session: AsyncSession, request: ApprovalRequest
+) -> dict[str, Any] | None:
+    """Return a fire_action_button preview (target + effective payload), or None."""
+    if request.action_type != "fire_action_button":
+        return None
+    payload = json.loads(request.proposed_payload or "{}")
+    target_id = payload.get("target_id") or request.target_id
+    if not target_id:
+        return None
+    target = await session.get(ActionTarget, target_id)
+    if target is None or target.deleted_at is not None:
+        return None
+
+    cfg = redact(json.loads(target.config or "{}"))
+    agent_payload = payload.get("payload") or {}
+    uses_target_default = not agent_payload and target.kind == "webhook"
+    effective = cfg.get("default_payload") or {} if uses_target_default else agent_payload
+
+    return {
+        "target": {
+            "id": target.id,
+            "name": target.name,
+            "kind": target.kind,
+            "mode": target.mode,
+            "enabled": bool(target.enabled),
+        },
+        "destination": _action_destination(target.kind, cfg),
+        "payload": redact(effective),
+        "uses_target_default": uses_target_default,
+    }
+
+
+# ---------------------------------------------------------------------------
+# register_file — file metadata preview
+# ---------------------------------------------------------------------------
+
+
+async def build_file_preview(
+    session: AsyncSession, request: ApprovalRequest
+) -> dict[str, Any] | None:
+    """Return a register_file preview (file metadata + page hint), or None.
+
+    The bytes still live in the inbox (unvetted, not yet served), so this is a
+    metadata-only card — no thumbnail.
+    """
+    if request.action_type != "register_file":
+        return None
+    payload = json.loads(request.proposed_payload or "{}")
+
+    page = None
+    page_id = payload.get("page_id")
+    if page_id:
+        page_row = await session.get(Page, page_id)
+        if page_row is not None and page_row.deleted_at is None:
+            page = _page_summary(page_row)
+
+    return {
+        "display_name": payload.get("display_name"),
+        "inbox_name": payload.get("inbox_name"),
+        "kind": payload.get("kind"),
+        "mime": payload.get("mime"),
+        "size_bytes": payload.get("size_bytes"),
+        "purpose": payload.get("purpose"),
+        "sha256": payload.get("sha256"),
+        "page": page,
+    }
+
+
+__all__ = ["build_action_preview", "build_dashboard_preview", "build_file_preview"]
