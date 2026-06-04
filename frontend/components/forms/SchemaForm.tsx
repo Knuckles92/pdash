@@ -442,7 +442,7 @@ function SchemaField(props: FormProps) {
   }
 }
 
-/** Strip empty strings → null/undefined to keep payloads tidy. */
+/** Drop null/undefined keys only — keep "", [], and {} so required module fields validate. */
 export function pruneEmpties(value: unknown): unknown {
   if (value === null || value === undefined) return value;
   if (Array.isArray(value)) {
@@ -452,9 +452,7 @@ export function pruneEmpties(value: unknown): unknown {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
       const pv = pruneEmpties(v);
-      // Don't ship empty strings as values
-      if (pv === "" || pv === null || pv === undefined) continue;
-      if (Array.isArray(pv) && pv.length === 0) continue;
+      if (pv === null || pv === undefined) continue;
       out[k] = pv;
     }
     return out;
