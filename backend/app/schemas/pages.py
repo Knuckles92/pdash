@@ -38,3 +38,8 @@ class PageOut(BaseModel):
     owner_id: str | None = None
     created_at: str
     deleted_at: str | None = None
+
+
+class DefaultExamplesMutationOut(BaseModel):
+    cleared: int | None = None
+    deployed: int | None = None

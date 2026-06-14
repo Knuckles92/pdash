@@ -1,6 +1,6 @@
 "use client";
 
-import { Eraser, Pencil, Plus, Trash2 } from "lucide-react";
+import { Eraser, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -15,15 +15,18 @@ import { api, errorMessage, type Page } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { upsertById } from "@/lib/collections";
 
-type Props = { initialPages: Page[] };
+type Props = { initialPages: Page[]; initialHomeExampleCount: number };
 
-export function PagesClient({ initialPages }: Props) {
+export function PagesClient({ initialPages, initialHomeExampleCount }: Props) {
   const [pages, setPages] = useState(initialPages);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Page | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [clearingPageId, setClearingPageId] = useState<string | null>(null);
+  const [homeExampleCount, setHomeExampleCount] = useState(initialHomeExampleCount);
+  const [examplesBusy, setExamplesBusy] = useState(false);
   const router = useRouter();
+
+  const homePage = pages.find((p) => p.kind === "home");
 
   function upsertLocal(p: Page) {
     setPages((curr) => upsertById(curr, p));
@@ -45,26 +48,36 @@ export function PagesClient({ initialPages }: Props) {
     }
   }
 
-  async function clearDefaultExamples(p: Page) {
-    if (p.kind !== "home") return;
-    setClearingPageId(p.id);
+  async function clearDefaultExamples() {
+    if (!homePage) return;
+    const label = homeExampleCount === 1 ? "example module" : "example modules";
+    if (!confirm(`Clear ${homeExampleCount} default ${label} from Home?`)) return;
+    setExamplesBusy(true);
     try {
-      const { items } = await api.listModules({ page_id: p.id });
-      const examples = items.filter((m) => m.permissions?.pdash_default_example === true);
-      if (examples.length === 0) {
-        toast.info("No default examples remain.");
-        return;
-      }
-      const label = examples.length === 1 ? "example module" : "example modules";
-      if (!confirm(`Clear ${examples.length} default ${label} from Home?`)) return;
-
-      await Promise.all(examples.map((m) => api.deleteModule(m.id)));
-      toast.success(`Cleared ${examples.length} default ${label}`);
+      const { cleared } = await api.clearHomeExamples(homePage.id);
+      setHomeExampleCount(0);
+      toast.success(`Cleared ${cleared} default ${cleared === 1 ? "example module" : "example modules"}`);
       router.refresh();
     } catch (err) {
       toast.error(errorMessage(err, "Clear examples failed"));
     } finally {
-      setClearingPageId(null);
+      setExamplesBusy(false);
+    }
+  }
+
+  async function deployDefaultExamples() {
+    if (!homePage) return;
+    if (!confirm("Deploy 9 example modules to Home?")) return;
+    setExamplesBusy(true);
+    try {
+      const { deployed } = await api.deployHomeExamples(homePage.id);
+      setHomeExampleCount(deployed);
+      toast.success(`Restored ${deployed} example ${deployed === 1 ? "module" : "modules"}`);
+      router.refresh();
+    } catch (err) {
+      toast.error(errorMessage(err, "Restore examples failed"));
+    } finally {
+      setExamplesBusy(false);
     }
   }
 
@@ -108,18 +121,33 @@ export function PagesClient({ initialPages }: Props) {
                   </td>
                   <td className="px-4 py-2 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      {p.kind === "home" && (
+                      {p.kind === "home" && homeExampleCount > 0 && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => clearDefaultExamples(p)}
+                          onClick={() => clearDefaultExamples()}
                           aria-label="Clear examples"
                           title="Clear examples"
-                          disabled={clearingPageId === p.id}
+                          disabled={examplesBusy}
                         >
                           <Eraser className="size-4" />
                           <span className="hidden sm:inline">
-                            {clearingPageId === p.id ? "Clearing" : "Clear examples"}
+                            {examplesBusy ? "Clearing" : "Clear examples"}
+                          </span>
+                        </Button>
+                      )}
+                      {p.kind === "home" && homeExampleCount === 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deployDefaultExamples()}
+                          aria-label="Restore examples"
+                          title="Restore examples"
+                          disabled={examplesBusy}
+                        >
+                          <Sparkles className="size-4" />
+                          <span className="hidden sm:inline">
+                            {examplesBusy ? "Restoring" : "Restore examples"}
                           </span>
                         </Button>
                       )}

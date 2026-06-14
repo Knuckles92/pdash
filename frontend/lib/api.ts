@@ -501,6 +501,14 @@ export const api = {
     apiFetch<Page>(`/api/v1/pages/${id}`, { method: "PATCH", json: body }),
   deletePage: (id: string) =>
     apiFetch<void>(`/api/v1/pages/${id}`, { method: "DELETE" }),
+  clearHomeExamples: (pageId: string) =>
+    apiFetch<{ cleared: number }>(`/api/v1/pages/${pageId}/default-examples`, {
+      method: "DELETE",
+    }),
+  deployHomeExamples: (pageId: string) =>
+    apiFetch<{ deployed: number }>(`/api/v1/pages/${pageId}/default-examples`, {
+      method: "POST",
+    }),
 
   // modules
   listModules: (params: { page_id?: string; type?: string } = {}, opts: ApiRequestInit = {}) => {

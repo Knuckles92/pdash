@@ -41,7 +41,7 @@ from .internal import (
     WhoAmIOut,
 )
 from .modules import ModuleCreate, ModuleOut, ModulePatch
-from .pages import PageCreate, PageOut, PagePatch
+from .pages import DefaultExamplesMutationOut, PageCreate, PageOut, PagePatch
 
 __all__ = [
     "ActionTargetCreate",
@@ -66,6 +66,7 @@ __all__ = [
     "BulkDecisionItem",
     "BulkDecisionResult",
     "CursorPage",
+    "DefaultExamplesMutationOut",
     "DeleteModuleIn",
     "DenyIn",
     "FileDropboxOut",

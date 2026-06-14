@@ -16,8 +16,16 @@ from ..errors import bad_request, conflict, not_found
 from ..events.publish import publish_after_commit
 from ..ids import new_id
 from ..models import Page, utcnow_iso
-from ..schemas import CursorPage, PageCreate, PageOut, PagePatch, ReorderIn
+from ..schemas import (
+    CursorPage,
+    DefaultExamplesMutationOut,
+    PageCreate,
+    PageOut,
+    PagePatch,
+    ReorderIn,
+)
 from ..services.audit import write_event
+from ..services.home_examples import clear_default_examples, deploy_default_examples
 from . import _idem
 
 
@@ -133,6 +141,37 @@ async def create_page(
     out = _to_out(row).model_dump()
     await _idem.save(session, tool="POST /pages", key=idem_key, response=out)
     return JSONResponse(content=out, status_code=201)
+
+
+async def _require_home_page(session: AsyncSession, page_id: str) -> Page:
+    row = await session.get(Page, page_id)
+    if row is None or row.deleted_at is not None:
+        raise not_found("page.not_found", page_id)
+    if row.kind != "home":
+        raise bad_request("page.not_home", "Default examples are only available on the home page")
+    return row
+
+
+@router.delete("/{page_id}/default-examples", response_model=DefaultExamplesMutationOut)
+async def clear_page_default_examples(
+    page_id: str,
+    _: Annotated[CurrentUser, Depends(require_csrf)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> DefaultExamplesMutationOut:
+    await _require_home_page(session, page_id)
+    cleared = await clear_default_examples(session, page_id)
+    return DefaultExamplesMutationOut(cleared=cleared)
+
+
+@router.post("/{page_id}/default-examples", response_model=DefaultExamplesMutationOut)
+async def deploy_page_default_examples(
+    page_id: str,
+    _: Annotated[CurrentUser, Depends(require_csrf)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> DefaultExamplesMutationOut:
+    await _require_home_page(session, page_id)
+    deployed = await deploy_default_examples(session, page_id)
+    return DefaultExamplesMutationOut(deployed=deployed)
 
 
 @router.patch("/{page_id}", response_model=PageOut)
