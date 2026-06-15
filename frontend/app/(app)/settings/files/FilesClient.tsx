@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Dialog } from "@/components/ui/Dialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
@@ -23,6 +24,10 @@ import { humanizeBytes } from "@/lib/bytes";
 import { refreshOrphanCount } from "@/lib/hooks/useOrphanCount";
 
 type Props = { initialOverview: FilesOverview | null; pages: Page[] };
+
+type PendingConfirm =
+  | { kind: "inbox"; file: InboxFile }
+  | { kind: "registered"; file: RegisteredFile };
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
@@ -45,6 +50,8 @@ export function FilesClient({ initialOverview, pages }: Props) {
   const [assignFile, setAssignFile] = useState<InboxFile | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
 
   const pageLabel = (id: string | null) =>
     id ? (pages.find((p) => p.id === id)?.name ?? id) : "—";
@@ -85,26 +92,23 @@ export function FilesClient({ initialOverview, pages }: Props) {
     }
   }
 
-  async function handleDeleteInbox(f: InboxFile) {
-    if (!confirm(`Delete "${f.name}" from the inbox? This removes the dropped file.`)) return;
+  async function handleConfirmDelete() {
+    if (!pendingConfirm) return;
+    setConfirmBusy(true);
     try {
-      await api.deleteInboxFile({ name: f.name, page_id: f.page_id ?? undefined });
+      if (pendingConfirm.kind === "inbox") {
+        const f = pendingConfirm.file;
+        await api.deleteInboxFile({ name: f.name, page_id: f.page_id ?? undefined });
+      } else {
+        await api.deleteFile(pendingConfirm.file.id);
+      }
       toast.success("Deleted");
+      setPendingConfirm(null);
       await refresh();
     } catch (err) {
       toast.error(errorMessage(err, "Delete failed"));
-    }
-  }
-
-  async function handleDeleteFile(f: RegisteredFile) {
-    if (!confirm(`Delete "${f.display_name}"? Widgets pointing at it will stop rendering.`))
-      return;
-    try {
-      await api.deleteFile(f.id);
-      toast.success("Deleted");
-      await refresh();
-    } catch (err) {
-      toast.error(errorMessage(err, "Delete failed"));
+    } finally {
+      setConfirmBusy(false);
     }
   }
 
@@ -197,7 +201,7 @@ export function FilesClient({ initialOverview, pages }: Props) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDeleteInbox(f)}
+                          onClick={() => setPendingConfirm({ kind: "inbox", file: f })}
                           aria-label="Delete"
                         >
                           <Trash2 className="size-4 text-[var(--danger)]" />
@@ -272,7 +276,7 @@ export function FilesClient({ initialOverview, pages }: Props) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDeleteFile(f)}
+                          onClick={() => setPendingConfirm({ kind: "registered", file: f })}
                           aria-label="Delete"
                         >
                           <Trash2 className="size-4 text-[var(--danger)]" />
@@ -294,6 +298,26 @@ export function FilesClient({ initialOverview, pages }: Props) {
           cleaned up on disk.
         </p>
       )}
+
+      <ConfirmDialog
+        open={pendingConfirm !== null}
+        onClose={() => setPendingConfirm(null)}
+        title={
+          pendingConfirm?.kind === "inbox" ? "Delete inbox file?" : "Delete registered file?"
+        }
+        description={
+          pendingConfirm?.kind === "inbox"
+            ? `Delete "${pendingConfirm.file.name}" from the inbox? This removes the dropped file.`
+            : pendingConfirm?.kind === "registered"
+              ? `Delete "${pendingConfirm.file.display_name}"? Widgets pointing at it will stop rendering.`
+              : undefined
+        }
+        confirmLabel="Delete file"
+        loadingLabel="Deleting"
+        icon={<Trash2 className="size-4" />}
+        loading={confirmBusy}
+        onConfirm={handleConfirmDelete}
+      />
 
       <Dialog
         open={assignFile !== null}

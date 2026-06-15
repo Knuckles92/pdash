@@ -6,6 +6,16 @@ from .actions import (
     ActionTargetTestResult,
     ActionTargetUpdate,
 )
+from .agent_registration import (
+    AgentRegistrationListOut,
+    AgentRegistrationOut,
+    BootstrapClaimIn,
+    BootstrapClaimOut,
+    BootstrapRegisterIn,
+    BootstrapRegisterOut,
+    RegistrationApproveIn,
+    RegistrationDenyIn,
+)
 from .agents import AgentCreate, AgentKeyOut, AgentOut, AgentUpdate
 from .approvals import (
     ApprovalRequestDetailOut,
@@ -51,6 +61,8 @@ __all__ = [
     "AgentCreate",
     "AgentKeyOut",
     "AgentOut",
+    "AgentRegistrationListOut",
+    "AgentRegistrationOut",
     "AgentUpdate",
     "AppendLogIn",
     "ApprovalRequestDetailOut",
@@ -61,6 +73,10 @@ __all__ = [
     "ApprovalRuleOut",
     "ApprovalRuleUpdate",
     "ApproveIn",
+    "BootstrapClaimIn",
+    "BootstrapClaimOut",
+    "BootstrapRegisterIn",
+    "BootstrapRegisterOut",
     "BulkDecideIn",
     "BulkDecideOut",
     "BulkDecisionItem",
@@ -86,6 +102,8 @@ __all__ = [
     "ProposeModuleIn",
     "ProposePageIn",
     "RegisterFileIn",
+    "RegistrationApproveIn",
+    "RegistrationDenyIn",
     "ReorderIn",
     "UpdateModuleIn",
     "UpdateModulePatch",

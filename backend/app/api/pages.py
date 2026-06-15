@@ -79,6 +79,20 @@ async def list_pages(
     return CursorPage[PageOut](items=[_to_out(r) for r in rows], next_cursor=next_cursor)
 
 
+@router.get("/by-slug/{slug}", response_model=PageOut)
+async def get_page_by_slug(
+    slug: str,
+    _: Annotated[CurrentUser, Depends(require_session)],
+    session: Annotated[AsyncSession, Depends(read_session)],
+) -> PageOut:
+    row = await session.scalar(
+        select(Page).where(Page.slug == slug, Page.deleted_at.is_(None))
+    )
+    if row is None:
+        raise not_found("page.not_found", slug)
+    return _to_out(row)
+
+
 @router.get("/{page_id}", response_model=PageOut)
 async def get_page(
     page_id: str,

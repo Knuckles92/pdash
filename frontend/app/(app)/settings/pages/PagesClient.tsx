@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Dialog } from "@/components/ui/Dialog";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -17,13 +18,19 @@ import { upsertById } from "@/lib/collections";
 
 type Props = { initialPages: Page[]; initialHomeExampleCount: number };
 
+type PendingConfirm =
+  | { kind: "delete-page"; page: Page }
+  | { kind: "clear-examples" }
+  | { kind: "deploy-examples" };
+
 export function PagesClient({ initialPages, initialHomeExampleCount }: Props) {
   const [pages, setPages] = useState(initialPages);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Page | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [homeExampleCount, setHomeExampleCount] = useState(initialHomeExampleCount);
-  const [examplesBusy, setExamplesBusy] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
   const router = useRouter();
 
   const homePage = pages.find((p) => p.kind === "home");
@@ -32,54 +39,85 @@ export function PagesClient({ initialPages, initialHomeExampleCount }: Props) {
     setPages((curr) => upsertById(curr, p));
   }
 
-  async function deletePage(p: Page) {
-    if (p.kind === "home") {
-      toast.error("Cannot delete the home page.");
-      return;
-    }
-    if (!confirm(`Delete page "${p.name}"? This soft-deletes the page and cascades modules.`)) return;
+  async function handleConfirmAction() {
+    if (!pendingConfirm) return;
+    setConfirmBusy(true);
     try {
-      await api.deletePage(p.id);
-      setPages((curr) => curr.filter((x) => x.id !== p.id));
-      toast.success("Page deleted");
-      router.refresh();
+      if (pendingConfirm.kind === "delete-page") {
+        const p = pendingConfirm.page;
+        if (p.kind === "home") {
+          toast.error("Cannot delete the home page.");
+          return;
+        }
+        await api.deletePage(p.id);
+        setPages((curr) => curr.filter((x) => x.id !== p.id));
+        toast.success("Page deleted");
+        router.refresh();
+      } else if (pendingConfirm.kind === "clear-examples") {
+        if (!homePage) return;
+        const { cleared } = await api.clearHomeExamples(homePage.id);
+        setHomeExampleCount(0);
+        toast.success(
+          `Cleared ${cleared} default ${cleared === 1 ? "example module" : "example modules"}`,
+        );
+        router.refresh();
+      } else {
+        if (!homePage) return;
+        const { deployed } = await api.deployHomeExamples(homePage.id);
+        setHomeExampleCount(deployed);
+        toast.success(`Restored ${deployed} example ${deployed === 1 ? "module" : "modules"}`);
+        router.refresh();
+      }
+      setPendingConfirm(null);
     } catch (err) {
-      toast.error(errorMessage(err, "Delete failed"));
+      toast.error(errorMessage(err, "Action failed"));
+    } finally {
+      setConfirmBusy(false);
     }
   }
 
-  async function clearDefaultExamples() {
-    if (!homePage) return;
-    const label = homeExampleCount === 1 ? "example module" : "example modules";
-    if (!confirm(`Clear ${homeExampleCount} default ${label} from Home?`)) return;
-    setExamplesBusy(true);
-    try {
-      const { cleared } = await api.clearHomeExamples(homePage.id);
-      setHomeExampleCount(0);
-      toast.success(`Cleared ${cleared} default ${cleared === 1 ? "example module" : "example modules"}`);
-      router.refresh();
-    } catch (err) {
-      toast.error(errorMessage(err, "Clear examples failed"));
-    } finally {
-      setExamplesBusy(false);
-    }
-  }
-
-  async function deployDefaultExamples() {
-    if (!homePage) return;
-    if (!confirm("Deploy 9 example modules to Home?")) return;
-    setExamplesBusy(true);
-    try {
-      const { deployed } = await api.deployHomeExamples(homePage.id);
-      setHomeExampleCount(deployed);
-      toast.success(`Restored ${deployed} example ${deployed === 1 ? "module" : "modules"}`);
-      router.refresh();
-    } catch (err) {
-      toast.error(errorMessage(err, "Restore examples failed"));
-    } finally {
-      setExamplesBusy(false);
-    }
-  }
+  const exampleLabel = homeExampleCount === 1 ? "example module" : "example modules";
+  const confirmDialogProps =
+    pendingConfirm?.kind === "delete-page"
+      ? {
+          title: "Delete page?",
+          description: `"${pendingConfirm.page.name}" and its modules will be soft-deleted.`,
+          confirmLabel: "Delete page",
+          loadingLabel: "Deleting",
+          icon: <Trash2 className="size-4" />,
+          children: (
+            <p className="text-sm text-[var(--muted-fg)]">
+              This soft-deletes the page and cascades to its modules.
+            </p>
+          ),
+        }
+      : pendingConfirm?.kind === "clear-examples"
+        ? {
+            title: "Clear example modules?",
+            description: `Remove ${homeExampleCount} default ${exampleLabel} from Home?`,
+            confirmLabel: "Clear examples",
+            loadingLabel: "Clearing",
+            confirmVariant: "primary" as const,
+            children: (
+              <p className="text-sm text-[var(--muted-fg)]">
+                Only the seeded demo modules are removed. Your other modules stay put.
+              </p>
+            ),
+          }
+        : pendingConfirm?.kind === "deploy-examples"
+          ? {
+              title: "Restore example modules?",
+              description: "Deploy 9 example modules to Home?",
+              confirmLabel: "Restore examples",
+              loadingLabel: "Restoring",
+              confirmVariant: "primary" as const,
+              children: (
+                <p className="text-sm text-[var(--muted-fg)]">
+                  Adds the default demo modules back to the home page.
+                </p>
+              ),
+            }
+          : null;
 
   return (
     <div className="flex flex-col gap-3">
@@ -125,14 +163,14 @@ export function PagesClient({ initialPages, initialHomeExampleCount }: Props) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => clearDefaultExamples()}
+                          onClick={() => setPendingConfirm({ kind: "clear-examples" })}
                           aria-label="Clear examples"
                           title="Clear examples"
-                          disabled={examplesBusy}
+                          disabled={confirmBusy}
                         >
                           <Eraser className="size-4" />
                           <span className="hidden sm:inline">
-                            {examplesBusy ? "Clearing" : "Clear examples"}
+                            {confirmBusy ? "Clearing" : "Clear examples"}
                           </span>
                         </Button>
                       )}
@@ -140,14 +178,14 @@ export function PagesClient({ initialPages, initialHomeExampleCount }: Props) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => deployDefaultExamples()}
+                          onClick={() => setPendingConfirm({ kind: "deploy-examples" })}
                           aria-label="Restore examples"
                           title="Restore examples"
-                          disabled={examplesBusy}
+                          disabled={confirmBusy}
                         >
                           <Sparkles className="size-4" />
                           <span className="hidden sm:inline">
-                            {examplesBusy ? "Restoring" : "Restore examples"}
+                            {confirmBusy ? "Restoring" : "Restore examples"}
                           </span>
                         </Button>
                       )}
@@ -163,7 +201,7 @@ export function PagesClient({ initialPages, initialHomeExampleCount }: Props) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => deletePage(p)}
+                        onClick={() => setPendingConfirm({ kind: "delete-page", page: p })}
                         aria-label="Delete"
                         title={p.kind === "home" ? "Cannot delete home" : "Delete"}
                         disabled={p.kind === "home"}
@@ -179,6 +217,15 @@ export function PagesClient({ initialPages, initialHomeExampleCount }: Props) {
         </div>
       </Card>
 
+      {confirmDialogProps && (
+        <ConfirmDialog
+          open={pendingConfirm !== null}
+          onClose={() => setPendingConfirm(null)}
+          loading={confirmBusy}
+          onConfirm={handleConfirmAction}
+          {...confirmDialogProps}
+        />
+      )}
       <CreatePageDialog
         open={creating}
         onClose={() => setCreating(false)}

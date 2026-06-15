@@ -18,6 +18,7 @@ from mcp.server.fastmcp import FastMCP
 
 from . import decision_cache
 from .backend import close_client, get_client
+from .health import register_health_routes
 from .settings import get_settings
 from .tools import register_tools
 
@@ -56,11 +57,17 @@ def build_server() -> FastMCP:
     mcp = FastMCP(
         name="pdash",
         instructions=(
-            "Home Base (pdash) MCP server. All write tools route through the "
-            "approval engine; responses use status=applied/pending/denied. "
-            "Call get_module_schema before propose_module. Do NOT retry "
-            "pending responses; poll list_my_pending_requests instead. "
-            "Honor retry_after_ms on rate-limit errors."
+            "Home Base (pdash) MCP server. First add this server to your MCP client "
+            "configuration (streamable HTTP, no Authorization header). If you have no "
+            "hb_agt_ API key, call 'onboarding' for the full setup flow, then "
+            "'request_registration' to ask the admin for access and "
+            "'claim_registration' to pick up your key once approved — those three tools "
+            "need no key; every other tool does until you update your MCP config with "
+            "the key. Use MCP tools, not raw HTTP. All write tools route through the "
+            "approval engine; responses use status=applied/pending/denied. Call "
+            "get_module_schema before propose_module. Do NOT retry pending responses; "
+            "poll list_my_pending_requests instead. Honor retry_after_ms on rate-limit "
+            "errors."
         ),
         host=settings.mcp_host,
         port=settings.mcp_port,
@@ -71,6 +78,7 @@ def build_server() -> FastMCP:
         lifespan=_lifespan,
     )
     register_tools(mcp)
+    register_health_routes(mcp)
     return mcp
 
 

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Dialog } from "@/components/ui/Dialog";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -86,6 +87,8 @@ export function RuleEditor({
   const [draft, setDraft] = useState<ApprovalRuleDraft>(initial);
   const [applyToPending, setApplyToPending] = useState(false);
   const [confirmingWildcardAgent, setConfirmingWildcardAgent] = useState(false);
+  const [wideOpenConfirmOpen, setWideOpenConfirmOpen] = useState(false);
+  const [wildcardConfirmOpen, setWildcardConfirmOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   // We re-init when the dialog is opened with a different mode.
   // (The Dialog returns null when closed, so this state survives only an open
@@ -105,21 +108,7 @@ export function RuleEditor({
   const hasConcreteAgent = !!draft.agent_id && draft.agent_id !== "*";
   const isWideOpen = !hasScope && !hasConcreteAgent;
 
-  async function handleSave(): Promise<void> {
-    if (!draft.action_type) {
-      toast.error("action_type is required");
-      return;
-    }
-    if (isWideOpen) {
-      // Foot-gun guard. Require explicit confirmation.
-      if (
-        !confirm(
-          "This rule has wildcard agent and no scope dimension. It will match every request of this action_type. Continue?",
-        )
-      ) {
-        return;
-      }
-    }
+  async function performSave(): Promise<void> {
     setSubmitting(true);
     try {
       if (mode.kind === "create") {
@@ -160,6 +149,18 @@ export function RuleEditor({
     }
   }
 
+  async function handleSave(): Promise<void> {
+    if (!draft.action_type) {
+      toast.error("action_type is required");
+      return;
+    }
+    if (isWideOpen) {
+      setWideOpenConfirmOpen(true);
+      return;
+    }
+    await performSave();
+  }
+
   const agentOptions = useMemo(
     () => agents.filter((a) => a.status !== "revoked"),
     [agents],
@@ -173,6 +174,7 @@ export function RuleEditor({
     draft.module_type != null && isKnownModuleType(draft.module_type);
 
   return (
+    <>
     <Dialog
       open={open}
       onClose={onClose}
@@ -205,14 +207,8 @@ export function RuleEditor({
             onChange={(e) => {
               const v = e.target.value;
               if (v === "*" && !confirmingWildcardAgent) {
-                if (
-                  !confirm(
-                    "Selecting '* (any agent)' makes this rule apply to every registered agent — including ones you add later. Confirm?",
-                  )
-                ) {
-                  return;
-                }
-                setConfirmingWildcardAgent(true);
+                setWildcardConfirmOpen(true);
+                return;
               }
               patch({ agent_id: v });
             }}
@@ -400,5 +396,39 @@ export function RuleEditor({
         )}
       </div>
     </Dialog>
+
+    <ConfirmDialog
+      open={wideOpenConfirmOpen}
+      onClose={() => setWideOpenConfirmOpen(false)}
+      title="Save wide-open rule?"
+      description="This rule has wildcard agent and no scope dimension. It will match every request of this action_type."
+      confirmLabel="Save rule"
+      loadingLabel="Saving"
+      confirmVariant="primary"
+      loading={submitting}
+      onConfirm={async () => {
+        setWideOpenConfirmOpen(false);
+        await performSave();
+      }}
+    >
+      <p className="text-sm text-[var(--muted-fg)]">
+        Consider narrowing scope to a page, module type, or specific agent before saving.
+      </p>
+    </ConfirmDialog>
+
+    <ConfirmDialog
+      open={wildcardConfirmOpen}
+      onClose={() => setWildcardConfirmOpen(false)}
+      title="Apply to any agent?"
+      description="Selecting '* (any agent)' makes this rule apply to every registered agent — including ones you add later."
+      confirmLabel="Use any agent"
+      confirmVariant="primary"
+      onConfirm={() => {
+        setConfirmingWildcardAgent(true);
+        patch({ agent_id: "*" });
+        setWildcardConfirmOpen(false);
+      }}
+    />
+    </>
   );
 }

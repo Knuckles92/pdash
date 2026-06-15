@@ -3,23 +3,24 @@
  */
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 import { ApiError, api } from "./api";
 import { CSRF_COOKIE, SESSION_COOKIE } from "./cookies";
 
 /** Build a Cookie header from the incoming request's cookies. */
-export async function cookieHeaderFromRequest(): Promise<string> {
+export const cookieHeaderFromRequest = cache(async (): Promise<string> => {
   const jar = await cookies();
   return jar
     .getAll()
     .map((c) => `${c.name}=${c.value}`)
     .join("; ");
-}
+});
 
-export async function hasSessionCookie(): Promise<boolean> {
+export const hasSessionCookie = cache(async (): Promise<boolean> => {
   const jar = await cookies();
   return jar.has(SESSION_COOKIE);
-}
+});
 
 function isAuthError(err: unknown): boolean {
   return (
@@ -32,7 +33,7 @@ function isAuthError(err: unknown): boolean {
  * Ensure the caller has a valid backend session. Redirects to /login when the
  * cookie is missing or rejected (stale signing secret, expired token, etc.).
  */
-export async function requireSession(): Promise<string> {
+export const requireSession = cache(async (): Promise<string> => {
   const jar = await cookies();
   if (!jar.has(SESSION_COOKIE)) {
     redirect("/login");
@@ -47,4 +48,4 @@ export async function requireSession(): Promise<string> {
     throw err;
   }
   return cookieHeader;
-}
+});

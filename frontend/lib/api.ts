@@ -14,6 +14,29 @@ export type About = {
   version: string;
 };
 
+export type McpTool = {
+  name: string;
+  description: string;
+  category: "read" | "write" | "bootstrap";
+};
+
+export type McpStatus = {
+  reachable: boolean;
+  error: string | null;
+  mcp_url: string;
+  mcp_version: string | null;
+  sse_connected: boolean | null;
+  auth_cache_ttl_s: number | null;
+  idem_dedupe_ttl_s: number | null;
+  tools: McpTool[];
+  backend_version: string;
+  service_secret_configured: boolean;
+  screenshot_sidecar: {
+    configured: boolean;
+    reachable: boolean | null;
+  };
+};
+
 export type ProblemDetail = {
   type?: string;
   title: string;
@@ -173,6 +196,30 @@ export type Agent = {
 
 export type AgentKeyOut = { agent: Agent; api_key: string };
 
+export type AgentRegistrationStatus =
+  | "pending"
+  | "approved"
+  | "denied"
+  | "claimed"
+  | "expired";
+
+export type AgentRegistration = {
+  id: string;
+  requested_name: string;
+  description: string | null;
+  rationale: string | null;
+  client_hint: string | null;
+  status: AgentRegistrationStatus;
+  agent_id: string | null;
+  permissions: Record<string, unknown> | null;
+  created_at: string;
+  decided_at: string | null;
+  decided_by: string | null;
+  decision_reason: string | null;
+  claimed_at: string | null;
+  expires_at: string | null;
+};
+
 export type ModuleSchemaEntry = {
   type: string;
   data?: Record<string, unknown>;
@@ -250,7 +297,8 @@ export type ApprovalActionType =
   | "delete_module"
   | "create_page"
   | "delete_page"
-  | "fire_action_button";
+  | "fire_action_button"
+  | "register_agent";
 
 export const APPROVAL_ACTION_TYPES: readonly ApprovalActionType[] = [
   "create_module",
@@ -261,6 +309,7 @@ export const APPROVAL_ACTION_TYPES: readonly ApprovalActionType[] = [
   "create_page",
   "delete_page",
   "fire_action_button",
+  "register_agent",
 ] as const;
 
 export type ApprovalRequestStatus =
@@ -274,7 +323,7 @@ export type ApprovalRequestStatus =
 
 export type ApprovalRequest = {
   id: string;
-  agent_id: string;
+  agent_id: string | null;
   action_type: string;
   target_kind: string | null;
   target_id: string | null;
@@ -296,6 +345,7 @@ export type ApprovalRequestDetail = ApprovalRequest & {
   dashboard_preview: DashboardPreview | null;
   action_preview: ActionPreview | null;
   file_preview: FilePreview | null;
+  registration_preview: RegistrationPreview | null;
 };
 
 export type ActionPreview = {
@@ -320,6 +370,16 @@ export type FilePreview = {
   purpose: string | null;
   sha256: string | null;
   page: { id: string; name: string; slug: string } | null;
+};
+
+export type RegistrationPreview = {
+  registration_id: string | null;
+  requested_name: string | null;
+  description: string | null;
+  rationale: string | null;
+  client_hint: string | null;
+  status: string | null;
+  expires_at: string | null;
 };
 
 export type DashboardPreviewHighlight = {
@@ -491,6 +551,8 @@ export const api = {
   // pages
   listPages: (opts: ApiRequestInit = {}) =>
     apiFetch<CursorPage<Page>>("/api/v1/pages?limit=200", opts),
+  getPageBySlug: (slug: string, opts: ApiRequestInit = {}) =>
+    apiFetch<Page>(`/api/v1/pages/by-slug/${encodeURIComponent(slug)}`, opts),
   createPage: (body: {
     slug: string;
     name: string;
@@ -557,6 +619,13 @@ export const api = {
     apiFetch<Agent>(`/api/v1/agents/${id}/disable`, { method: "POST" }),
   revokeAgent: (id: string) =>
     apiFetch<void>(`/api/v1/agents/${id}`, { method: "DELETE" }),
+
+  // agent self-registration (list/history; decisions go through Approvals inbox)
+  listAgentRegistrations: (params: { status?: string } = {}, opts: ApiRequestInit = {}) =>
+    apiFetch<{ items: AgentRegistration[] }>(
+      `/api/v1/agent-registrations${buildQuery({ status: params.status })}`,
+      opts,
+    ),
 
   // module schemas
   getModuleSchema: (type: string, opts: ApiRequestInit = {}) =>
@@ -647,7 +716,15 @@ export const api = {
     apiFetch<ApprovalRequestDetail>(`/api/v1/approval-requests/${id}`, opts),
   approveRequest: (
     id: string,
-    body: { reason?: string; create_rule?: ApprovalRuleDraft } = {},
+    body: {
+      reason?: string;
+      create_rule?: ApprovalRuleDraft;
+      registration?: {
+        display_name?: string;
+        description?: string;
+        permissions?: Record<string, unknown>;
+      };
+    } = {},
   ) =>
     apiFetch<{
       request: ApprovalRequest;
@@ -768,4 +845,8 @@ export const api = {
     apiFetch<ActivityLogDetail>(`/api/v1/activity-log/${id}`, opts),
 
   getAbout: (opts: ApiRequestInit = {}) => apiFetch<About>("/api/v1/about", opts),
+
+  // mcp control center
+  getMcpStatus: (opts: ApiRequestInit = {}) =>
+    apiFetch<McpStatus>("/api/v1/mcp/status", opts),
 };

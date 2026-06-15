@@ -9,11 +9,13 @@ import { useOrphanCount } from "@/lib/hooks/useOrphanCount";
 
 const TABS = [
   { href: "/settings/agents", label: "Agents" },
+  { href: "/settings/mcp", label: "MCP" },
   { href: "/settings/pages", label: "Pages" },
   { href: "/settings/rules", label: "Rules" },
   { href: "/settings/action-targets", label: "Action targets" },
   { href: "/settings/iframe-allowlist", label: "Iframe allowlist" },
   { href: "/settings/files", label: "Files", badge: "orphans" as const },
+  { href: "/settings/help", label: "Help" },
 ];
 
 export function SettingsTabs() {
@@ -23,7 +25,8 @@ export function SettingsTabs() {
     <nav className="flex items-center gap-1 border-b border-[var(--border)]">
       {TABS.map((t) => {
         const active = pathname.startsWith(t.href);
-        const showBadge = "badge" in t && t.badge === "orphans" && orphanCount > 0;
+        const badge = "badge" in t ? t.badge : undefined;
+        const orphanBadge = badge === "orphans" && orphanCount > 0;
         return (
           <Link
             key={t.href}
@@ -36,7 +39,7 @@ export function SettingsTabs() {
             )}
           >
             {t.label}
-            {showBadge && (
+            {orphanBadge && (
               <Badge
                 className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
                 title={`${orphanCount} file${orphanCount === 1 ? "" : "s"} need attention`}

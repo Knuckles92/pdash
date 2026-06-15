@@ -10,6 +10,7 @@ PREFIXES = {
     "mod": "mod_",
     "pg": "pg_",
     "agt": "agt_",
+    "areg": "areg_",
     "apr": "apr_",
     "rule": "rule_",
     "act": "act_",
@@ -18,7 +19,7 @@ PREFIXES = {
     "fil": "fil_",
 }
 
-IdKind = Literal["mod", "pg", "agt", "apr", "rule", "act", "msg", "job", "fil"]
+IdKind = Literal["mod", "pg", "agt", "areg", "apr", "rule", "act", "msg", "job", "fil"]
 
 
 def new_id(kind: IdKind) -> str:

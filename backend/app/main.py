@@ -14,12 +14,17 @@ from fastapi.responses import JSONResponse
 
 from .api import (
     about as about_api,
+)
+from .api import (
     action_targets,
     iframe_allowlist,
     module_schemas,
 )
 from .api import (
     activity_log as activity_log_api,
+)
+from .api import (
+    agent_registrations as agent_registrations_api,
 )
 from .api import (
     agents as agents_api,
@@ -44,6 +49,12 @@ from .api import (
 )
 from .api import (
     internal_auth as internal_auth_api,
+)
+from .api import (
+    internal_bootstrap as internal_bootstrap_api,
+)
+from .api import (
+    mcp_status as mcp_status_api,
 )
 from .api import (
     modules as modules_api,
@@ -137,6 +148,8 @@ def create_app() -> FastAPI:
     app.include_router(modules_api.router)
     app.include_router(pages_api.router)
     app.include_router(agents_api.router)
+    app.include_router(agent_registrations_api.router)
+    app.include_router(mcp_status_api.router)
     app.include_router(iframe_allowlist.router)
     app.include_router(action_targets.router)
     app.include_router(files_api.router)
@@ -146,6 +159,7 @@ def create_app() -> FastAPI:
     app.include_router(activity_log_api.router)
     app.include_router(internal_api.router)
     app.include_router(internal_auth_api.router)
+    app.include_router(internal_bootstrap_api.router)
     # Phase 5: SSE
     app.include_router(events_api.router)
 

@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ApprovalRequestOut(BaseModel):
     id: str
-    agent_id: str
+    agent_id: str | None = None
     action_type: str
     target_kind: str | None = None
     target_id: str | None = None
@@ -41,13 +41,15 @@ class ApprovalRequestDetailOut(ApprovalRequestOut):
 
     At most one of the ``*_preview`` fields is populated, keyed off the
     request's ``action_type`` (module/page changes → ``dashboard_preview``,
-    fire_action_button → ``action_preview``, register_file → ``file_preview``).
+    fire_action_button → ``action_preview``, register_file → ``file_preview``,
+    register_agent → ``registration_preview``).
     """
 
     diff_preview: dict[str, Any] | None = None
     dashboard_preview: dict[str, Any] | None = None
     action_preview: dict[str, Any] | None = None
     file_preview: dict[str, Any] | None = None
+    registration_preview: dict[str, Any] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -79,11 +81,22 @@ class ApprovalRuleDraft(BaseModel):
     apply_to_pending: bool = False
 
 
+class RegistrationApproveOverrides(BaseModel):
+    """Optional admin overrides when approving a ``register_agent`` request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    display_name: str | None = Field(default=None, min_length=1, max_length=80)
+    description: str | None = Field(default=None, max_length=500)
+    permissions: dict[str, Any] | None = None
+
+
 class ApproveIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     reason: str | None = None
     create_rule: ApprovalRuleDraft | None = None
+    registration: RegistrationApproveOverrides | None = None
 
 
 class DenyIn(BaseModel):

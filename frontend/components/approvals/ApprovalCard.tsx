@@ -7,10 +7,20 @@ import { AgentBadge } from "@/components/agents/AgentBadge";
 import { ApprovalActionPreview } from "@/components/approvals/ApprovalActionPreview";
 import { ApprovalFilePreview } from "@/components/approvals/ApprovalFilePreview";
 import { ApprovalPagePreview } from "@/components/approvals/ApprovalPagePreview";
+import { ApprovalRegistrationPreview } from "@/components/approvals/ApprovalRegistrationPreview";
+import {
+  FAMILY_STYLES,
+  RiskBadge,
+  actionTypeLabel,
+  classifyFamily,
+  describeTarget,
+  riskFor,
+  summarize,
+} from "@/components/approvals/layouts/shared";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import type { ActionPreview, Agent, ApprovalRequest, DashboardPreview, FilePreview, IframeAllowlistEntry, Module, Page } from "@/lib/api";
+import type { ActionPreview, Agent, ApprovalRequest, DashboardPreview, FilePreview, IframeAllowlistEntry, Module, Page, RegistrationPreview } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { relativeTime, formatDateTime } from "@/lib/time";
 
@@ -27,8 +37,11 @@ type ApprovalCardProps = {
   dashboardPreview?: DashboardPreview | null;
   actionPreview?: ActionPreview | null;
   filePreview?: FilePreview | null;
+  registrationPreview?: RegistrationPreview | null;
   detailLoading?: boolean;
   detailFetched?: boolean;
+  /** Start with the preview section open (used by the compact layouts). */
+  defaultExpanded?: boolean;
   iframeAllowlist?: IframeAllowlistEntry[];
   selected: boolean;
   onToggleSelect: () => void;
@@ -46,95 +59,16 @@ type ApprovalCardProps = {
   onLongPress?: () => void;
 };
 
-function actionTypeLabel(action: string): string {
-  switch (action) {
-    case "create_module":
-      return "Create module";
-    case "update_module_data":
-      return "Update data";
-    case "update_module_config":
-      return "Update config";
-    case "update_module_meta":
-      return "Update meta";
-    case "delete_module":
-      return "Delete module";
-    case "create_page":
-      return "Create page";
-    case "delete_page":
-      return "Delete page";
-    case "fire_action_button":
-      return "Fire action";
-    default:
-      return action;
-  }
-}
-
-function describeTarget(
-  req: ApprovalRequest,
-  modulesById: Map<string, Module>,
-  pagesById: Map<string, Page>,
-): string {
-  const payload = req.proposed_payload ?? {};
-  if (req.action_type === "create_module") {
-    const moduleType = (payload.type as string | undefined) ?? "module";
-    const pageId = payload.page_id as string | undefined;
-    const page = pageId ? pagesById.get(pageId) : undefined;
-    return `Create ${moduleType} on ${page?.name ?? pageId ?? "(page)"}`;
-  }
-  if (req.action_type === "create_page") {
-    const name = (payload.name as string | undefined) ?? (payload.slug as string | undefined);
-    return `Create page ${name ?? ""}`.trim();
-  }
-  if (req.target_kind === "module" && req.target_id) {
-    const targetModule = modulesById.get(req.target_id);
-    return targetModule
-      ? targetModule.title ?? `${targetModule.type} (${targetModule.id.slice(-6)})`
-      : req.target_id;
-  }
-  if (req.target_kind === "page" && req.target_id) {
-    const page = pagesById.get(req.target_id);
-    return page?.name ?? req.target_id;
-  }
-  if (req.target_kind === "action_target" && req.target_id) {
-    return `action: ${req.target_id}`;
-  }
-  return "—";
-}
-
-function summarize(req: ApprovalRequest): string {
-  const payload = req.proposed_payload ?? {};
-  if (
-    req.action_type === "update_module_data" ||
-    req.action_type === "update_module_config"
-  ) {
-    const patch = (payload.patch as Record<string, unknown> | undefined) ?? {};
-    const changedFields =
-      (patch.data as Record<string, unknown> | undefined) ??
-      (patch.config as Record<string, unknown> | undefined) ??
-      {};
-    const keys = Object.keys(changedFields);
-    if (keys.length === 0) return "no changed keys";
-    const firstKeys = keys.slice(0, 3).join(", ");
-    return keys.length > 3 ? `${firstKeys}, +${keys.length - 3} more` : firstKeys;
-  }
-  if (req.action_type === "create_module") {
-    const title = payload.title as string | undefined;
-    return title ? `“${title}”` : "(no title)";
-  }
-  if (req.action_type === "fire_action_button") {
-    return "Trigger action";
-  }
-  return "";
-}
-
 export function ApprovalCard({
   request,
   diffPreview,
   dashboardPreview,
   actionPreview,
   filePreview,
+  registrationPreview,
   detailLoading,
   detailFetched,
+  defaultExpanded,
   iframeAllowlist,
   selected,
   onToggleSelect,
@@ -147,14 +81,23 @@ export function ApprovalCard({
   onDeny,
   onLongPress,
 }: ApprovalCardProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded ?? false);
   const [showTechnical, setShowTechnical] = useState(false);
   const [swipeX, setSwipeX] = useState(0);
   const swipeStartRef = useRef<{ x: number; y: number; t: number; width: number } | null>(
     null,
   );
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const agent = agentsById.get(request.agent_id);
+  const family = classifyFamily(request.action_type);
+  const familyStyle = FAMILY_STYLES[family];
+  const risk = riskFor(family);
+  const agent = request.agent_id ? agentsById.get(request.agent_id) : undefined;
+  const registrationName =
+    request.action_type === "register_agent"
+      ? ((request.proposed_payload?.display_name as string | undefined) ??
+        registrationPreview?.requested_name ??
+        "New agent")
+      : undefined;
   const target = describeTarget(request, modulesById, pagesById);
 
   // Long-press for mobile multi-select.
@@ -232,6 +175,11 @@ export function ApprovalCard({
         selected && "ring-2 ring-[var(--accent)]",
       )}
     >
+      {/* Family-colored rail (action type at a glance). */}
+      <span
+        aria-hidden="true"
+        className={cn("absolute inset-y-0 left-0 z-10 w-1", familyStyle.rail)}
+      />
       {/* Reveal layer (gesture only). */}
       {swipeX !== 0 && (
         <div
@@ -247,7 +195,7 @@ export function ApprovalCard({
       )}
       <div
         ref={containerRef}
-        className="relative flex items-start gap-3 p-3 bg-[var(--card)] touch-pan-y"
+        className="relative flex items-start gap-3 p-3 pl-4 bg-[var(--card)] touch-pan-y"
         style={{
           transform: `translateX(${swipeX}px)`,
           transition: swipeStartRef.current ? "none" : "transform 0.18s ease-out",
@@ -272,10 +220,16 @@ export function ApprovalCard({
         />
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <AgentBadge agentId={request.agent_id} displayName={agent?.display_name} />
-            <Badge className="bg-[var(--muted)] text-[var(--fg)] border-[var(--border)]">
+            <AgentBadge
+              agentId={request.agent_id}
+              displayName={
+                registrationName ?? agent?.display_name ?? (request.agent_id ? undefined : "New agent")
+              }
+            />
+            <Badge className={cn(familyStyle.tint, familyStyle.text, familyStyle.border)}>
               {actionTypeLabel(request.action_type)}
             </Badge>
+            <RiskBadge label={risk} />
             <span className="truncate font-medium text-sm" title={target}>
               {target}
             </span>
@@ -332,10 +286,14 @@ export function ApprovalCard({
               {!detailLoading && filePreview && (
                 <ApprovalFilePreview preview={filePreview} />
               )}
+              {!detailLoading && registrationPreview && (
+                <ApprovalRegistrationPreview preview={registrationPreview} />
+              )}
               {!detailLoading &&
                 !dashboardPreview &&
                 !actionPreview &&
                 !filePreview &&
+                !registrationPreview &&
                 detailFetched && (
                   <p className="text-xs text-[var(--muted-fg)]">
                     No visual preview for this action type.

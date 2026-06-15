@@ -84,6 +84,8 @@ All env vars are prefixed `PDASH_`:
 | `PDASH_SESSION_LIFETIME_SECONDS` | `2592000` | 30-day sliding session. |
 | `PDASH_AUDIT_BLOB_THRESHOLD_BYTES` | `32768` | 32 KB; payloads above this spill to `audit_blobs` (P0). |
 | `PDASH_PENDING_TTL_SECONDS` | `604800` | 7-day pending TTL (P0). |
+| `PDASH_AGENT_REGISTRATION_MAX_PENDING` | `25` | Max outstanding pending agent self-registrations before new ones are refused (bounds the ungated bootstrap path). |
+| `PDASH_AGENT_REGISTRATION_TTL_SECONDS` | `604800` | 7-day claimable window for a pending agent self-registration before it expires. |
 | `PDASH_LOG_JSON` | `false` | JSON-format structured logs. |
 | `PDASH_LOG_LEVEL` | `INFO` | |
 | `PDASH_DOCS_ENABLED` | `true` | Mount session-gated Swagger UI at `/api/v1/docs`. |

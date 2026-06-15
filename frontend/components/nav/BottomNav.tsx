@@ -1,14 +1,24 @@
 "use client";
 
-import { Activity, CheckCircle2, Cog, Home } from "lucide-react";
-import Link from "next/link";
+import { Activity, CheckCircle2, Cog, Home, Sparkles } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/cn";
 import { useApprovalCount } from "@/lib/hooks/useApprovalCount";
+import { useGuideDismissed } from "@/lib/hooks/useGuideDismissed";
+
+import { WarmLink } from "./WarmLink";
 
 const ITEMS = [
+  {
+    href: "/how-it-works",
+    label: "Guide",
+    icon: Sparkles,
+    match: (p: string) => p.startsWith("/how-it-works"),
+    featured: true,
+  },
   { href: "/", label: "Home", icon: Home, match: (p: string) => p === "/" || p.startsWith("/pages") },
   {
     href: "/approvals",
@@ -32,23 +42,37 @@ const ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname() ?? "/";
+  const [pendingPath, setPendingPath] = useState<string | null>(null);
   const { count: approvalCount } = useApprovalCount();
+  const { dismissed: guideDismissed } = useGuideDismissed();
+  const items = ITEMS.filter((it) => !("featured" in it && it.featured && guideDismissed));
+  const activePath = pendingPath ?? pathname;
+
+  useEffect(() => {
+    setPendingPath(null);
+  }, [pathname]);
+
   return (
     <nav
       className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--card)] pb-[env(safe-area-inset-bottom)]"
       aria-label="Primary navigation"
     >
-      <ul className="grid grid-cols-4">
-        {ITEMS.map((it) => {
+      <ul className={cn("grid", items.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
+        {items.map((it) => {
           const Icon = it.icon;
-          const active = it.match(pathname);
+          const active = it.match(activePath);
           return (
             <li key={it.href}>
-              <Link
+              <WarmLink
                 href={it.href}
+                onNavigate={() => setPendingPath(it.href)}
                 className={cn(
                   "relative flex flex-col items-center justify-center gap-1 py-2 text-[11px]",
-                  active ? "text-[var(--fg)]" : "text-[var(--muted-fg)]",
+                  "featured" in it && it.featured
+                    ? "text-[var(--accent)]"
+                    : active
+                      ? "text-[var(--fg)]"
+                      : "text-[var(--muted-fg)]",
                 )}
               >
                 <Icon className="size-5" />
@@ -58,7 +82,7 @@ export function BottomNav() {
                     {approvalCount}
                   </Badge>
                 )}
-              </Link>
+              </WarmLink>
             </li>
           );
         })}

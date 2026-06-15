@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import modules as module_registry
-from ..models import ActionTarget, ApprovalRequest, Module, Page, utcnow_iso
+from ..models import ActionTarget, AgentRegistrationRequest, ApprovalRequest, Module, Page, utcnow_iso
 from ..services.redact import redact
 
 
@@ -320,4 +320,30 @@ async def build_file_preview(
     }
 
 
-__all__ = ["build_action_preview", "build_dashboard_preview", "build_file_preview"]
+async def build_registration_preview(
+    session: AsyncSession, request: ApprovalRequest
+) -> dict[str, Any] | None:
+    """Return a register_agent preview from the linked registration row."""
+    if request.action_type != "register_agent":
+        return None
+    payload = json.loads(request.proposed_payload or "{}")
+    row: AgentRegistrationRequest | None = None
+    if request.target_kind == "agent_registration" and request.target_id:
+        row = await session.get(AgentRegistrationRequest, request.target_id)
+    return {
+        "registration_id": request.target_id,
+        "requested_name": row.requested_name if row else payload.get("display_name"),
+        "description": row.description if row else payload.get("description"),
+        "rationale": row.rationale if row else payload.get("rationale"),
+        "client_hint": row.client_hint if row else payload.get("client_hint"),
+        "status": row.status if row else None,
+        "expires_at": row.expires_at if row else None,
+    }
+
+
+__all__ = [
+    "build_action_preview",
+    "build_dashboard_preview",
+    "build_file_preview",
+    "build_registration_preview",
+]

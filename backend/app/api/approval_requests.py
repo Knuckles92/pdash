@@ -16,13 +16,14 @@ from ..approval.preview import (
     build_action_preview,
     build_dashboard_preview,
     build_file_preview,
+    build_registration_preview,
 )
 from ..auth.deps import CurrentUser, require_csrf, require_session
 from ..db import get_session, read_session
 from ..errors import bad_request, not_found
 from ..events.publish import publish_after_commit
 from ..ids import new_id
-from ..models import ApprovalRequest, ApprovalRule, Module, utcnow_iso
+from ..models import AgentRegistrationRequest, ApprovalRequest, ApprovalRule, Module, utcnow_iso
 from ..schemas import (
     ApprovalRequestDetailOut,
     ApprovalRequestListOut,
@@ -34,6 +35,7 @@ from ..schemas import (
     BulkDecisionResult,
     DenyIn,
 )
+from ..services.agent_registration import sync_registration_denied_from_approval
 from ..services.audit import write_event
 
 router = APIRouter(prefix="/api/v1/approval-requests", tags=["approval-requests"])
@@ -187,12 +189,14 @@ async def get_request(
     dashboard_preview = await build_dashboard_preview(session, row)
     action_preview = await build_action_preview(session, row)
     file_preview = await build_file_preview(session, row)
+    registration_preview = await build_registration_preview(session, row)
     return ApprovalRequestDetailOut(
         **out.model_dump(),
         diff_preview=diff_preview,
         dashboard_preview=dashboard_preview,
         action_preview=action_preview,
         file_preview=file_preview,
+        registration_preview=registration_preview,
     )
 
 
@@ -259,7 +263,7 @@ async def _apply_to_pending(
     for request in rows:
         # Compute ownership against current module state.
         agent_owns_target = await _agent_owns_module(
-            session, agent_id=request.agent_id,
+            session, agent_id=request.agent_id or "",
             target_kind=request.target_kind, target_id=request.target_id,
         )
         payload = json.loads(request.proposed_payload or "{}")
@@ -322,6 +326,12 @@ async def _apply_to_pending(
                 decided_by=f"rule:{decision.rule_id} (retroactive)",
                 decision_reason="apply_to_pending sweep",
             )
+            await sync_registration_denied_from_approval(
+                session,
+                request,
+                decided_by=f"rule:{decision.rule_id} (retroactive)",
+                reason="apply_to_pending sweep",
+            )
             await write_event(
                 session,
                 actor_kind="rule",
@@ -360,6 +370,17 @@ async def approve_request(
         )
 
     # Re-validate at apply time happens inside apply_request.
+    if row.action_type == "register_agent" and body.registration is not None:
+        payload = json.loads(row.proposed_payload or "{}")
+        if body.registration.display_name is not None:
+            payload["display_name"] = body.registration.display_name
+        if body.registration.description is not None:
+            payload["description"] = body.registration.description
+        if body.registration.permissions is not None:
+            payload["permissions"] = body.registration.permissions
+        row.proposed_payload = json.dumps(payload, separators=(",", ":"), default=str)
+        await session.flush()
+
     lifecycle.mark_approved(
         row,
         decided_by=f"admin:{user.name}",
@@ -451,6 +472,12 @@ async def deny_request(
         row,
         decided_by=f"admin:{user.name}",
         decision_reason=body.reason,
+    )
+    await sync_registration_denied_from_approval(
+        session,
+        row,
+        decided_by=f"admin:{user.name}",
+        reason=body.reason,
     )
     audit = await write_event(
         session,
@@ -567,6 +594,12 @@ async def bulk_decide(
                     row,
                     decided_by=f"admin:{user.name}",
                     decision_reason=decision.reason,
+                )
+                await sync_registration_denied_from_approval(
+                    session,
+                    row,
+                    decided_by=f"admin:{user.name}",
+                    reason=decision.reason,
                 )
                 await write_event(
                     session,

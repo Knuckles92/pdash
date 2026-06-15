@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Dialog } from "@/components/ui/Dialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
@@ -25,6 +26,8 @@ export function IframeAllowlistClient({ initialEntries }: Props) {
   const [host, setHost] = useState("");
   const [pathPrefix, setPathPrefix] = useState("");
   const [desc, setDesc] = useState("");
+  const [entryToRemove, setEntryToRemove] = useState<IframeAllowlistEntry | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   function resetForm() {
     setHost("");
@@ -58,19 +61,18 @@ export function IframeAllowlistClient({ initialEntries }: Props) {
     }
   }
 
-  async function handleRemove(entry: IframeAllowlistEntry) {
-    if (
-      !confirm(
-        `Remove "${entry.host_pattern}" from the iframe allowlist? Modules referencing it will stop rendering.`,
-      )
-    )
-      return;
+  async function confirmRemove() {
+    if (!entryToRemove) return;
+    setRemoving(true);
     try {
-      await api.removeIframeAllowlist(entry.id);
-      setEntries((curr) => curr.filter((e) => e.id !== entry.id));
+      await api.removeIframeAllowlist(entryToRemove.id);
+      setEntries((curr) => curr.filter((e) => e.id !== entryToRemove.id));
       toast.success("Removed");
+      setEntryToRemove(null);
     } catch (err) {
       toast.error(errorMessage(err, "Remove failed"));
+    } finally {
+      setRemoving(false);
     }
   }
 
@@ -133,7 +135,7 @@ export function IframeAllowlistClient({ initialEntries }: Props) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleRemove(e)}
+                        onClick={() => setEntryToRemove(e)}
                         aria-label="Remove"
                       >
                         <Trash2 className="size-4 text-[var(--danger)]" />
@@ -146,6 +148,22 @@ export function IframeAllowlistClient({ initialEntries }: Props) {
           </div>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={entryToRemove !== null}
+        onClose={() => setEntryToRemove(null)}
+        title="Remove from allowlist?"
+        description={
+          entryToRemove
+            ? `Remove "${entryToRemove.host_pattern}" from the iframe allowlist? Modules referencing it will stop rendering.`
+            : undefined
+        }
+        confirmLabel="Remove"
+        loadingLabel="Removing"
+        icon={<Trash2 className="size-4" />}
+        loading={removing}
+        onConfirm={confirmRemove}
+      />
 
       <Dialog
         open={creating}

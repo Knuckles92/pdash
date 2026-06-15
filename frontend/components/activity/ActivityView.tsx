@@ -230,7 +230,8 @@ export function ActivityView({
         <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-4 text-[var(--muted-fg)]" />
         <Input
           className="pl-8"
-          placeholder="Search payload…"
+          placeholder="Type here to search…"
+     
           value={filters.q}
           onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
         />

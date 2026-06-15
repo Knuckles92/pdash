@@ -27,8 +27,39 @@ from pydantic import BaseModel, ConfigDict, Field
 from . import auth as auth_mod
 from . import decision_cache, idem
 from .backend import AgentInfo, BackendError, get_client
+from .onboarding import onboarding_payload
 
 logger = logging.getLogger(__name__)
+
+
+# Tools whose calls route through the approval engine (write side). Every other
+# registered tool is read-only. Used by ``app.health`` to categorize the tool
+# catalog for the admin control center.
+WRITE_TOOLS: frozenset[str] = frozenset(
+    {
+        "propose_module",
+        "update_module",
+        "delete_module",
+        "propose_page",
+        "fire_action",
+        "append_log",
+        "register_file",
+    }
+)
+
+
+# Ungated onboarding tools: callable WITHOUT an agent API key so a brand-new
+# client can learn how to connect and request its first registration. They never
+# mutate dashboard state and never mint a key on their own (registration is
+# always admin-approved). ``app.health`` labels these ``bootstrap`` in the
+# catalog so the admin can see exactly which tools need no key.
+BOOTSTRAP_TOOLS: frozenset[str] = frozenset(
+    {
+        "onboarding",
+        "request_registration",
+        "claim_registration",
+    }
+)
 
 
 # ---------------------------------------------------------------------------
@@ -198,6 +229,22 @@ class ListMyFilesArgs(BaseModel):
 
     limit: int = Field(default=50, ge=1, le=200)
     cursor: str | None = None
+
+
+class RequestRegistrationArgs(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    display_name: str = Field(..., min_length=1, max_length=80)
+    description: str | None = Field(default=None, max_length=500)
+    rationale: str | None = Field(default=None, max_length=1000)
+    client_hint: str | None = Field(default=None, max_length=200)
+
+
+class ClaimRegistrationArgs(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    claim_token: str = Field(..., min_length=8, max_length=200)
+    registration_id: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -735,6 +782,81 @@ Errors: rate_limit, service_unavailable.
 """
 
 
+# -- ungated onboarding tools (no agent API key required) -------------------
+
+_DESC_ONBOARDING = """\
+START HERE if you have no pdash API key. Explains how to wire up your MCP client,
+register, and unlock the full tool set. Requires NO key — callable by a brand-new
+client.
+
+When to use:
+  - You have added this MCP server to your client's MCP configuration (no
+    Authorization header yet) but don't yet have an hb_agt_ key. Every other tool
+    returns auth_required until registration completes.
+
+Args: none.
+Returns: {service, auth_model, steps:[...], notes:[...]} — a plain-language
+guide to MCP client setup -> request_registration -> admin approval ->
+claim_registration -> update MCP config with your key.
+
+This tool only reads guidance; it does not register you. Call
+request_registration next (via MCP tools, not raw HTTP).
+"""
+
+_DESC_REQUEST_REGISTRATION = """\
+Request to become a registered agent. Requires NO key. The request ALWAYS lands
+pending for the pdash admin to approve in the web UI — it never grants access by
+itself and never mints a key.
+
+When to use:
+  - Exactly once, when you have no hb_agt_ key. Pick a clear display_name for
+    yourself; optionally add a description and a rationale the admin will read.
+
+Args:
+  - display_name (required, 1-80 chars): your name as it'll appear to the admin.
+  - description (optional): what you are.
+  - rationale (optional): why you want access (helps the admin decide).
+  - client_hint (optional): where you're running (e.g. "Claude Code on host-x").
+
+Returns: {status:"pending", registration_id, claim_token, expires_at,
+next_step}. SAVE the claim_token — it is shown ONCE and is how you pick up your
+key after approval.
+
+Do NOT call this again to "retry"; that just creates a second pending request.
+After the admin approves, poll claim_registration with your claim_token.
+
+Errors:
+  - conflict (agent.name_taken) — that display_name is taken; choose another.
+  - rate_limit (registration.queue_full) — too many requests await approval; ask
+    the admin to clear the queue, then retry later.
+"""
+
+_DESC_CLAIM_REGISTRATION = """\
+Pick up the API key for a registration you requested. Requires NO key — you
+authenticate with the claim_token from request_registration.
+
+When to use:
+  - After calling request_registration, poll this (~every 10s) until the admin
+    approves. Do not retry request_registration in the meantime.
+
+Args:
+  - claim_token (required): the token from request_registration.
+  - registration_id (optional): the id from request_registration (extra check).
+
+Returns one of:
+  - {status:"pending"} — not approved yet; poll again shortly.
+  - {status:"approved", api_key, agent_id, display_name} — your key, shown ONCE.
+    Save it, add it to your MCP client config as
+    'Authorization: Bearer <api_key>' in headers, and reconnect.
+  - {status:"denied", reason} — the admin declined; you may register again.
+  - {status:"expired"} — the request expired before approval; register again.
+  - {status:"claimed"} — already picked up (the key is shown only once).
+
+Errors:
+  - not_found (registration.not_found) — unknown/incorrect claim_token.
+"""
+
+
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
@@ -1220,6 +1342,80 @@ def register_tools(mcp: FastMCP) -> None:
         return await _call_backend(
             get_client().my_files(agent.agent_id, cursor=args.cursor, limit=args.limit)
         )
+
+    # ====================================================================
+    # Ungated onboarding tools (NO agent key required). These deliberately
+    # skip _require_agent so a brand-new client can connect and register.
+    # ====================================================================
+
+    # -------------------- onboarding --------------------
+    @mcp.tool(name="onboarding", description=_DESC_ONBOARDING)
+    async def onboarding() -> dict[str, Any]:
+        return onboarding_payload()
+
+    # -------------------- request_registration --------------------
+    @mcp.tool(name="request_registration", description=_DESC_REQUEST_REGISTRATION)
+    async def request_registration(
+        display_name: str,
+        description: str | None = None,
+        rationale: str | None = None,
+        client_hint: str | None = None,
+    ) -> dict[str, Any]:
+        args = RequestRegistrationArgs(
+            display_name=display_name,
+            description=description,
+            rationale=rationale,
+            client_hint=client_hint,
+        )
+        body: dict[str, Any] = {"display_name": args.display_name}
+        if args.description is not None:
+            body["description"] = args.description
+        if args.rationale is not None:
+            body["rationale"] = args.rationale
+        if args.client_hint is not None:
+            body["client_hint"] = args.client_hint
+        out = await _call_backend(get_client().register_agent(body=body))
+        return {
+            "status": out.get("status", "pending"),
+            "registration_id": out.get("registration_id"),
+            "claim_token": out.get("claim_token"),
+            "expires_at": out.get("expires_at"),
+            "next_step": (
+                "Save claim_token (shown once). The pdash admin must approve this request, then "
+                "call claim_registration(claim_token=...) — poll about every 10s. Do NOT call "
+                "request_registration again."
+            ),
+        }
+
+    # -------------------- claim_registration --------------------
+    @mcp.tool(name="claim_registration", description=_DESC_CLAIM_REGISTRATION)
+    async def claim_registration(
+        claim_token: str,
+        registration_id: str | None = None,
+    ) -> dict[str, Any]:
+        args = ClaimRegistrationArgs(claim_token=claim_token, registration_id=registration_id)
+        body: dict[str, Any] = {"claim_token": args.claim_token}
+        if args.registration_id is not None:
+            body["registration_id"] = args.registration_id
+        out = await _call_backend(get_client().claim_registration(body=body))
+        status = out.get("status")
+        if status == "approved":
+            out["next_step"] = (
+                "Approved. Save api_key (shown ONCE), add it to your MCP client config as "
+                "'Authorization: Bearer <api_key>' in headers, and reconnect. You can now use the "
+                "full tool set; every write goes through the approval engine."
+            )
+        elif status == "pending":
+            out["next_step"] = (
+                "Still pending admin approval. Poll again in ~10s; do not re-register."
+            )
+        elif status == "denied":
+            out["next_step"] = (
+                "The admin denied this request. Read 'reason'; you may register again with changes."
+            )
+        elif status == "expired":
+            out["next_step"] = "This registration expired before approval. Call request_registration again."
+        return out
 
 
 __all__ = ["register_tools"]

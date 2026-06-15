@@ -1,18 +1,26 @@
 "use client";
 
-import { LayoutGrid, MoreHorizontal } from "lucide-react";
-import Link from "next/link";
+import { LayoutGrid } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import type { Page } from "@/lib/api";
 import { cn } from "@/lib/cn";
 
+import { PageActionsMenu } from "./PageActionsMenu";
+import { WarmLink } from "./WarmLink";
+
 export function MobilePagesDrawer({ pages }: { pages: Page[] }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname() ?? "/";
+  const [pendingPath, setPendingPath] = useState<string | null>(null);
+  const activePath = pendingPath ?? pathname;
+
+  useEffect(() => {
+    setPendingPath(null);
+  }, [pathname]);
 
   return (
     <>
@@ -29,9 +37,8 @@ export function MobilePagesDrawer({ pages }: { pages: Page[] }) {
         <nav className="flex flex-col gap-0.5">
           {pages.map((p) => {
             const href = p.slug === "home" ? "/" : `/pages/${p.slug}`;
-            const rulesHref = `/settings/rules?page_id=${encodeURIComponent(p.id)}`;
             const active =
-              p.slug === "home" ? pathname === "/" : pathname === `/pages/${p.slug}`;
+              p.slug === "home" ? activePath === "/" : activePath === `/pages/${p.slug}`;
             return (
               <div
                 key={p.id}
@@ -42,22 +49,20 @@ export function MobilePagesDrawer({ pages }: { pages: Page[] }) {
                     : "hover:bg-[var(--muted)]",
                 )}
               >
-                <Link
+                <WarmLink
                   href={href}
                   onClick={() => setOpen(false)}
+                  onNavigate={() => setPendingPath(href)}
                   className="min-w-0 flex-1 truncate px-3 py-2 text-sm"
                 >
                   {p.name}
-                </Link>
-                <Link
-                  href={rulesHref}
-                  onClick={() => setOpen(false)}
-                  className="mr-1 inline-flex size-9 shrink-0 items-center justify-center rounded-md text-[var(--muted-fg)] hover:bg-[var(--card)] hover:text-[var(--fg)]"
-                  aria-label={`Manage rules for ${p.name}`}
-                  title={`Manage rules for ${p.name}`}
-                >
-                  <MoreHorizontal className="size-4" />
-                </Link>
+                </WarmLink>
+                <PageActionsMenu
+                  page={p}
+                  buttonClassName="mr-1"
+                  buttonSizeClassName="size-9"
+                  onAction={() => setOpen(false)}
+                />
               </div>
             );
           })}

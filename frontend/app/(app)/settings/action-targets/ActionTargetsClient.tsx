@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Dialog } from "@/components/ui/Dialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
@@ -98,6 +99,8 @@ export function ActionTargetsClient({
   const [form, setForm] = useState<FormState>(() => newFormForKind("webhook"));
   const [submitting, setSubmitting] = useState(false);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [targetToDelete, setTargetToDelete] = useState<ActionTarget | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Lazy-load agents for the agent_message kind.
   useEffect(() => {
@@ -232,14 +235,18 @@ export function ActionTargetsClient({
     }
   }
 
-  async function deleteTarget(t: ActionTarget) {
-    if (!confirm(`Delete target "${t.name}"?`)) return;
+  async function confirmDeleteTarget() {
+    if (!targetToDelete) return;
+    setDeleting(true);
     try {
-      await api.deleteActionTarget(t.id);
-      setTargets((curr) => curr.filter((x) => x.id !== t.id));
+      await api.deleteActionTarget(targetToDelete.id);
+      setTargets((curr) => curr.filter((x) => x.id !== targetToDelete.id));
       toast.success("Deleted");
+      setTargetToDelete(null);
     } catch (err) {
       toast.error(errorMessage(err, "Delete failed"));
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -380,7 +387,7 @@ export function ActionTargetsClient({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => deleteTarget(t)}
+                          onClick={() => setTargetToDelete(t)}
                           aria-label="Delete"
                           title="Delete"
                         >
@@ -395,6 +402,20 @@ export function ActionTargetsClient({
           </div>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={targetToDelete !== null}
+        onClose={() => setTargetToDelete(null)}
+        title="Delete action target?"
+        description={
+          targetToDelete ? `Delete target "${targetToDelete.name}"?` : undefined
+        }
+        confirmLabel="Delete target"
+        loadingLabel="Deleting"
+        icon={<Trash2 className="size-4" />}
+        loading={deleting}
+        onConfirm={confirmDeleteTarget}
+      />
 
       <Dialog
         open={creating}

@@ -2,15 +2,26 @@ import { notFound } from "next/navigation";
 
 import { loadIframeAllowlistSafe } from "@/components/page/loadIframeAllowlistSafe";
 import { PageView } from "@/components/page/PageView";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { requireSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
+async function loadPageBySlug(slug: string, cookieHeader: string) {
+  try {
+    return await api.getPageBySlug(slug, { cookieHeader });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return null;
+    throw err;
+  }
+}
+
 export default async function HomePage() {
   const cookieHeader = await requireSession();
-  const { items: pages } = await api.listPages({ cookieHeader });
-  const home = pages.find((p) => p.slug === "home");
+  const [home, allowlist] = await Promise.all([
+    loadPageBySlug("home", cookieHeader),
+    loadIframeAllowlistSafe(cookieHeader),
+  ]);
   if (!home) {
     notFound();
   }
@@ -18,6 +29,5 @@ export default async function HomePage() {
     { page_id: home.id },
     { cookieHeader },
   );
-  const allowlist = await loadIframeAllowlistSafe(cookieHeader);
   return <PageView page={home} modules={modules} iframeAllowlist={allowlist} />;
 }

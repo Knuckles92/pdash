@@ -244,6 +244,30 @@ class BackendClient:
         _, body, _ = await self._request("GET", "/api/v1/internal/whoami", agent_id=agent_id)
         return body
 
+    # ---- agent self-registration (ungated bootstrap) ----------------------
+    # No agent_id is sent — these are callable on behalf of a keyless client,
+    # authenticated by the shared service secret alone (like resolve_key).
+
+    async def register_agent(self, *, body: dict[str, Any]) -> dict[str, Any]:
+        """Create a pending agent-registration request. Returns a claim token."""
+        _, out, _ = await self._request(
+            "POST",
+            "/api/v1/internal/bootstrap/register",
+            json=body,
+            accept_statuses=(200, 201),
+        )
+        return out
+
+    async def claim_registration(self, *, body: dict[str, Any]) -> dict[str, Any]:
+        """Poll a registration; the minted key is returned once on approval."""
+        _, out, _ = await self._request(
+            "POST",
+            "/api/v1/internal/bootstrap/claim",
+            json=body,
+            accept_statuses=(200,),
+        )
+        return out
+
     # ---- module schema -----------------------------------------------------
 
     async def module_schema(self, agent_id: str, module_type: str) -> dict[str, Any]:

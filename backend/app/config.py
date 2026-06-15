@@ -60,6 +60,21 @@ class Settings(BaseSettings):
         description="Offset for approval_request.expires_at on pending rows.",
     )
 
+    # Agent self-registration (agent-first MCP onboarding). A keyless client can
+    # request registration via the ungated bootstrap surface; requests always
+    # land pending for the admin. These bound abuse of that ungated path.
+    agent_registration_max_pending: int = Field(
+        default=25,
+        description=(
+            "Max outstanding pending agent self-registration requests before new "
+            "ones are refused (bounds flooding of the admin approval queue)."
+        ),
+    )
+    agent_registration_ttl_seconds: int = Field(
+        default=int(timedelta(days=7).total_seconds()),
+        description="How long a pending agent self-registration stays claimable before it expires.",
+    )
+
     # Files (agent file-drop). Agents write into the inbox dir on a shared host
     # mount; registered files are moved into the managed store dir and served.
     # Both default to siblings of pdash.db inside the data dir.
@@ -96,6 +111,15 @@ class Settings(BaseSettings):
         description="Lifetime of the throwaway admin session cookie minted for a screenshot.",
     )
     screenshot_default_viewport_width: int = Field(default=1280)
+
+    # MCP server (the FastMCP translator service). The backend probes its
+    # `/info` endpoint to power the admin "MCP control center" UI. In compose
+    # this is set to http://mcp:8090; dev default targets a native `make dev`.
+    mcp_url: str = Field(
+        default="http://localhost:8090",
+        description="Base URL of the MCP server, reachable from the backend.",
+    )
+    mcp_probe_timeout_seconds: float = Field(default=5.0)
 
     # Logging
     log_level: str = "INFO"

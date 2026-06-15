@@ -79,44 +79,50 @@ export function PageView({ page, modules, iframeAllowlist }: Props) {
     router.push(qs ? `${basePath}?${qs}` : basePath);
   }
 
+  const body =
+    sorted.length === 0 && !editMode ? (
+      <EmptyState
+        icon={<LayoutDashboard className="size-12" />}
+        title={page.slug === "home" ? "Your dashboard is empty" : "This page has no modules yet"}
+        hint="Modules are the building blocks of every page. Drop in a status panel, a chart, or a quick-launch button."
+        action={
+          <Button onClick={toggleEdit}>
+            <Pencil className="size-4" /> Enter edit mode
+          </Button>
+        }
+      />
+    ) : editMode ? (
+      <EditablePageGrid pageId={page.id} initialModules={sorted} />
+    ) : (
+      <PageGrid modules={sorted} iframeAllowlist={iframeAllowlist} />
+    );
+
   return (
-    <div className="flex flex-col gap-4">
-      <header className="flex items-start justify-between gap-3">
-        <div>
+    <div className="grid grid-cols-[1fr_auto] gap-x-3">
+      <div className="flex min-w-0 flex-col gap-4">
+        <header>
           <h1 className="text-xl font-semibold">{page.name}</h1>
           {page.description && (
             <p className="text-sm text-[var(--muted-fg)]">{page.description}</p>
           )}
+        </header>
+        {body}
+      </div>
+      <div>
+        <div className="sticky top-4 z-20 shrink-0">
+          <Button variant={editMode ? "primary" : "secondary"} size="sm" onClick={toggleEdit}>
+            {editMode ? (
+              <>
+                <X className="size-4" /> Done
+              </>
+            ) : (
+              <>
+                <Pencil className="size-4" /> Edit
+              </>
+            )}
+          </Button>
         </div>
-        <Button variant={editMode ? "primary" : "secondary"} size="sm" onClick={toggleEdit}>
-          {editMode ? (
-            <>
-              <X className="size-4" /> Done
-            </>
-          ) : (
-            <>
-              <Pencil className="size-4" /> Edit
-            </>
-          )}
-        </Button>
-      </header>
-
-      {sorted.length === 0 && !editMode ? (
-        <EmptyState
-          icon={<LayoutDashboard className="size-12" />}
-          title={page.slug === "home" ? "Your dashboard is empty" : "This page has no modules yet"}
-          hint="Modules are the building blocks of every page. Drop in a status panel, a chart, or a quick-launch button."
-          action={
-            <Button onClick={toggleEdit}>
-              <Pencil className="size-4" /> Enter edit mode
-            </Button>
-          }
-        />
-      ) : editMode ? (
-        <EditablePageGrid pageId={page.id} initialModules={sorted} />
-      ) : (
-        <PageGrid modules={sorted} iframeAllowlist={iframeAllowlist} />
-      )}
+      </div>
     </div>
   );
 }

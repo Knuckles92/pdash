@@ -19,6 +19,10 @@ def test_create_get_patch_delete_page(admin_client: TestClient) -> None:
     assert resp.status_code == 200
     assert resp.json()["name"] == "Operations"
 
+    resp = admin_client.get("/api/v1/pages/by-slug/ops")
+    assert resp.status_code == 200
+    assert resp.json()["id"] == page_id
+
     resp = admin_client.patch(
         f"/api/v1/pages/{page_id}", json={"name": "Ops Page"}
     )
@@ -29,6 +33,9 @@ def test_create_get_patch_delete_page(admin_client: TestClient) -> None:
     assert resp.status_code == 204
 
     resp = admin_client.get(f"/api/v1/pages/{page_id}")
+    assert resp.status_code == 404
+
+    resp = admin_client.get("/api/v1/pages/by-slug/ops")
     assert resp.status_code == 404
 
 

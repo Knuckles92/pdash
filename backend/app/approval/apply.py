@@ -45,17 +45,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import modules as module_registry
 from ..auth.secrets import get_kv
-from ..config import get_settings
+from ..errors import ProblemDetail
 from ..events.publish import publish_after_commit
 from ..ids import new_id
 from ..models import (
     ActionTarget,
     AgentMessage,
+    AgentRegistrationRequest,
     ApprovalRequest,
     Module,
     Page,
     utcnow_iso,
 )
+from ..services.agent_registration import approve_registration_row
 from ..services.files import (
     FilePathError,
     file_summary,
@@ -867,6 +869,47 @@ async def apply_register_file(
 
 
 # ---------------------------------------------------------------------------
+# register_agent
+# ---------------------------------------------------------------------------
+
+
+async def apply_register_agent(
+    session: AsyncSession, request: ApprovalRequest
+) -> ApplyResult:
+    """Approve a pending agent self-registration (mint happens on client claim)."""
+    if request.target_kind != "agent_registration" or not request.target_id:
+        raise ApplyError(
+            "registration.invalid_target",
+            "register_agent requires target_kind=agent_registration",
+        )
+    row = await session.get(AgentRegistrationRequest, request.target_id)
+    if row is None:
+        raise ApplyError("registration.not_found", request.target_id)
+    if row.status != "pending":
+        raise ApplyError(
+            "registration.not_pending",
+            f"registration is {row.status!r}",
+        )
+    payload = _load_payload(request)
+    try:
+        await approve_registration_row(
+            session,
+            row,
+            decided_by="approval:apply",
+            display_name=payload.get("display_name"),
+            description=payload.get("description"),
+            permissions=payload.get("permissions"),
+        )
+    except ProblemDetail as exc:
+        raise ApplyError(exc.code, exc.detail or exc.title) from exc
+    return ApplyResult(
+        target_kind="agent_registration",
+        target_id=row.id,
+        extra={"requested_name": row.requested_name},
+    )
+
+
+# ---------------------------------------------------------------------------
 # Top-level dispatcher
 # ---------------------------------------------------------------------------
 
@@ -881,6 +924,7 @@ _DISPATCH = {
     "delete_page": apply_delete_page,
     "fire_action_button": apply_fire_action,
     "register_file": apply_register_file,
+    "register_agent": apply_register_agent,
 }
 
 

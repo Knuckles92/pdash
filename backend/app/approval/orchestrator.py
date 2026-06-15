@@ -28,6 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..events.publish import publish_after_commit
 from ..ids import new_id
 from ..models import ApprovalRequest, ApprovalRule, utcnow_iso
+from ..services.agent_registration import sync_registration_denied_from_approval
 from ..services.audit import write_event
 from . import lifecycle
 from .apply import ApplyError, ApplyResult, apply_request
@@ -84,11 +85,15 @@ async def _bump_rule_application_count(
         await session.flush()
 
 
+def _actor_label(agent_id: str | None) -> str:
+    return f"agent:{agent_id}" if agent_id else "bootstrap"
+
+
 def _publish_approval_decided(
     session: AsyncSession,
     request: ApprovalRequest,
     *,
-    agent_id: str,
+    agent_id: str | None,
     action_type: str,
     outcome: str,
     rule_id: str | None,
@@ -114,7 +119,7 @@ def _publish_approval_decided(
 async def submit_request(
     session: AsyncSession,
     *,
-    agent_id: str,
+    agent_id: str | None,
     action_type: str,
     target_kind: str | None,
     target_id: str | None,
@@ -174,7 +179,9 @@ async def submit_request(
             decision_reason=rationale,
         )
         try:
-            result = await apply_request(session, request, actor=f"agent:{agent_id}")
+            result = await apply_request(
+                session, request, actor=_actor_label(agent_id),
+            )
         except ApplyError as exc:
             lifecycle.mark_application_failed(request, reason=str(exc))
             log = await write_event(
@@ -247,6 +254,12 @@ async def submit_request(
             decided_by=f"rule:{decision.rule_id}" if decision.rule_id else "system:deny",
             decision_reason=rationale or "denied by rule",
         )
+        await sync_registration_denied_from_approval(
+            session,
+            request,
+            decided_by=f"rule:{decision.rule_id}" if decision.rule_id else "system:deny",
+            reason=rationale or "denied by rule",
+        )
         log = await write_event(
             session,
             actor_kind="rule" if via_rule else "system",
@@ -282,8 +295,8 @@ async def submit_request(
     # ------------------------------------------------------------------
     log = await write_event(
         session,
-        actor_kind="agent",
-        actor_id=agent_id,
+        actor_kind="agent" if agent_id else "system",
+        actor_id=agent_id or "bootstrap",
         action_type=action_type,
         target_kind=target_kind,
         target_id=target_id,

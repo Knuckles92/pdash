@@ -62,6 +62,8 @@ The MCP server (`mcp/`) holds raw agent API keys presented by AI clients, resolv
 
 Beyond the write/read core, agents get a **visibility + self-diagnosis** surface (all read-only, no approval engine): `whoami`, `list_module_schemas`, `validate_module` (dry-run a payload), `module_health` (which of my modules fail to render, with structured per-field errors), `render_page` (structured view of a page + ASCII layout sketch + per-module render status), `get_module`/`list_pages` (real backend endpoints — no more MCP-side scanning), and `screenshot_page` (real PNG via the screenshot sidecar; returns an MCP image). Module render-health is computed on read by re-validating stored `data`/`config` against the type's Pydantic models — there is no persisted health column. See `docs/agent_visibility.md`.
 
+There is also a small **ungated bootstrap surface** — the only MCP tools callable with no agent key: `onboarding`, `request_registration`, `claim_registration` (in `BOOTSTRAP_TOOLS`). A keyless client requests registration; it always lands `pending` in `agent_registration_requests` for the admin to approve in Settings → Agents (never auto-minted). The `hb_agt_` key is minted only when the client claims it after approval (mint-on-claim; only a sha256 of a one-time claim token is stored). Backend routes are service-secret-only (`api/internal_bootstrap.py`), admin review is `api/agent_registrations.py`. See `docs/agent_onboarding.md`.
+
 ### Approval engine (`backend/app/approval/`)
 
 The heart of the system. Flow for an agent write:
@@ -109,4 +111,4 @@ Ten module types (`markdown`, `key_value`, `table`, `timeseries`, `log_stream`, 
 
 ## Docs
 
-`docs/dev.md` (local dev), `docs/deploy.md` (Tailscale TLS + backups), `docs/phase{4,5}_smoke.md` (manual smoke-test recipes). `PLAN.md` for the full design.
+`docs/dev.md` (local dev), `docs/deploy.md` (Tailscale TLS + backups), `docs/agent_visibility.md` (agent read/diagnosis tools), `docs/agent_onboarding.md` (agent-first MCP registration/bootstrap), `docs/phase{4,5}_smoke.md` (manual smoke-test recipes). `PLAN.md` for the full design.

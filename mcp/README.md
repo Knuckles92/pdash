@@ -20,4 +20,15 @@ cd mcp
 
 Default URL: http://127.0.0.1:8090/mcp
 
+Fresh agents can read the hosted standard skill file before they know how to use
+the MCP tools:
+
+```text
+http://127.0.0.1:8090/mcp-skill/SKILL.md
+```
+
+The skill route is unauthenticated and contains only setup guidance. It points
+the agent at the sibling `/mcp` endpoint, then walks through
+`onboarding` -> `request_registration` -> admin approval -> `claim_registration`.
+
 See [docs/dev.md](../docs/dev.md), `scripts/run.sh`, and `scripts/smoke.py`.

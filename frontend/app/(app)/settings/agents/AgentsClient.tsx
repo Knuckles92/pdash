@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Dialog } from "@/components/ui/Dialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input, Textarea } from "@/components/ui/Input";
@@ -18,6 +19,10 @@ import { relativeTime } from "@/lib/time";
 
 type Props = { initialAgents: Agent[] };
 
+type PendingConfirm = { kind: "rotate"; agent: Agent } | { kind: "revoke"; agent: Agent };
+
+const isExampleAgent = (a: Agent) => a.permissions?.pdash_default_example === true;
+
 export function AgentsClient({ initialAgents }: Props) {
   const [agents, setAgents] = useState(initialAgents);
   const [creating, setCreating] = useState(false);
@@ -25,6 +30,9 @@ export function AgentsClient({ initialAgents }: Props) {
   const [newAgentDescription, setNewAgentDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [revealedKey, setRevealedKey] = useState<{ agent: Agent; key: string } | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
 
   function upsertLocal(agent: Agent) {
     setAgents((curr) => upsertById(curr, agent));
@@ -51,18 +59,30 @@ export function AgentsClient({ initialAgents }: Props) {
     }
   }
 
-  async function rotate(a: Agent) {
-    if (!confirm(`Rotate the API key for "${a.display_name}"? The old key will stop working immediately.`)) return;
+  async function handleConfirmAction() {
+    if (!pendingConfirm) return;
+    setConfirmBusy(true);
     try {
-      const res = await api.rotateAgentKey(a.id);
-      upsertLocal(res.agent);
-      setRevealedKey({ agent: res.agent, key: res.api_key });
-      toast.success("Key rotated");
+      if (pendingConfirm.kind === "rotate") {
+        const res = await api.rotateAgentKey(pendingConfirm.agent.id);
+        upsertLocal(res.agent);
+        setRevealedKey({ agent: res.agent, key: res.api_key });
+        toast.success("Key rotated");
+      } else {
+        const a = pendingConfirm.agent;
+        await api.revokeAgent(a.id);
+        upsertLocal({ ...a, status: "revoked" });
+        toast.success("Agent revoked");
+      }
+      setPendingConfirm(null);
     } catch (err) {
-      toast.error(errorMessage(err, "Rotate failed"));
+      toast.error(
+        errorMessage(err, pendingConfirm.kind === "rotate" ? "Rotate failed" : "Revoke failed"),
+      );
+    } finally {
+      setConfirmBusy(false);
     }
   }
-
   async function setEnabled(a: Agent, enable: boolean) {
     try {
       const next = enable ? await api.enableAgent(a.id) : await api.disableAgent(a.id);
@@ -70,17 +90,6 @@ export function AgentsClient({ initialAgents }: Props) {
       toast.success(`Agent ${enable ? "enabled" : "disabled"}`);
     } catch (err) {
       toast.error(errorMessage(err, "Failed"));
-    }
-  }
-
-  async function revoke(a: Agent) {
-    if (!confirm(`Revoke "${a.display_name}"? This cannot be undone.`)) return;
-    try {
-      await api.revokeAgent(a.id);
-      upsertLocal({ ...a, status: "revoked" });
-      toast.success("Agent revoked");
-    } catch (err) {
-      toast.error(errorMessage(err, "Revoke failed"));
     }
   }
 
@@ -122,7 +131,18 @@ export function AgentsClient({ initialAgents }: Props) {
                   <tr key={a.id} className="border-b border-[var(--border)] last:border-b-0">
                     <td className="px-4 py-2 font-medium">{a.display_name}</td>
                     <td className="px-4 py-2 hidden md:table-cell text-[var(--muted-fg)]">
-                      {a.description ?? "—"}
+                      <div className="flex flex-col gap-1">
+                        <span>{a.description ?? "—"}</span>
+                        {isExampleAgent(a) && (
+                          <button
+                            type="button"
+                            onClick={() => setShowHelp(true)}
+                            className="text-left text-xs text-[var(--accent)] hover:underline"
+                          >
+                            How to register an agent →
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-2">
                       <Badge
@@ -143,7 +163,7 @@ export function AgentsClient({ initialAgents }: Props) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => rotate(a)}
+                          onClick={() => setPendingConfirm({ kind: "rotate", agent: a })}
                           title="Rotate key"
                           disabled={a.status === "revoked"}
                           aria-label="Rotate key"
@@ -175,7 +195,7 @@ export function AgentsClient({ initialAgents }: Props) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => revoke(a)}
+                          onClick={() => setPendingConfirm({ kind: "revoke", agent: a })}
                           disabled={a.status === "revoked"}
                           title="Revoke"
                           aria-label="Revoke"
@@ -191,6 +211,45 @@ export function AgentsClient({ initialAgents }: Props) {
           </div>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={pendingConfirm !== null}
+        onClose={() => setPendingConfirm(null)}
+        title={
+          pendingConfirm?.kind === "rotate"
+            ? "Rotate API key?"
+            : pendingConfirm?.kind === "revoke"
+              ? "Revoke agent?"
+              : ""
+        }
+        description={
+          pendingConfirm?.kind === "rotate"
+            ? `Rotate the API key for "${pendingConfirm.agent.display_name}"? The old key stops working immediately.`
+            : pendingConfirm?.kind === "revoke"
+              ? `Revoke "${pendingConfirm.agent.display_name}"? This cannot be undone.`
+              : undefined
+        }
+        confirmLabel={
+          pendingConfirm?.kind === "rotate"
+            ? "Rotate key"
+            : pendingConfirm?.kind === "revoke"
+              ? "Revoke agent"
+              : "Confirm"
+        }
+        loadingLabel={pendingConfirm?.kind === "rotate" ? "Rotating" : "Revoking"}
+        confirmVariant={pendingConfirm?.kind === "revoke" ? "danger" : "primary"}
+        icon={
+          pendingConfirm?.kind === "revoke" ? <Trash2 className="size-4" /> : <KeyRound className="size-4" />
+        }
+        loading={confirmBusy}
+        onConfirm={handleConfirmAction}
+      >
+        {pendingConfirm?.kind === "rotate" && (
+          <p className="text-sm text-[var(--muted-fg)]">
+            The new key is shown once after rotation. Update your MCP client config right away.
+          </p>
+        )}
+      </ConfirmDialog>
 
       <Dialog
         open={creating}
@@ -267,6 +326,67 @@ export function AgentsClient({ initialAgents }: Props) {
             </p>
           </div>
         )}
+      </Dialog>
+
+      <Dialog
+        open={showHelp}
+        onClose={() => setShowHelp(false)}
+        title="How to register an agent"
+        description="Mint an API key here, then connect your AI client to the MCP server."
+        footer={<Button onClick={() => setShowHelp(false)}>Close</Button>}
+      >
+        <div className="flex flex-col gap-4 text-sm">
+          <div className="flex flex-col gap-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-fg)]">
+              Option A — mint a key yourself
+            </h4>
+            <ol className="flex flex-col gap-2 list-decimal pl-5 marker:text-[var(--muted-fg)]">
+              <li>
+                Click <span className="font-medium">Register agent</span> at the top-right of this
+                page.
+              </li>
+              <li>
+                Enter a display name (e.g. <code className="font-mono text-xs">claude-code</code>)
+                and an optional description, then click <span className="font-medium">Register</span>.
+              </li>
+              <li>
+                Copy the API key — it is shown <span className="font-medium">once</span> and stored
+                only as an Argon2id hash, so it can never be retrieved again.
+              </li>
+              <li>
+                Add the key to your AI client&apos;s MCP config, pointing it at the MCP server&apos;s{" "}
+                <code className="font-mono text-xs">/mcp</code> endpoint.
+              </li>
+            </ol>
+          </div>
+          <div className="flex flex-col gap-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-fg)]">
+              Option B — let the agent self-register
+            </h4>
+            <ol className="flex flex-col gap-2 list-decimal pl-5 marker:text-[var(--muted-fg)]">
+              <li>
+                Have the agent add the MCP <code className="font-mono text-xs">/mcp</code>{" "}
+                endpoint to its MCP client config (no key yet) and reload. The{" "}
+                <span className="font-medium">MCP</span> tab has a copy-paste prompt that walks
+                through setup, <code className="font-mono text-xs">request_registration</code>, and
+                adding the key after claim.
+              </li>
+              <li>
+                The request appears in <span className="font-medium">Approvals</span> — approve or
+                deny it there.
+              </li>
+              <li>
+                After you approve, the agent picks up its own key by polling{" "}
+                <code className="font-mono text-xs">claim_registration</code>, updates its MCP
+                config with the key, and reconnects; no key is shown here.
+              </li>
+            </ol>
+          </div>
+          <p className="text-xs text-[var(--muted-fg)]">
+            Either way the agent authenticates with its key and every write flows through the
+            approval engine, appearing in your inbox to approve or deny.
+          </p>
+        </div>
       </Dialog>
     </div>
   );

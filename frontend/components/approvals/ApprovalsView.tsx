@@ -1,11 +1,18 @@
 "use client";
 
 import { CheckCircle2, Filter, RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { ApprovalCard } from "@/components/approvals/ApprovalCard";
 import { BulkActionBar } from "@/components/approvals/BulkActionBar";
+import {
+  buildRows,
+  getLayout,
+  type ApprovalLayoutProps,
+} from "@/components/approvals/layouts";
+import { LayoutSwitcher } from "@/components/approvals/layouts/LayoutSwitcher";
+import { useApprovalLayout } from "@/components/approvals/layouts/useApprovalLayout";
 import { RuleEditor } from "@/components/approvals/RuleEditor";
 import { useChannel } from "@/components/layout/RealtimeProvider";
 import { Button } from "@/components/ui/Button";
@@ -22,6 +29,7 @@ import {
   type ApprovalRuleDraft,
   type DashboardPreview,
   type FilePreview,
+  type RegistrationPreview,
   type IframeAllowlistEntry,
   type Module,
   type Page,
@@ -87,9 +95,13 @@ export function ApprovalsView({
   );
   const [actionPreviews, setActionPreviews] = useState<Map<string, ActionPreview>>(new Map());
   const [filePreviews, setFilePreviews] = useState<Map<string, FilePreview>>(new Map());
+  const [registrationPreviews, setRegistrationPreviews] = useState<
+    Map<string, RegistrationPreview>
+  >(new Map());
   const [detailLoadingIds, setDetailLoadingIds] = useState<Set<string>>(new Set());
   const [detailFetchedIds, setDetailFetchedIds] = useState<Set<string>>(new Set());
   const [ruleDialog, setRuleDialog] = useState<RuleDialogState>({ open: false });
+  const [layoutId, setLayoutId] = useApprovalLayout();
 
   const agentsById = useMemo(() => indexById(agents), [agents]);
 
@@ -97,6 +109,12 @@ export function ApprovalsView({
 
   // Modules referenced by requests — fetched lazily on demand.
   const [modules, setModules] = useState<Map<string, Module>>(new Map());
+
+  // Pre-derive the per-request view model once; layouts render from this.
+  const rows = useMemo(
+    () => buildRows(requests, agentsById, modules, pagesById),
+    [requests, agentsById, modules, pagesById],
+  );
 
   const fetchPage = useCallback(
     async (opts: { cursor?: string; replace?: boolean }) => {
@@ -251,6 +269,13 @@ export function ApprovalsView({
           return next;
         });
       }
+      if (d.registration_preview) {
+        setRegistrationPreviews((prev) => {
+          const next = new Map(prev);
+          next.set(id, d.registration_preview as RegistrationPreview);
+          return next;
+        });
+      }
     } catch {
       /* ignore */
     } finally {
@@ -327,7 +352,7 @@ export function ApprovalsView({
   ): void {
     // Compute the narrowest draft per PLAN §7.4.
     const draft: Partial<ApprovalRuleDraft> = {
-      agent_id: request.agent_id,
+      agent_id: request.agent_id ?? "*",
       action_type: request.action_type,
       outcome: decision === "approve" ? "auto_approve" : "deny",
       priority: 100,
@@ -347,15 +372,15 @@ export function ApprovalsView({
     setRuleDialog({ open: true, draft, requestId: request.id });
   }
 
-  async function bulkDecide(decision: "approve" | "deny"): Promise<void> {
-    if (selected.size === 0) return;
-    const ids = Array.from(selected);
+  /** Bulk-decide an explicit set of ids (no per-item undo — used by the
+   * bulk bar and by layout group "approve/deny all" buttons). */
+  async function decideIds(ids: string[], decision: "approve" | "deny"): Promise<void> {
+    if (ids.length === 0) return;
+    const idSet = new Set(ids);
     setBulkBusy(true);
-    const snapshot = requests.filter((r) => selected.has(r.id));
+    const snapshot = requests.filter((r) => idSet.has(r.id));
     try {
-      const res = await api.bulkDecideRequests(
-        ids.map((id) => ({ id, decision })),
-      );
+      const res = await api.bulkDecideRequests(ids.map((id) => ({ id, decision })));
       const removedIds = new Set(
         res.results
           .filter((r) => r.error == null && r.status !== "not_found")
@@ -364,7 +389,11 @@ export function ApprovalsView({
       setRequests((prev) => prev.filter((r) => !removedIds.has(r.id)));
       adjustApprovalCount(-removedIds.size);
       bumpTotalPending(-removedIds.size);
-      setSelected(new Set());
+      setSelected((prev) => {
+        const next = new Set(prev);
+        for (const id of removedIds) next.delete(id);
+        return next;
+      });
       const errors = res.results.filter((r) => r.error);
       if (errors.length > 0) {
         toast.error(`${errors.length} failed`, { description: errors[0]?.error ?? undefined });
@@ -384,14 +413,74 @@ export function ApprovalsView({
     }
   }
 
+  function bulkDecide(decision: "approve" | "deny"): void {
+    void decideIds(Array.from(selected), decision);
+  }
+
   const visibleAgents = useMemo(
     () => agents.filter((a) => a.status !== "revoked"),
     [agents],
   );
 
+  function handleDecision(id: string, decision: "approve" | "deny", withRule: boolean): void {
+    const request = requests.find((r) => r.id === id);
+    if (!request) return;
+    if (withRule) openRuleFlow(request, decision);
+    else void doDecision(request, decision);
+  }
+
+  /** A fully-wired ApprovalCard — the detail/expanded view used by every layout. */
+  function renderCard(
+    request: ApprovalRequest,
+    opts?: { defaultExpanded?: boolean },
+  ): ReactNode {
+    return (
+      <div onMouseEnter={() => void maybeFetchDetail(request.id)}>
+        <ApprovalCard
+          request={request}
+          diffPreview={diffPreviews.get(request.id)}
+          dashboardPreview={dashboardPreviews.get(request.id) ?? null}
+          actionPreview={actionPreviews.get(request.id) ?? null}
+          filePreview={filePreviews.get(request.id) ?? null}
+          registrationPreview={registrationPreviews.get(request.id) ?? null}
+          detailLoading={detailLoadingIds.has(request.id)}
+          detailFetched={detailFetchedIds.has(request.id)}
+          defaultExpanded={opts?.defaultExpanded}
+          iframeAllowlist={iframeAllowlist}
+          selected={selected.has(request.id)}
+          onToggleSelect={() => toggleSelect(request.id)}
+          onExpand={() => void maybeFetchDetail(request.id)}
+          agentsById={agentsById}
+          modulesById={modules}
+          pagesById={pagesById}
+          busy={busyIds.has(request.id)}
+          onApprove={(withRule) => handleDecision(request.id, "approve", withRule)}
+          onDeny={(withRule) => handleDecision(request.id, "deny", withRule)}
+          onLongPress={() => toggleSelect(request.id)}
+        />
+      </div>
+    );
+  }
+
+  const layoutProps: ApprovalLayoutProps = {
+    rows,
+    agents,
+    selectedIds: selected,
+    busyIds,
+    onToggleSelect: toggleSelect,
+    onApprove: (id, withRule) => handleDecision(id, "approve", withRule),
+    onDeny: (id, withRule) => handleDecision(id, "deny", withRule),
+    onApproveMany: (ids) => void decideIds(ids, "approve"),
+    onDenyMany: (ids) => void decideIds(ids, "deny"),
+    onWantDetail: (id) => void maybeFetchDetail(id),
+    renderCard,
+  };
+
+  const ActiveLayout = getLayout(layoutId).Component;
+
   return (
     <div className="flex flex-col gap-3">
-      <header className="flex items-center justify-between gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-xl font-semibold">Approvals</h1>
           <p className="text-sm text-[var(--muted-fg)]">
@@ -401,6 +490,7 @@ export function ApprovalsView({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <LayoutSwitcher value={layoutId} onChange={setLayoutId} />
           <Button
             size="sm"
             variant="ghost"
@@ -508,37 +598,7 @@ export function ApprovalsView({
         />
       ) : (
         <div className="flex flex-col gap-2">
-          {requests.map((r) => (
-            <div
-              key={r.id}
-              onMouseEnter={() => void maybeFetchDetail(r.id)}
-            >
-              <ApprovalCard
-                request={r}
-                diffPreview={diffPreviews.get(r.id)}
-                dashboardPreview={dashboardPreviews.get(r.id) ?? null}
-                actionPreview={actionPreviews.get(r.id) ?? null}
-                filePreview={filePreviews.get(r.id) ?? null}
-                detailLoading={detailLoadingIds.has(r.id)}
-                detailFetched={detailFetchedIds.has(r.id)}
-                iframeAllowlist={iframeAllowlist}
-                selected={selected.has(r.id)}
-                onToggleSelect={() => toggleSelect(r.id)}
-                onExpand={() => void maybeFetchDetail(r.id)}
-                agentsById={agentsById}
-                modulesById={modules}
-                pagesById={pagesById}
-                busy={busyIds.has(r.id)}
-                onApprove={(withRule) =>
-                  withRule ? openRuleFlow(r, "approve") : void doDecision(r, "approve")
-                }
-                onDeny={(withRule) =>
-                  withRule ? openRuleFlow(r, "deny") : void doDecision(r, "deny")
-                }
-                onLongPress={() => toggleSelect(r.id)}
-              />
-            </div>
-          ))}
+          <ActiveLayout {...layoutProps} />
           {nextCursor && (
             <div className="flex justify-center">
               <Button

@@ -12,6 +12,8 @@ PID_FILE="$DEV_DIR/pids"
 # shellcheck source=scripts/lib/load-env.sh
 source "$REPO_ROOT/scripts/lib/load-env.sh"
 load_pdash_env "$REPO_ROOT"
+# shellcheck source=scripts/lib/dev-procs.sh
+source "$REPO_ROOT/scripts/lib/dev-procs.sh"
 
 DB_PATH="${PDASH_DATABASE_PATH:-$REPO_ROOT/data/pdash.db}"
 if [[ "$DB_PATH" != /* ]]; then
@@ -39,6 +41,22 @@ if [[ -z "${PDASH_SERVICE_SECRET:-}" ]]; then
 fi
 
 mkdir -p "$LOG_DIR"
+
+# Preflight: a leftover stack (or an orphaned next-server from a previous
+# double-launch) holding a dev port corrupts hot reload and the React Client
+# Manifest, which shows up as a page that renders with no CSS. Clear it before
+# starting so we never run two stacks against the same ports / .next dir.
+stop_dev_stack "$PID_FILE"
+
+# Keep the dev DB at the latest schema. Unlike Docker (docker-entrypoint.sh) and
+# first boot (`app.cli init`), native dev never otherwise runs migrations, so a
+# DB left behind by an earlier checkout silently lacks any newly-added table and
+# 500s the endpoints that use it (e.g. the agent-registration bootstrap surface).
+# Apply pending migrations up front; set -e aborts the launch if they fail.
+echo "Applying database migrations (alembic upgrade head)…"
+( cd "$REPO_ROOT/backend" && .venv/bin/alembic upgrade head )
+echo ""
+
 : >"$PID_FILE"
 
 PIDS=()
@@ -46,7 +64,7 @@ cleanup() {
   local pid
   for pid in "${PIDS[@]}"; do
     if kill -0 "$pid" 2>/dev/null; then
-      kill "$pid" 2>/dev/null || true
+      _kill_group "$pid"
     fi
   done
   wait 2>/dev/null || true
@@ -56,29 +74,26 @@ trap cleanup EXIT INT TERM
 echo "Starting pdash dev stack (logs in $LOG_DIR/)"
 echo ""
 
-(
-  cd "$REPO_ROOT/backend"
-  export PDASH_DATABASE_PATH
-  # --timeout-graceful-shutdown: don't let open SSE streams hang a --reload.
-  exec .venv/bin/uvicorn app.main:app --reload --host 127.0.0.1 --port 8080 \
-    --timeout-graceful-shutdown 2
-) >>"$LOG_DIR/backend.log" 2>&1 &
+# Each service is launched via `setsid` so it leads its own process group. That
+# lets dev-stop (and the cleanup trap) kill the whole tree by group — npm's
+# next-server grandchild can't survive as an orphan holding port 3000.
+export REPO_ROOT PDASH_DATABASE_PATH
+
+# --timeout-graceful-shutdown: don't let open SSE streams hang a --reload.
+setsid bash -c 'cd "$REPO_ROOT/backend" && exec .venv/bin/uvicorn app.main:app \
+  --reload --host 127.0.0.1 --port 8080 --timeout-graceful-shutdown 2' \
+  >>"$LOG_DIR/backend.log" 2>&1 &
 PIDS+=($!)
 echo "backend=$!" >>"$PID_FILE"
 
-(
-  cd "$REPO_ROOT/mcp"
-  export PDASH_DATABASE_PATH
-  exec .venv/bin/python -m app.main
-) >>"$LOG_DIR/mcp.log" 2>&1 &
+setsid bash -c 'cd "$REPO_ROOT/mcp" && exec .venv/bin/python -m app.main' \
+  >>"$LOG_DIR/mcp.log" 2>&1 &
 PIDS+=($!)
 echo "mcp=$!" >>"$PID_FILE"
 
-(
-  cd "$REPO_ROOT/frontend"
-  export PDASH_BACKEND_URL="${PDASH_BACKEND_URL:-http://127.0.0.1:8080}"
-  exec npm run dev
-) >>"$LOG_DIR/frontend.log" 2>&1 &
+export PDASH_BACKEND_URL="${PDASH_BACKEND_URL:-http://127.0.0.1:8080}"
+setsid bash -c 'cd "$REPO_ROOT/frontend" && exec npm run dev' \
+  >>"$LOG_DIR/frontend.log" 2>&1 &
 PIDS+=($!)
 echo "frontend=$!" >>"$PID_FILE"
 

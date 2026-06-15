@@ -198,7 +198,7 @@ class DecisionRequest:
     """Input shape for the matcher — denormalized request fields."""
 
     action_type: str
-    agent_id: str
+    agent_id: str | None
     module_type: str | None = None
     module_id: str | None = None
     page_id: str | None = None
@@ -212,7 +212,7 @@ class Decision:
 
 
 def _rule_matches(rule: CachedRule, req: DecisionRequest) -> bool:
-    if rule.agent_id != "*" and rule.agent_id != req.agent_id:
+    if rule.agent_id != "*" and rule.agent_id != (req.agent_id or ""):
         return False
     if rule.module_type not in (None, "*") and rule.module_type != req.module_type:
         return False

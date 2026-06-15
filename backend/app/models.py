@@ -60,6 +60,54 @@ class Agent(Base):
     )
 
 
+class AgentRegistrationRequest(Base):
+    """A keyless AI client's request to become a registered agent.
+
+    Created by the ungated MCP bootstrap surface (``api/internal_bootstrap.py``).
+    Always lands ``pending`` in the Approvals inbox (``register_agent`` action) —
+    we never auto-mint a key. On approval + claim a real :class:`Agent` row is
+    minted; ``agent_id`` then links the two. Only a sha256 of the one-time claim
+    token is stored (``claim_token_hash``); no agent key ever lives here.
+    """
+
+    __tablename__ = "agent_registration_requests"
+
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    requested_name: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    rationale: Mapped[str | None] = mapped_column(Text)
+    client_hint: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'pending'"),
+    )
+    claim_token_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    permissions: Mapped[str | None] = mapped_column(Text)
+    agent_id: Mapped[str | None] = mapped_column(
+        Text, ForeignKey("agents.id", ondelete="SET NULL"),
+    )
+    created_at: Mapped[str] = mapped_column(Text, nullable=False)
+    decided_at: Mapped[str | None] = mapped_column(Text)
+    decided_by: Mapped[str | None] = mapped_column(Text)
+    decision_reason: Mapped[str | None] = mapped_column(Text)
+    claimed_at: Mapped[str | None] = mapped_column(Text)
+    expires_at: Mapped[str | None] = mapped_column(Text)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending','approved','denied','claimed','expired')",
+            name="ck_areg_status",
+        ),
+        CheckConstraint(
+            "permissions IS NULL OR json_valid(permissions)",
+            name="ck_areg_perm_json",
+        ),
+        Index(
+            "ux_areg_claim_token", "claim_token_hash", unique=True,
+        ),
+        Index("idx_areg_status_created", "status", text("created_at DESC")),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Pages
 # ---------------------------------------------------------------------------
@@ -163,10 +211,10 @@ class ApprovalRequest(Base):
     __tablename__ = "approval_requests"
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
-    agent_id: Mapped[str] = mapped_column(
+    agent_id: Mapped[str | None] = mapped_column(
         Text,
         ForeignKey("agents.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
     )
     action_type: Mapped[str] = mapped_column(Text, nullable=False)
     target_kind: Mapped[str | None] = mapped_column(Text)
@@ -201,7 +249,8 @@ class ApprovalRequest(Base):
             name="ck_apr_status",
         ),
         CheckConstraint(
-            "target_kind IS NULL OR target_kind IN ('module','page','action_target')",
+            "target_kind IS NULL OR target_kind IN "
+            "('module','page','action_target','agent_registration')",
             name="ck_apr_target_kind",
         ),
         Index("idx_approvals_status_created", "status", text("created_at DESC")),
@@ -498,6 +547,7 @@ class AgentRateLimit(Base):
 __all__ = [
     "Base",
     "Agent",
+    "AgentRegistrationRequest",
     "Page",
     "Module",
     "ApprovalRequest",

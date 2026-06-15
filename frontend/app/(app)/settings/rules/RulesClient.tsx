@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Sheet } from "@/components/ui/Sheet";
 import {
   api,
@@ -118,6 +119,8 @@ export function RulesClient({ initialRules, agents, pages, pageId = null }: Rule
   >(null);
   const [preview, setPreview] = useState<ApprovalRulePreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [ruleToDelete, setRuleToDelete] = useState<ApprovalRule | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const agentsById = useMemo(() => {
     const m = new Map<string, Agent>();
@@ -171,15 +174,18 @@ export function RulesClient({ initialRules, agents, pages, pageId = null }: Rule
     }
   }
 
-  async function deleteRule(rule: ApprovalRule): Promise<void> {
-    if (rule.is_builtin) return;
-    if (!confirm(`Delete rule ${rule.id}?`)) return;
+  async function confirmDeleteRule() {
+    if (!ruleToDelete || ruleToDelete.is_builtin) return;
+    setDeleting(true);
     try {
-      await api.deleteApprovalRule(rule.id);
-      setRules((prev) => prev.filter((x) => x.id !== rule.id));
+      await api.deleteApprovalRule(ruleToDelete.id);
+      setRules((prev) => prev.filter((x) => x.id !== ruleToDelete.id));
       toast.success("Rule deleted");
+      setRuleToDelete(null);
     } catch (err) {
       toast.error(errorMessage(err, "Delete failed"));
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -323,7 +329,7 @@ export function RulesClient({ initialRules, agents, pages, pageId = null }: Rule
                             size="icon"
                             title={rule.is_builtin ? "Built-in rules cannot be deleted" : "Delete"}
                             disabled={rule.is_builtin}
-                            onClick={() => void deleteRule(rule)}
+                            onClick={() => setRuleToDelete(rule)}
                             aria-label="Delete rule"
                           >
                             <Trash2
@@ -343,6 +349,18 @@ export function RulesClient({ initialRules, agents, pages, pageId = null }: Rule
           </div>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={ruleToDelete !== null}
+        onClose={() => setRuleToDelete(null)}
+        title="Delete approval rule?"
+        description={ruleToDelete ? `Delete rule ${ruleToDelete.id}?` : undefined}
+        confirmLabel="Delete rule"
+        loadingLabel="Deleting"
+        icon={<Trash2 className="size-4" />}
+        loading={deleting}
+        onConfirm={confirmDeleteRule}
+      />
 
       {editorMode && (
         <RuleEditor

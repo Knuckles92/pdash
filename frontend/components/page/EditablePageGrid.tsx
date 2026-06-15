@@ -15,7 +15,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus } from "lucide-react";
+import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -25,6 +25,8 @@ import { api, errorMessage, type Module } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { upsertById } from "@/lib/collections";
 import { type Colspan, colspanClassFor, colspanOf } from "@/lib/modules/grid";
+
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 import { AddModuleSheet } from "./AddModuleSheet";
 
@@ -37,6 +39,8 @@ export function EditablePageGrid({ pageId, initialModules }: Props) {
   const [modules, setModules] = useState<Module[]>(initialModules);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Module | null>(null);
+  const [moduleToDelete, setModuleToDelete] = useState<Module | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const gridRef = useRef<HTMLDivElement | null>(null);
 
   const sensors = useSensors(
@@ -63,16 +67,21 @@ export function EditablePageGrid({ pageId, initialModules }: Props) {
     }
   }
 
-  async function handleDelete(m: Module) {
-    if (!confirm(`Delete "${m.title ?? m.type}"? This is reversible for 30 days.`)) return;
+  async function confirmDeleteModule() {
+    if (!moduleToDelete) return;
+    const m = moduleToDelete;
     const prev = modules;
+    setDeleting(true);
     setModules((curr) => curr.filter((x) => x.id !== m.id));
     try {
       await api.deleteModule(m.id);
       toast.success("Module deleted");
+      setModuleToDelete(null);
     } catch (err) {
       setModules(prev);
       toast.error(errorMessage(err, "Delete failed"));
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -111,7 +120,7 @@ export function EditablePageGrid({ pageId, initialModules }: Props) {
                   setEditing(mod);
                   setSheetOpen(true);
                 }}
-                onDelete={handleDelete}
+                onDelete={setModuleToDelete}
                 onResize={handleResize}
               />
             ))}
@@ -141,6 +150,26 @@ export function EditablePageGrid({ pageId, initialModules }: Props) {
         module={editing}
         onSaved={handleSaved}
       />
+
+      <ConfirmDialog
+        open={moduleToDelete !== null}
+        onClose={() => setModuleToDelete(null)}
+        title="Delete module?"
+        description={
+          moduleToDelete
+            ? `"${moduleToDelete.title ?? moduleToDelete.type}" will be soft-deleted.`
+            : undefined
+        }
+        confirmLabel="Delete module"
+        loadingLabel="Deleting"
+        loading={deleting}
+        icon={<Trash2 className="size-4" />}
+        onConfirm={confirmDeleteModule}
+      >
+        <p className="text-sm text-[var(--muted-fg)]">
+          Deleted modules can be restored within 30 days from the activity log.
+        </p>
+      </ConfirmDialog>
     </>
   );
 }

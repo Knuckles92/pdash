@@ -56,6 +56,7 @@ def run_migrations_online() -> None:
     )
     with connectable.connect() as connection:
         connection.exec_driver_sql("PRAGMA foreign_keys=ON")
+        connection.exec_driver_sql("PRAGMA busy_timeout=30000")
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
