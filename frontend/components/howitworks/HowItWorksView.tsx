@@ -75,6 +75,31 @@ export function HowItWorksView() {
 
   return (
     <article className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--border)] bg-[var(--muted)] px-4 py-3">
+        <p className="text-sm text-[var(--muted-fg)]">
+          {dismissed ? (
+            <>
+              This guide is hidden from the sidebar. You can always reopen it from{" "}
+              <span className="font-medium text-[var(--fg)]">Settings → Help</span>.
+            </>
+          ) : (
+            <>
+              This guide is pinned to your sidebar. Hide it when you&apos;re done — you can bring it
+              back from <span className="font-medium text-[var(--fg)]">Settings → Help</span>.
+            </>
+          )}
+        </p>
+        <Button variant="secondary" size="sm" onClick={dismissed ? restore : dismiss}>
+          {dismissed ? (
+            "Show in sidebar"
+          ) : (
+            <>
+              <EyeOff className="size-4" /> Hide from sidebar
+            </>
+          )}
+        </Button>
+      </div>
+
       {/* Hero */}
       <section className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] px-5 py-8 shadow-sm sm:px-8 sm:py-10">
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -87,16 +112,9 @@ export function HowItWorksView() {
           />
         </div>
         <div className="relative flex flex-col gap-4">
-          <div className="flex items-start justify-between gap-3">
-            <Badge className="border-[var(--border)] bg-[var(--bg)] text-[var(--muted-fg)]">
-              <ShieldCheck className="size-3.5 text-[var(--accent)]" /> Self-hosted · Tailscale-only
-            </Badge>
-            {!dismissed && (
-              <Button variant="ghost" size="sm" onClick={dismiss}>
-                <EyeOff className="size-4" /> Hide guide
-              </Button>
-            )}
-          </div>
+          <Badge className="w-fit border-[var(--border)] bg-[var(--bg)] text-[var(--muted-fg)]">
+            <ShieldCheck className="size-3.5 text-[var(--accent)]" /> Self-hosted · Tailscale-only
+          </Badge>
           <div className="max-w-2xl">
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
               How Home&nbsp;Base works
@@ -137,18 +155,6 @@ export function HowItWorksView() {
           </div>
         </div>
       </section>
-
-      {dismissed && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--border)] bg-[var(--muted)] px-4 py-3">
-          <p className="text-sm text-[var(--muted-fg)]">
-            This guide is hidden from the sidebar. You can always reopen it from{" "}
-            <span className="font-medium text-[var(--fg)]">Settings → Help</span>.
-          </p>
-          <Button variant="secondary" size="sm" onClick={restore}>
-            Show in sidebar
-          </Button>
-        </div>
-      )}
 
       {/* What is Home Base? */}
       <section aria-labelledby="hiw-what" className="flex flex-col gap-3">

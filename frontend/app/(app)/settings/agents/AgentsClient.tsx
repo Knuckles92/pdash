@@ -20,11 +20,14 @@ import { relativeTime } from "@/lib/time";
 type Props = { initialAgents: Agent[] };
 
 type PendingConfirm = { kind: "rotate"; agent: Agent } | { kind: "revoke"; agent: Agent };
+type AgentStatusFilter = "all" | "active" | "inactive";
 
 const isExampleAgent = (a: Agent) => a.permissions?.pdash_default_example === true;
+const isInactiveAgent = (a: Agent) => a.status === "disabled" || a.status === "revoked";
 
 export function AgentsClient({ initialAgents }: Props) {
   const [agents, setAgents] = useState(initialAgents);
+  const [statusFilter, setStatusFilter] = useState<AgentStatusFilter>("all");
   const [creating, setCreating] = useState(false);
   const [newAgentName, setNewAgentName] = useState("");
   const [newAgentDescription, setNewAgentDescription] = useState("");
@@ -93,13 +96,51 @@ export function AgentsClient({ initialAgents }: Props) {
     }
   }
 
+  const activeCount = agents.filter((a) => a.status === "active").length;
+  const inactiveCount = agents.filter(isInactiveAgent).length;
+  const filteredAgents = agents.filter((a) => {
+    if (statusFilter === "active") return a.status === "active";
+    if (statusFilter === "inactive") return isInactiveAgent(a);
+    return true;
+  });
+  const statusFilters: { value: AgentStatusFilter; label: string; count: number }[] = [
+    { value: "all", label: "All", count: agents.length },
+    { value: "active", label: "Active", count: activeCount },
+    { value: "inactive", label: "Inactive", count: inactiveCount },
+  ];
+
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-sm font-medium text-[var(--muted-fg)]">Registered agents</h2>
-        <Button size="sm" onClick={() => setCreating(true)}>
-          <Plus className="size-4" /> Register agent
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div
+            className="inline-flex h-8 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--card)]"
+            role="group"
+            aria-label="Filter agents by status"
+          >
+            {statusFilters.map((filter) => (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setStatusFilter(filter.value)}
+                aria-pressed={statusFilter === filter.value}
+                className={cn(
+                  "inline-flex items-center gap-1 border-r border-[var(--border)] px-3 text-xs font-medium last:border-r-0 hover:bg-[var(--muted)]",
+                  statusFilter === filter.value
+                    ? "bg-[var(--fg)] text-[var(--bg)] hover:bg-[var(--fg)]"
+                    : "text-[var(--muted-fg)]",
+                )}
+              >
+                <span>{filter.label}</span>
+                <span className="tabular-nums opacity-75">{filter.count}</span>
+              </button>
+            ))}
+          </div>
+          <Button size="sm" onClick={() => setCreating(true)}>
+            <Plus className="size-4" /> Register agent
+          </Button>
+        </div>
       </div>
 
       {agents.length === 0 ? (
@@ -127,7 +168,7 @@ export function AgentsClient({ initialAgents }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {agents.map((a) => (
+                {filteredAgents.map((a) => (
                   <tr key={a.id} className="border-b border-[var(--border)] last:border-b-0">
                     <td className="px-4 py-2 font-medium">{a.display_name}</td>
                     <td className="px-4 py-2 hidden md:table-cell text-[var(--muted-fg)]">
@@ -206,6 +247,16 @@ export function AgentsClient({ initialAgents }: Props) {
                     </td>
                   </tr>
                 ))}
+                {filteredAgents.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-8 text-center text-sm text-[var(--muted-fg)]"
+                    >
+                      No {statusFilter} agents.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
