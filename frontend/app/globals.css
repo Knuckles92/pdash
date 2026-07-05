@@ -1,0 +1,333 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  /* IBM Plex is the app's "instrument" voice: Plex Sans for display headings,
+     Plex Mono for machine-facing text (paths, ids, timestamps, statuses). */
+  --font-display: var(--font-plex-sans), var(--font-inter), ui-sans-serif, system-ui,
+    sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", SFMono-Regular, Menlo,
+    Monaco, "Cascadia Mono", "Roboto Mono", monospace;
+}
+
+/* ── Design tokens ────────────────────────────────────────────────────────────
+   One definition per token via light-dark(); the active theme is selected by
+   `color-scheme` (explicit via [data-theme], otherwise following the OS).
+   Light mode is the primary design target: soft cool paper, white surfaces,
+   hairline borders, deep-teal accent. Dark mode is a blue-tinted charcoal —
+   never pure black — with the same relationships between surfaces.
+   A subset of these values is mirrored (as --pdash-* tokens) into html-module
+   iframes by lib/modules/html.ts — keep the two in sync when editing. */
+:root {
+  color-scheme: light;
+
+  --bg: light-dark(#f6f7f9, #101216);
+  --fg: light-dark(#1a1d23, #e9ebef);
+  --muted: light-dark(#eef0f3, #1d2129);
+  --muted-fg: light-dark(#5d6572, #99a1b0);
+  --border: light-dark(#e4e7ec, #272c36);
+  --border-strong: light-dark(#d4d9e0, #353b47);
+  --card: light-dark(#ffffff, #171a20);
+  --overlay: light-dark(rgba(23, 25, 35, 0.4), rgba(5, 6, 10, 0.6));
+
+  /* The desktop sidebar: a quiet mist surface, one step cooler than the page,
+     so navigation recedes and content carries the room. */
+  --sidebar: light-dark(#eff2f5, #13161b);
+  --sidebar-fg: light-dark(#272c33, #dde2e8);
+  --sidebar-muted-fg: light-dark(#68717d, #8a94a2);
+  --sidebar-border: light-dark(#e2e6eb, #252a33);
+  --sidebar-hover: light-dark(rgba(23, 28, 36, 0.05), rgba(255, 255, 255, 0.05));
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-fg: var(--accent-fg);
+  --sidebar-active: var(--accent-soft);
+
+  --accent: light-dark(#47698c, #8fb3d6);
+  --accent-hover: light-dark(#3c5a78, #a1c1de);
+  --accent-fg: light-dark(#ffffff, #0e1015);
+  --accent-soft: light-dark(rgba(71, 105, 140, 0.1), rgba(143, 179, 214, 0.14));
+  --accent-border: light-dark(rgba(71, 105, 140, 0.3), rgba(143, 179, 214, 0.38));
+
+  --danger: light-dark(#dc2626, #f0645f);
+  --danger-fg: light-dark(#ffffff, #150a09);
+  --danger-soft: light-dark(rgba(220, 38, 38, 0.08), rgba(240, 100, 95, 0.14));
+  --warning: light-dark(#b45309, #f5b04d);
+  --warning-soft: light-dark(rgba(217, 119, 6, 0.1), rgba(245, 176, 77, 0.13));
+  --success: light-dark(#16803c, #57c58a);
+  --success-soft: light-dark(rgba(22, 128, 60, 0.09), rgba(87, 197, 138, 0.13));
+  --info: light-dark(#0270ad, #58b9f0);
+  --info-soft: light-dark(rgba(2, 132, 199, 0.09), rgba(88, 185, 240, 0.13));
+
+  /* Layered elevation. One theme-neutral set: soft and barely-there on light
+     paper; in dark mode borders and the overlay carry elevation instead
+     (light-dark() is a color function, so shadows can't switch per theme). */
+  --shadow-xs: 0 1px 2px rgba(16, 18, 26, 0.05);
+  --shadow-sm: 0 1px 2px rgba(16, 18, 26, 0.05), 0 2px 8px rgba(16, 18, 26, 0.04);
+  --shadow-md: 0 2px 4px rgba(16, 18, 26, 0.05), 0 8px 24px rgba(16, 18, 26, 0.08);
+  --shadow-lg: 0 4px 12px rgba(16, 18, 26, 0.09), 0 16px 48px rgba(16, 18, 26, 0.16);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    color-scheme: dark;
+  }
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  border-color: var(--border);
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+/* Thin, unobtrusive scrollbars that match the theme. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+/* Consistent focus ring for anything not styled by a component. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Markdown defaults ─────────────────────────────────────────────────────── */
+.prose-pdash :where(h1, h2, h3, h4) {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  line-height: 1.25;
+}
+.prose-pdash h1 { font-size: 1.6em; }
+.prose-pdash h2 { font-size: 1.35em; }
+.prose-pdash h3 { font-size: 1.15em; }
+.prose-pdash h4 { font-size: 1em; }
+.prose-pdash p { margin: 0.6em 0; line-height: 1.65; }
+.prose-pdash :where(ul, ol) { margin: 0.6em 0; padding-left: 1.5em; }
+.prose-pdash li { margin: 0.2em 0; }
+.prose-pdash code {
+  background: var(--muted);
+  padding: 0.15em 0.35em;
+  border-radius: 0.3em;
+  font-size: 0.9em;
+  font-family: var(--font-mono);
+}
+.prose-pdash pre {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  padding: 0.75em 1em;
+  border-radius: 0.65em;
+  overflow-x: auto;
+  font-size: 0.85em;
+  margin: 0.75em 0;
+}
+.prose-pdash pre code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+.prose-pdash blockquote {
+  border-left: 3px solid var(--accent-border);
+  padding-left: 1em;
+  color: var(--muted-fg);
+  margin: 0.75em 0;
+}
+.prose-pdash a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--accent-border);
+}
+.prose-pdash a:hover {
+  text-decoration-color: var(--accent);
+}
+.prose-pdash table {
+  border-collapse: collapse;
+  margin: 0.75em 0;
+  font-size: 0.9em;
+}
+.prose-pdash th, .prose-pdash td {
+  border: 1px solid var(--border);
+  padding: 0.4em 0.7em;
+}
+.prose-pdash th {
+  background: var(--muted);
+  font-weight: 600;
+}
+.prose-pdash hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 1em 0;
+}
+
+/* Notes (corkboard): markdown decorations derive from the note's own ink
+   (currentColor) instead of the app theme tokens, so code / quotes / rules stay
+   legible on any paper color in both light and dark dashboard modes. */
+.prose-note code,
+.prose-note pre {
+  background: color-mix(in srgb, currentColor 9%, transparent);
+}
+.prose-note pre {
+  border-color: color-mix(in srgb, currentColor 15%, transparent);
+}
+.prose-note blockquote {
+  border-left-color: color-mix(in srgb, currentColor 30%, transparent);
+  color: color-mix(in srgb, currentColor 72%, transparent);
+}
+.prose-note :where(th, td) {
+  border-color: color-mix(in srgb, currentColor 28%, transparent);
+}
+.prose-note th {
+  background: color-mix(in srgb, currentColor 7%, transparent);
+}
+.prose-note hr {
+  border-top-color: color-mix(in srgb, currentColor 28%, transparent);
+}
+.prose-note a {
+  color: inherit;
+  text-decoration-color: color-mix(in srgb, currentColor 50%, transparent);
+}
+
+/* ── Shared motion ─────────────────────────────────────────────────────────────
+   Entrance animations for overlays (Dialog / Sheet / palette). All gated on
+   prefers-reduced-motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .anim-overlay-in {
+    animation: overlay-in 160ms ease-out both;
+  }
+  .anim-pop-in {
+    animation: pop-in 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .anim-slide-in-right {
+    animation: slide-in-right 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .anim-slide-in-left {
+    animation: slide-in-left 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .anim-slide-in-bottom {
+    animation: slide-in-bottom 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .anim-fade-up {
+    animation: fade-up 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .anim-caret {
+    animation: caret-blink 1.05s step-end infinite;
+  }
+}
+
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.97) translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: none; }
+}
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: none; }
+}
+@keyframes slide-in-bottom {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes caret-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* ── How it Works: interactive core-flow simulator ───────────────────────────
+   Scoped to .hiw-* so nothing here leaks into the rest of the app. All motion
+   is gated on prefers-reduced-motion; the collapsible disclosure uses a pure
+   grid-template-rows trick (no JS height measurement). */
+.hiw-collapsible {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease;
+}
+.hiw-collapsible > * {
+  overflow: hidden;
+}
+.hiw-collapsible[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hiw-panel-enter {
+    animation: hiw-panel-enter 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .hiw-pop {
+    animation: hiw-pop 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .hiw-caret {
+    animation: hiw-caret 1.05s step-end infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hiw-collapsible {
+    transition: none;
+  }
+}
+
+@keyframes hiw-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes hiw-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes hiw-caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}

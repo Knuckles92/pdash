@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdash-backend"
+version = "0.1.0"
+description = "pdash — backend FastAPI service"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115,<0.120",
+    "uvicorn[standard]>=0.30,<0.40",
+    "pydantic>=2.9,<3",
+    "pydantic-settings>=2.5,<3",
+    "sqlalchemy>=2.0,<2.1",
+    "greenlet>=3.0,<4",
+    "aiosqlite>=0.20,<0.22",
+    "alembic>=1.13,<2",
+    "argon2-cffi>=23.1,<25",
+    "python-ulid>=2.7,<4",
+    "python-multipart>=0.0.9,<1",
+    "httpx>=0.27,<0.30",
+    "itsdangerous>=2.2,<3",
+    "mcp>=1.20,<2",
+    "sse-starlette>=2.0,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3,<9",
+    "pytest-asyncio>=0.24,<1",
+    "pytest-cov>=5,<7",
+    "ruff>=0.6,<1",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "W"]
+ignore = ["E501"]

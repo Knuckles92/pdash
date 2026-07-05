@@ -1,0 +1,125 @@
+# pdash production stack.
+#
+# Three app services plus Caddy. Caddy fronts everything on :443. The
+# whole stack is bound to localhost in docker-compose.yml; expose it via
+# Tailscale (`tailscale serve`) — never bind Caddy to a public interface.
+#
+# First-run flow (see docs/deploy.md for details):
+#
+#   PDASH_BOOTSTRAP_ADMIN_PASSWORD=changeme docker compose up -d backend
+#   # backend prints the service secret on first init — copy it now
+#   docker compose logs backend | grep "Service secret"
+#   # paste it into .env as PDASH_SERVICE_SECRET, then start the rest:
+#   docker compose up -d
+#
+
+name: pdash
+
+services:
+  backend:
+    build:
+      context: ./backend
+    image: pdash-backend:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Database lives in the shared volume so it survives image rebuilds.
+      PDASH_DATABASE_PATH: /data/pdash.db
+      # Production cookies require HTTPS — Caddy terminates TLS.
+      PDASH_COOKIE_SECURE: "true"
+      # Dashboard screenshots: the frontend the screenshot sidecar renders, and
+      # the sidecar the backend proxies to. Remove SCREENSHOT_SERVICE_URL (or
+      # drop the screenshot service) to disable the feature.
+      PDASH_FRONTEND_URL: http://frontend:3000
+      PDASH_SCREENSHOT_SERVICE_URL: http://screenshot:9000
+      # MCP server the backend probes for the admin "MCP control center" UI.
+      PDASH_MCP_URL: http://mcp:8090
+    volumes:
+      - ./data:/data
+    # No exposed ports — Caddy reaches it on the internal docker network.
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/healthz').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  mcp:
+    build:
+      context: ./mcp
+    image: pdash-mcp:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PDASH_BACKEND_URL: http://backend:8080
+      PDASH_MCP_HOST: 0.0.0.0
+      PDASH_MCP_PORT: "8090"
+    depends_on:
+      backend:
+        condition: service_healthy
+    expose:
+      - "8090"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/healthz').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+    image: pdash-frontend:latest
+    restart: unless-stopped
+    environment:
+      PDASH_BACKEND_URL: http://backend:8080
+    depends_on:
+      backend:
+        condition: service_healthy
+    expose:
+      - "3000"
+
+  # Optional: headless-Chromium sidecar powering the screenshot_page MCP tool.
+  # Large image (~1GB, bundles Chromium). Drop this service to disable agent
+  # screenshots — the backend then returns 501 screenshot.unavailable.
+  screenshot:
+    build:
+      context: ./screenshot
+    image: pdash-screenshot:latest
+    restart: unless-stopped
+    # Shares PDASH_SERVICE_SECRET with the backend so /capture is authenticated.
+    env_file:
+      - .env
+    depends_on:
+      - frontend
+    expose:
+      - "9000"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - mcp
+      - frontend
+    # Tailscale's `serve` is the public face. Caddy listens on the docker
+    # bridge for plain HTTP from `tailscale serve` (or use `tls internal`
+    # mode and bind 443 — see docs/deploy.md for both setups).
+    ports:
+      - "127.0.0.1:8443:443"
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      # If using Tailscale-issued certs, mount them in and reference the paths
+      # in the Caddyfile (commented out by default — see docs/deploy.md).
+      # - /var/lib/tailscale/certs:/tailscale-certs:ro
+
+volumes:
+  caddy_data:
+  caddy_config:
