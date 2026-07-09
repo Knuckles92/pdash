@@ -31,4 +31,10 @@ The skill route is unauthenticated and contains only setup guidance. It points
 the agent at the sibling `/mcp` endpoint, then walks through
 `onboarding` -> `request_registration` -> admin approval -> `claim_registration`.
 
+In production both paths are served through Caddy, so an agent on another
+tailnet device connects to `https://<host>.<tailnet>.ts.net/mcp` (and reads the
+skill file at `.../mcp-skill/SKILL.md`). The MCP server itself always runs next
+to the backend — same host, same compose network; running it elsewhere is
+unsupported. See "Connecting remote agents" in `docs/deploy.md`.
+
 See `scripts/run.sh` and `scripts/smoke.py`.

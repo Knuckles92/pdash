@@ -1,7 +1,8 @@
 # pdash
 
 Self-hosted personal command center and agent integration surface. Tailscale-only;
-not for public internet exposure.
+not for public internet exposure. The stack runs co-located on one host; AI
+agents connect from anywhere on your tailnet.
 
 ## Quickstart (local development)
 
@@ -24,6 +25,9 @@ make prod                  # docker compose up -d
 Expose via Tailscale (`tailscale serve` or a Tailscale-issued cert in Caddy) —
 never bind the stack to a public interface. See `Caddyfile` and
 `docker-compose.yml` for TLS options; `make backup` snapshots `data/pdash.db`.
+
+Agents on other tailnet devices connect to `https://<host>.<tailnet>.ts.net/mcp`
+— see "Connecting remote agents" in [docs/deploy.md](docs/deploy.md).
 
 ## Layout
 

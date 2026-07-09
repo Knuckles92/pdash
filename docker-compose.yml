@@ -3,6 +3,8 @@
 # Three app services plus Caddy. Caddy fronts everything on :443. The
 # whole stack is bound to localhost in docker-compose.yml; expose it via
 # Tailscale (`tailscale serve`) — never bind Caddy to a public interface.
+# All services stay together on this one host; AI agents may be remote,
+# reaching the tailnet address's /mcp route through Caddy.
 #
 # First-run flow:
 #

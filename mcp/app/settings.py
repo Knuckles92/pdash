@@ -22,7 +22,8 @@ class Settings(BaseSettings):
     # Service secret printed by `python -m app.cli init` on the backend.
     service_secret: str = Field(default="")
 
-    # MCP server bind.
+    # MCP server bind. Loopback by default for native dev; docker-compose sets
+    # 0.0.0.0 and remote tailnet agents come in through Caddy's /mcp* route.
     mcp_host: str = Field(default="127.0.0.1")
     mcp_port: int = Field(default=8090)
 

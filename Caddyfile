@@ -55,6 +55,8 @@
     }
 
     # MCP server (streamable HTTP). Same flush + long-timeout posture.
+    # This is the remote-agent entry point: devices elsewhere on the tailnet
+    # connect their MCP clients to https://<host>.<tailnet>.ts.net/mcp.
     handle /mcp* {
         reverse_proxy mcp:8090 {
             flush_interval -1
