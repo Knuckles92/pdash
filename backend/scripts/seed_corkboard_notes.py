@@ -102,7 +102,7 @@ def main() -> int:
     con.row_factory = sqlite3.Row
 
     page = con.execute(
-        "SELECT id FROM pages WHERE kind='corkboard' AND deleted_at IS NULL",
+        "SELECT id FROM pages WHERE type='corkboard' AND deleted_at IS NULL",
     ).fetchone()
     if page is None:
         print("No corkboard page found.", file=sys.stderr)

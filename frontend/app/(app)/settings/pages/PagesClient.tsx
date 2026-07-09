@@ -32,7 +32,7 @@ export function PagesClient({ initialPages, initialHomeExampleCount }: Props) {
   const [confirmBusy, setConfirmBusy] = useState(false);
   const router = useRouter();
 
-  const homePage = pages.find((p) => p.kind === "home");
+  const homePage = pages.find((p) => p.type === "home");
 
   function upsertLocal(p: Page) {
     setPages((curr) => upsertById(curr, p));
@@ -44,7 +44,7 @@ export function PagesClient({ initialPages, initialHomeExampleCount }: Props) {
     try {
       if (pendingConfirm.kind === "delete-page") {
         const p = pendingConfirm.page;
-        if (p.kind === "home") {
+        if (p.type === "home") {
           toast.error("Cannot delete the home page.");
           return;
         }
@@ -135,7 +135,7 @@ export function PagesClient({ initialPages, initialHomeExampleCount }: Props) {
                 <th className="text-left px-4 py-2">Name</th>
                 <th className="text-left px-4 py-2">Slug</th>
                 <th className="text-left px-4 py-2 hidden md:table-cell">Description</th>
-                <th className="text-left px-4 py-2">Kind</th>
+                <th className="text-left px-4 py-2">Type</th>
                 <th className="text-right px-4 py-2">Actions</th>
               </tr>
             </thead>
@@ -148,11 +148,11 @@ export function PagesClient({ initialPages, initialHomeExampleCount }: Props) {
                     {p.description ?? "—"}
                   </td>
                   <td className="px-4 py-2">
-                    <Badge tone={p.kind === "home" ? "info" : "neutral"}>{p.kind}</Badge>
+                    <Badge tone={p.type === "home" ? "info" : "neutral"}>{p.type}</Badge>
                   </td>
                   <td className="px-4 py-2 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      {p.kind === "home" && homeExampleCount > 0 && (
+                      {p.type === "home" && homeExampleCount > 0 && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -167,7 +167,7 @@ export function PagesClient({ initialPages, initialHomeExampleCount }: Props) {
                           </span>
                         </Button>
                       )}
-                      {p.kind === "home" && homeExampleCount === 0 && (
+                      {p.type === "home" && homeExampleCount === 0 && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -196,8 +196,8 @@ export function PagesClient({ initialPages, initialHomeExampleCount }: Props) {
                         size="icon"
                         onClick={() => setPendingConfirm({ kind: "delete-page", page: p })}
                         aria-label="Delete"
-                        title={p.kind === "home" ? "Cannot delete home" : "Delete"}
-                        disabled={p.kind === "home"}
+                        title={p.type === "home" ? "Cannot delete home" : "Delete"}
+                        disabled={p.type === "home"}
                       >
                         <Trash2 className="size-4 text-[var(--danger)]" />
                       </Button>
@@ -261,7 +261,7 @@ function CreatePageDialog({
 }) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
-  const [kind, setKind] = useState("custom");
+  const [type, setType] = useState("custom");
   const [description, setDescription] = useState("");
 
   async function handleSave() {
@@ -270,13 +270,13 @@ function CreatePageDialog({
       const p = await api.createPage({
         name: name.trim(),
         slug: slug.trim(),
-        kind,
+        type,
         description: description.trim() || undefined,
       });
       onSaved(p);
       setName("");
       setSlug("");
-      setKind("custom");
+      setType("custom");
       setDescription("");
       onClose();
       toast.success("Page created");
@@ -321,10 +321,10 @@ function CreatePageDialog({
           />
         </div>
         <div className="flex flex-col gap-1">
-          <Label>Kind</Label>
+          <Label>Type</Label>
           <select
-            value={kind}
-            onChange={(e) => setKind(e.target.value)}
+            value={type}
+            onChange={(e) => setType(e.target.value)}
             className="block w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm shadow-[var(--shadow-xs)] transition-[border-color,box-shadow] hover:border-[var(--border-strong)] focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-[3px] focus-visible:ring-[var(--accent-soft)]"
           >
             <option value="custom">custom</option>
@@ -410,7 +410,7 @@ function EditPageDialog({
           <Input
             value={slug}
             onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-            disabled={page.kind === "home"}
+            disabled={page.type === "home"}
           />
         </div>
         <div className="flex flex-col gap-1">

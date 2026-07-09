@@ -1,6 +1,6 @@
-"""Corkboard page kind + sticky_note module type (board notes).
+"""Corkboard page type + sticky_note module type (board notes).
 
-Locks in the two surfaces (the ``corkboard`` page kind and the ``sticky_note``
+Locks in the two surfaces (the ``corkboard`` page type and the ``sticky_note``
 type), the note's rich content fields (title / markdown / checklist / pinned),
 and that the module ``grid`` JSON blob round-trips as an opaque value. The board
 orders notes by pinned-then-recency; it no longer reads any board position out of
@@ -15,10 +15,10 @@ from fastapi.testclient import TestClient
 def _corkboard_page_id(client: TestClient) -> str:
     resp = client.post(
         "/api/v1/pages",
-        json={"slug": "board", "name": "Corkboard", "kind": "corkboard"},
+        json={"slug": "board", "name": "Corkboard", "type": "corkboard"},
     )
     assert resp.status_code == 201, resp.text
-    assert resp.json()["kind"] == "corkboard"
+    assert resp.json()["type"] == "corkboard"
     return resp.json()["id"]
 
 
@@ -26,7 +26,7 @@ def test_create_corkboard_page(admin_client: TestClient) -> None:
     page_id = _corkboard_page_id(admin_client)
     resp = admin_client.get(f"/api/v1/pages/{page_id}")
     assert resp.status_code == 200
-    assert resp.json()["kind"] == "corkboard"
+    assert resp.json()["type"] == "corkboard"
 
 
 def test_sticky_note_grid_blob_round_trips(admin_client: TestClient) -> None:

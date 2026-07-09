@@ -1,4 +1,4 @@
-"""End-to-end tests for the ``propose_page`` MCP tool (kind passthrough)."""
+"""End-to-end tests for the ``propose_page`` MCP tool (type passthrough)."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ def _request_payload(admin: AdminSession, request_id: str) -> dict:
 
 
 @pytest.mark.asyncio
-async def test_propose_page_default_kind_agent(
+async def test_propose_page_default_type_agent(
     mcp_backend_client: BackendClient, admin: AdminSession
 ) -> None:
     _, key = register_agent(admin, name="t-page-default")
@@ -29,11 +29,11 @@ async def test_propose_page_default_kind_agent(
         agent_key=key,
     )
     assert result["status"] == "pending"
-    assert _request_payload(admin, result["request_id"])["kind"] == "agent"
+    assert _request_payload(admin, result["request_id"])["type"] == "agent"
 
 
 @pytest.mark.asyncio
-async def test_propose_page_canvas_kind_passthrough(
+async def test_propose_page_canvas_type_passthrough(
     mcp_backend_client: BackendClient, admin: AdminSession
 ) -> None:
     _, key = register_agent(admin, name="t-page-canvas")
@@ -41,23 +41,23 @@ async def test_propose_page_canvas_kind_passthrough(
     result = await call_tool(
         mcp,
         "propose_page",
-        {"name": "Status Board", "slug": "t-ws-canvas", "kind": "canvas"},
+        {"name": "Status Board", "slug": "t-ws-canvas", "type": "canvas"},
         agent_key=key,
     )
     assert result["status"] == "pending"
-    assert _request_payload(admin, result["request_id"])["kind"] == "canvas"
+    assert _request_payload(admin, result["request_id"])["type"] == "canvas"
 
 
 @pytest.mark.asyncio
-async def test_propose_page_rejects_other_kinds(
+async def test_propose_page_rejects_other_types(
     mcp_backend_client: BackendClient, admin: AdminSession
 ) -> None:
-    _, key = register_agent(admin, name="t-page-badkind")
+    _, key = register_agent(admin, name="t-page-badtype")
     mcp = build_mcp_for_tests()
     with pytest.raises(Exception):
         await call_tool(
             mcp,
             "propose_page",
-            {"name": "Sneaky", "slug": "t-ws-sneaky", "kind": "corkboard"},
+            {"name": "Sneaky", "slug": "t-ws-sneaky", "type": "corkboard"},
             agent_key=key,
         )

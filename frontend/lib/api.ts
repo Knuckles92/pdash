@@ -156,7 +156,7 @@ export type Page = {
   slug: string;
   name: string;
   description: string | null;
-  kind: string;
+  type: string;
   owner_kind: string | null;
   owner_id: string | null;
   created_at: string;
@@ -401,7 +401,7 @@ export type DashboardPreviewHighlight = {
 };
 
 export type DashboardPreview = {
-  page: { id: string; name: string; slug: string; description?: string | null; kind?: string };
+  page: { id: string; name: string; slug: string; description?: string | null; type?: string };
   modules: Module[];
   highlight: DashboardPreviewHighlight;
 };
@@ -568,7 +568,7 @@ export const api = {
     slug: string;
     name: string;
     description?: string;
-    kind?: string;
+    type?: string;
   }) => apiFetch<Page>("/api/v1/pages", { method: "POST", json: body }),
   updatePage: (id: string, body: Partial<{ slug: string; name: string; description: string }>) =>
     apiFetch<Page>(`/api/v1/pages/${id}`, { method: "PATCH", json: body }),

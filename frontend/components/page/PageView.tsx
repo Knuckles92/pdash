@@ -90,8 +90,8 @@ export function PageView({ page, modules, iframeAllowlist }: Props) {
     router.push(qs ? `${basePath}?${qs}` : basePath, { scroll: false });
   }
 
-  const isCorkboard = page.kind === "corkboard";
-  const isCanvas = page.kind === "canvas";
+  const isCorkboard = page.type === "corkboard";
+  const isCanvas = page.type === "canvas";
 
   const body = isCorkboard ? (
     <CorkboardBoard pageId={page.id} modules={sorted} />

@@ -14,7 +14,7 @@ from _phase3_helpers import (
 def _create_custom_page(admin_client: TestClient, *, slug: str, name: str = "Preview") -> str:
     resp = admin_client.post(
         "/api/v1/pages",
-        json={"slug": slug, "name": name, "kind": "custom"},
+        json={"slug": slug, "name": name, "type": "custom"},
     )
     assert resp.status_code == 201, resp.text
     return resp.json()["id"]

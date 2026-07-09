@@ -17,7 +17,7 @@ export default async function PagesSettings() {
   try {
     const res = await api.listPages({ cookieHeader });
     pages = res.items;
-    const home = pages.find((p) => p.kind === "home");
+    const home = pages.find((p) => p.type === "home");
     if (home) {
       try {
         const modules = await api.listModules({ page_id: home.id }, { cookieHeader });

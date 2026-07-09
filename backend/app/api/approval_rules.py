@@ -407,7 +407,7 @@ async def _reverse_one(
         page = await session.get(Page, target_id)
         if page is None:
             return ("skipped", "page not found")
-        if page.kind == "home":
+        if page.type == "home":
             return ("skipped", "cannot revoke home page")
         if page.deleted_at is not None:
             return ("skipped", "already deleted")

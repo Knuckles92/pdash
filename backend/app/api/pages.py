@@ -34,7 +34,7 @@ def _page_event_summary(row: Page) -> dict:
         "id": row.id,
         "slug": row.slug,
         "name": row.name,
-        "kind": row.kind,
+        "type": row.type,
         "owner_kind": row.owner_kind,
         "owner_id": row.owner_id,
         "deleted_at": row.deleted_at,
@@ -42,7 +42,7 @@ def _page_event_summary(row: Page) -> dict:
 
 router = APIRouter(prefix="/api/v1/pages", tags=["pages"])
 
-ALLOWED_KINDS = {"home", "agent", "custom", "system", "corkboard", "canvas"}
+ALLOWED_PAGE_TYPES = {"home", "agent", "custom", "system", "corkboard", "canvas"}
 
 
 def _to_out(row: Page) -> PageOut:
@@ -51,7 +51,7 @@ def _to_out(row: Page) -> PageOut:
         slug=row.slug,
         name=row.name,
         description=row.description,
-        kind=row.kind,
+        type=row.type,
         owner_kind=row.owner_kind,
         owner_id=row.owner_id,
         created_at=row.created_at,
@@ -112,8 +112,8 @@ async def create_page(
     _: Annotated[CurrentUser, Depends(require_csrf)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> JSONResponse:
-    if body.kind not in ALLOWED_KINDS:
-        raise bad_request("page.invalid_kind", f"kind must be one of {sorted(ALLOWED_KINDS)}")
+    if body.type not in ALLOWED_PAGE_TYPES:
+        raise bad_request("page.invalid_type", f"type must be one of {sorted(ALLOWED_PAGE_TYPES)}")
     idem_key = _idem.header(request)
     cached = await _idem.lookup(session, tool="POST /pages", key=idem_key)
     if cached is not None:
@@ -130,7 +130,7 @@ async def create_page(
         slug=body.slug,
         name=body.name,
         description=body.description,
-        kind=body.kind,
+        type=body.type,
         owner_kind=body.owner_kind,
         owner_id=body.owner_id,
         created_at=utcnow_iso(),
@@ -149,7 +149,7 @@ async def create_page(
         target_kind="page",
         target_id=pid,
         outcome="applied",
-        payload_summary={"slug": body.slug, "kind": body.kind},
+        payload_summary={"slug": body.slug, "type": body.type},
     )
     publish_after_commit(session, "pages", "page_added", {"page": _page_event_summary(row)})
     out = _to_out(row).model_dump()
@@ -161,7 +161,7 @@ async def _require_home_page(session: AsyncSession, page_id: str) -> Page:
     row = await session.get(Page, page_id)
     if row is None or row.deleted_at is not None:
         raise not_found("page.not_found", page_id)
-    if row.kind != "home":
+    if row.type != "home":
         raise bad_request("page.not_home", "Default examples are only available on the home page")
     return row
 
@@ -233,7 +233,7 @@ async def delete_page(
     row = await session.get(Page, page_id)
     if row is None or row.deleted_at is not None:
         raise not_found("page.not_found", page_id)
-    if row.kind == "home":
+    if row.type == "home":
         raise bad_request("page.cannot_delete_home", "The home page cannot be deleted")
     row.deleted_at = utcnow_iso()
     await session.flush()

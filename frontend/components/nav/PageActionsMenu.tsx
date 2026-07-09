@@ -35,7 +35,7 @@ export function PageActionsMenu({
   const rootRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname() ?? "/";
   const router = useRouter();
-  const isHome = page.kind === "home";
+  const isHome = page.type === "home";
   const pageHref = page.slug === "home" ? "/" : `/pages/${page.slug}`;
   const rulesHref = `/settings/rules?page_id=${encodeURIComponent(page.id)}`;
 

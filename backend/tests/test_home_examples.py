@@ -30,7 +30,7 @@ def _home_page_id(client: TestClient) -> str:
 def _custom_page_id(client: TestClient) -> str:
     resp = client.post(
         "/api/v1/pages",
-        json={"slug": "demo-page", "name": "Demo", "kind": "custom"},
+        json={"slug": "demo-page", "name": "Demo", "type": "custom"},
     )
     assert resp.status_code == 201, resp.text
     return resp.json()["id"]

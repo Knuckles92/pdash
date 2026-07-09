@@ -120,7 +120,7 @@ class Page(Base):
     slug: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     name: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    kind: Mapped[str] = mapped_column(Text, nullable=False)
+    type: Mapped[str] = mapped_column(Text, nullable=False)
     owner_kind: Mapped[str | None] = mapped_column(Text)
     owner_id: Mapped[str | None] = mapped_column(Text)
     deleted_at: Mapped[str | None] = mapped_column(Text)
@@ -128,8 +128,8 @@ class Page(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "kind IN ('home','agent','custom','system','corkboard','canvas')",
-            name="ck_pages_kind",
+            "type IN ('home','agent','custom','system','corkboard','canvas')",
+            name="ck_pages_type",
         ),
         CheckConstraint(
             "owner_kind IS NULL OR owner_kind IN ('user','agent')",

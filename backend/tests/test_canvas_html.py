@@ -1,8 +1,8 @@
-"""Canvas page kind + html module type (agent-controlled HTML pages).
+"""Canvas page type + html module type (agent-controlled HTML pages).
 
-Locks in the two surfaces (the ``canvas`` page kind and the ``html`` module
+Locks in the two surfaces (the ``canvas`` page type and the ``html`` module
 type), the 400KB body cap, the agent-facing theme-token docs in the schema,
-the ``kind`` passthrough on ``propose-page``, and — critically — that html
+the ``type`` passthrough on ``propose-page``, and — critically — that html
 content updates always **prompt** (the migration-seeded built-in rule outranks
 the generic self-owned ``update_module_data`` auto-approve).
 """
@@ -20,10 +20,10 @@ VALID_HTML = "<!doctype html><html><head></head><body><h1>hi</h1></body></html>"
 def _canvas_page_id(client: TestClient) -> str:
     resp = client.post(
         "/api/v1/pages",
-        json={"slug": "canvas", "name": "Canvas", "kind": "canvas"},
+        json={"slug": "canvas", "name": "Canvas", "type": "canvas"},
     )
     assert resp.status_code == 201, resp.text
-    assert resp.json()["kind"] == "canvas"
+    assert resp.json()["type"] == "canvas"
     return resp.json()["id"]
 
 
@@ -31,7 +31,7 @@ def test_create_canvas_page(admin_client: TestClient) -> None:
     page_id = _canvas_page_id(admin_client)
     resp = admin_client.get(f"/api/v1/pages/{page_id}")
     assert resp.status_code == 200
-    assert resp.json()["kind"] == "canvas"
+    assert resp.json()["type"] == "canvas"
 
 
 def test_html_module_round_trips(admin_client: TestClient) -> None:
@@ -89,12 +89,12 @@ def test_module_schema_documents_theme_tokens(admin_client: TestClient) -> None:
     assert "sandboxed iframe" in desc
 
 
-def test_propose_page_kind_canvas(admin_client: TestClient) -> None:
+def test_propose_page_type_canvas(admin_client: TestClient) -> None:
     agent_id, _ = register_agent(admin_client, name="canvas-bot")
     secret = get_service_secret()
     resp = admin_client.post(
         "/api/v1/internal/propose-page",
-        json={"name": "Status Board", "slug": "status-board", "kind": "canvas"},
+        json={"name": "Status Board", "slug": "status-board", "type": "canvas"},
         headers=internal_headers(agent_id, secret, idempotency_key="cv-1"),
     )
     assert resp.status_code == 202, resp.text
@@ -103,7 +103,7 @@ def test_propose_page_kind_canvas(admin_client: TestClient) -> None:
 
     detail = admin_client.get(f"/api/v1/approval-requests/{body['request_id']}")
     assert detail.status_code == 200
-    assert detail.json()["proposed_payload"]["kind"] == "canvas"
+    assert detail.json()["proposed_payload"]["type"] == "canvas"
 
     approve = admin_client.post(
         f"/api/v1/approval-requests/{body['request_id']}/approve", json={}
@@ -113,10 +113,10 @@ def test_propose_page_kind_canvas(admin_client: TestClient) -> None:
 
     pages = admin_client.get("/api/v1/pages").json()["items"]
     created = next(p for p in pages if p["slug"] == "status-board")
-    assert created["kind"] == "canvas"
+    assert created["type"] == "canvas"
 
 
-def test_propose_page_kind_defaults_agent(admin_client: TestClient) -> None:
+def test_propose_page_type_defaults_agent(admin_client: TestClient) -> None:
     agent_id, _ = register_agent(admin_client, name="plain-bot")
     secret = get_service_secret()
     resp = admin_client.post(
@@ -126,15 +126,15 @@ def test_propose_page_kind_defaults_agent(admin_client: TestClient) -> None:
     )
     assert resp.status_code == 202, resp.text
     detail = admin_client.get(f"/api/v1/approval-requests/{resp.json()['request_id']}")
-    assert detail.json()["proposed_payload"]["kind"] == "agent"
+    assert detail.json()["proposed_payload"]["type"] == "agent"
 
 
-def test_propose_page_rejects_other_kinds(admin_client: TestClient) -> None:
+def test_propose_page_rejects_other_types(admin_client: TestClient) -> None:
     agent_id, _ = register_agent(admin_client, name="sneaky-bot")
     secret = get_service_secret()
     resp = admin_client.post(
         "/api/v1/internal/propose-page",
-        json={"name": "Sneaky", "slug": "sneaky", "kind": "system"},
+        json={"name": "Sneaky", "slug": "sneaky", "type": "system"},
         headers=internal_headers(agent_id, secret, idempotency_key="cv-3"),
     )
     assert resp.status_code == 422

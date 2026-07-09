@@ -15,7 +15,7 @@ class PageCreate(BaseModel):
     slug: SlugStr
     name: str = Field(..., min_length=1, max_length=120)
     description: str | None = Field(default=None, max_length=500)
-    kind: str = Field(default="custom")  # checked against allowed enum at write
+    type: str = Field(default="custom")  # checked against allowed enum at write
     owner_kind: str | None = None
     owner_id: str | None = None
 
@@ -33,7 +33,7 @@ class PageOut(BaseModel):
     slug: str
     name: str
     description: str | None = None
-    kind: str
+    type: str
     owner_kind: str | None = None
     owner_id: str | None = None
     created_at: str

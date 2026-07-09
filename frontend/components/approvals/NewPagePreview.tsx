@@ -5,7 +5,7 @@ import { FilePlus2, LayoutDashboard, Lock, Plus, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import type { DashboardPreview } from "@/lib/api";
 
-const KIND_LABELS: Record<string, string> = {
+const TYPE_LABELS: Record<string, string> = {
   home: "Home",
   agent: "Agent",
   custom: "Custom",
@@ -18,13 +18,13 @@ const KIND_LABELS: Record<string, string> = {
  * Visual preview for a `create_page` approval. The new page doesn't exist yet
  * and carries no modules, so instead of an empty module grid we render a
  * browser-window mock that shows the admin exactly what's being proposed: the
- * page name, its URL path, kind, description, and an empty dashboard canvas
+ * page name, its URL path, type, description, and an empty dashboard canvas
  * standing in for the modules that can be added once the page exists.
  */
 export function NewPagePreview({ preview }: { preview: DashboardPreview }) {
-  const { name, slug, description, kind } = preview.page;
+  const { name, slug, description, type } = preview.page;
   const path = slug ? `/pages/${slug}` : "/pages/…";
-  const kindLabel = kind ? (KIND_LABELS[kind] ?? kind) : null;
+  const typeLabel = type ? (TYPE_LABELS[type] ?? type) : null;
 
   return (
     <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg)] shadow-[var(--shadow-sm)]">
@@ -53,7 +53,7 @@ export function NewPagePreview({ preview }: { preview: DashboardPreview }) {
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="truncate text-lg font-semibold tracking-tight text-[var(--fg)]">{name}</h3>
-              {kindLabel && <Badge tone="neutral">{kindLabel}</Badge>}
+              {typeLabel && <Badge tone="neutral">{typeLabel}</Badge>}
             </div>
             {description ? (
               <p className="mt-1 text-sm text-[var(--muted-fg)]">{description}</p>

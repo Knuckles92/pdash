@@ -108,7 +108,7 @@ class ProposePageArgs(BaseModel):
     name: str = Field(..., min_length=1, max_length=120)
     slug: str | None = Field(default=None, pattern=r"^[a-z0-9-]{1,40}$")
     description: str | None = Field(default=None, max_length=500)
-    kind: Literal["agent", "canvas"] = "agent"
+    type: Literal["agent", "canvas"] = "agent"
     idempotency_key: str | None = None
     rationale: str | None = Field(default=None, max_length=1000)
 
@@ -528,7 +528,7 @@ When to use:
   - You need a fresh page to organise your modules. Prefer adding modules to
     an existing page (list_pages) before requesting a new one.
 
-kind:
+type:
   - "agent" (default) — a normal module grid page.
   - "canvas" — a full-bleed page that renders a single `html` module as an
     app-like surface (sandboxed iframe; no pdash session/API access). After
@@ -620,7 +620,7 @@ List every dashboard page, so you can find a page_id to place a widget on
 (propose_module) or pick a page to render/screenshot.
 
 Args: limit (1-200, default 50), cursor.
-Returns: {items: [{id, slug, name, kind, owned, module_count,
+Returns: {items: [{id, slug, name, type, owned, module_count,
 my_module_count}], next_cursor}. "owned" means you can edit modules on it
 without admin approval; "my_module_count" is how many modules there you own.
 
@@ -683,7 +683,7 @@ which modules are broken. Use this to understand a dashboard's content and
 arrangement without pixels. For an actual image, use screenshot_page.
 
 Args: page_id.
-Returns: {page:{id,name,slug,kind}, modules:[{...module, health}],
+Returns: {page:{id,name,slug,type}, modules:[{...module, health}],
 layout:{columns, rows, ascii}, broken_module_ids, summary:{total, broken}}.
 Errors: not_found (page), rate_limit, service_unavailable.
 """
@@ -1004,7 +1004,7 @@ def register_tools(mcp: FastMCP) -> None:
         name: str,
         slug: str | None = None,
         description: str | None = None,
-        kind: Literal["agent", "canvas"] = "agent",
+        type: Literal["agent", "canvas"] = "agent",
         idempotency_key: str | None = None,
         rationale: str | None = None,
         ctx: Context | None = None,
@@ -1015,12 +1015,12 @@ def register_tools(mcp: FastMCP) -> None:
             name=name,
             slug=slug,
             description=description,
-            kind=kind,
+            type=type,
             idempotency_key=idempotency_key,
             rationale=rationale,
         )
         key = await _acquire_idem_key(agent.agent_id, "propose_page", args)
-        body: dict[str, Any] = {"name": args.name, "kind": args.kind}
+        body: dict[str, Any] = {"name": args.name, "type": args.type}
         if args.slug is not None:
             body["slug"] = args.slug
         if args.description is not None:

@@ -89,7 +89,7 @@ def _page_summary(row: Page) -> dict[str, Any]:
         "id": row.id,
         "slug": row.slug,
         "name": row.name,
-        "kind": row.kind,
+        "type": row.type,
         "owner_kind": row.owner_kind,
         "owner_id": row.owner_id,
         "deleted_at": row.deleted_at,
@@ -286,7 +286,8 @@ async def apply_create_page(
         slug=payload["slug"],
         name=payload["name"],
         description=payload.get("description"),
-        kind=payload.get("kind", "custom"),
+        # Prefer ``type``; fall back to legacy ``kind`` for in-flight approvals.
+        type=payload.get("type") or payload.get("kind") or "custom",
         owner_kind="agent",
         owner_id=request.agent_id,
         created_at=utcnow_iso(),
@@ -312,7 +313,7 @@ async def apply_delete_page(
     row = await session.get(Page, pid)
     if row is None or row.deleted_at is not None:
         raise ApplyError("page.not_found", f"page {pid} not found")
-    if row.kind == "home":
+    if row.type == "home":
         raise ApplyError("page.cannot_delete_home", "home page cannot be deleted")
     row.deleted_at = utcnow_iso()
     # `cascade=true` is a hint for the FK — modules.page_id has ON DELETE

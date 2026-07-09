@@ -515,7 +515,7 @@ async def list_pages(
             "id": p.id,
             "slug": p.slug,
             "name": p.name,
-            "kind": p.kind,
+            "type": p.type,
             "owner_kind": p.owner_kind,
             "owner_id": p.owner_id,
             "owned": p.owner_kind == "agent" and p.owner_id == agent.id,
@@ -558,7 +558,7 @@ async def render_page(
     modules = health.order_modules([_module_with_health(r) for r in rows])
     broken = [m["id"] for m in modules if not m["health"]["render_ok"]]
     return {
-        "page": {"id": page.id, "name": page.name, "slug": page.slug, "kind": page.kind},
+        "page": {"id": page.id, "name": page.name, "slug": page.slug, "type": page.type},
         "modules": modules,
         "layout": health.layout_summary(modules),
         "broken_module_ids": broken,
@@ -651,7 +651,7 @@ async def validate_module(
 def _frontend_page_url(base: str, page: Page) -> str:
     base = base.rstrip("/")
     # The home page renders at "/"; everything else at "/pages/<slug>".
-    if page.kind == "home" or page.slug == "home":
+    if page.type == "home" or page.slug == "home":
         return f"{base}/"
     return f"{base}/pages/{page.slug}"
 
@@ -1289,7 +1289,7 @@ async def propose_page(
         "name": body.name,
         "slug": slug,
         "description": body.description,
-        "kind": body.kind,
+        "type": body.type,
         "provisional_id": provisional_id,
     }
     result = await submit_request(
@@ -1312,7 +1312,7 @@ async def propose_page(
                     "id": page.id,
                     "slug": page.slug,
                     "name": page.name,
-                    "kind": page.kind,
+                    "type": page.type,
                     "created_at": page.created_at,
                 }
             }
