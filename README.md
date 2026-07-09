@@ -11,7 +11,7 @@ make setup    # venvs, npm, DB at data/pdash.db, secrets in .env
 make dev      # backend + MCP + frontend with hot reload
 ```
 
-Open [http://localhost:3000](http://localhost:3000) (default password `dev`). Full guide: [docs/dev.md](docs/dev.md).
+Open [http://localhost:3000](http://localhost:3000) (default password `dev`).
 
 ## Production (homelab)
 
@@ -21,17 +21,18 @@ make init                  # initialize the SQLite DB + secrets (Docker)
 make prod                  # docker compose up -d
 ```
 
-See [docs/deploy.md](docs/deploy.md) for Tailscale TLS wiring and backups.
+Expose via Tailscale (`tailscale serve` or a Tailscale-issued cert in Caddy) —
+never bind the stack to a public interface. See `Caddyfile` and
+`docker-compose.yml` for TLS options; `make backup` snapshots `data/pdash.db`.
 
 ## Layout
 
 | Path | What |
 |---|---|
-| `PLAN.md` | Full design + roadmap. Start here. |
 | `backend/` | FastAPI app, SQLite, Alembic migrations, approval engine. |
 | `mcp/` | MCP server (HTTP-streamable) — thin translator over `/api/v1/internal/*`. |
 | `frontend/` | Next.js admin UI (App Router). |
-| `docs/` | Dev guide, deployment guide, smoke-test recipes. |
+| `screenshot/` | Optional Playwright sidecar for the `screenshot_page` MCP tool. |
 | `scripts/` | `setup-dev.sh`, `dev.sh`, `backup.sh`. |
 | `Caddyfile` | Reverse proxy in front of all three services. |
 | `docker-compose.yml` | Production stack (backend / mcp / frontend / caddy). |

@@ -315,7 +315,7 @@ async def fire_action_button(
 ) -> dict[str, Any]:
     """Admin-side firing of an action_button module.
 
-    Bypasses the approval engine (admin mutations always do per PLAN §0) and
+    Bypasses the approval engine (admin mutations always do) and
     dispatches the resolved action target inline. Writes ``data.last_result``
     back onto the module and audit-logs the firing.
     """

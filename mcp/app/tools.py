@@ -1,6 +1,6 @@
 """MCP tool definitions.
 
-The agent-facing tools (the write/read set from PLAN §6 plus the visibility +
+The agent-facing tools (the write/read set plus the visibility +
 self-diagnosis tools), registered on a :class:`FastMCP` server. Each tool:
 
 1. Extracts the calling agent from the MCP request's Authorization header.
@@ -339,7 +339,7 @@ def _backend_error_to_mcp(exc: BackendError) -> McpError:
 def _status_envelope(status_code: int, body: dict[str, Any]) -> dict[str, Any]:
     """Translate a backend triad response into the documented MCP envelope.
 
-    PLAN §6: ``{status: applied|pending|denied, request_id?, reason?,
+    Response shape: ``{status: applied|pending|denied, request_id?, reason?,
     applied_at?, module?, ...}``. The backend returns ``denied_by_rule``;
     we normalise to ``denied`` for the MCP surface, but preserve ``rule_id``.
     """
@@ -439,7 +439,7 @@ async def _require_agent(ctx: Context) -> AgentInfo:
 
 
 # ---------------------------------------------------------------------------
-# Tool descriptions (≤400 tokens each, lifted from PLAN §6)
+# Tool descriptions (≤400 tokens each)
 # ---------------------------------------------------------------------------
 
 

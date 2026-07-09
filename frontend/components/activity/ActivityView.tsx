@@ -119,7 +119,7 @@ export function ActivityView({
   }, [filters, q]);
 
   // Phase 5: count new activity rows arriving via SSE; do NOT auto-prepend
-  // (per PLAN — disorienting in a log).
+  // (disorienting in a log).
   useChannel("activity", (ev) => {
     if (ev.kind === "activity_appended") {
       setNewCount((c) => c + 1);

@@ -1,4 +1,4 @@
-"""Approval engine matching tests (PLAN §7.1)."""
+"""Approval engine matching tests."""
 
 from __future__ import annotations
 

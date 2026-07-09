@@ -56,7 +56,7 @@ class Appearance(BaseModel):
     color: AppearanceColor | None = Field(default=None)
 
 
-# Lucide names in kebab-case (pattern matches PLAN §4 conventions).
+# Lucide names in kebab-case.
 Icon = Annotated[
     str,
     StringConstraints(pattern=r"^[a-z][a-z0-9-]{0,40}$"),

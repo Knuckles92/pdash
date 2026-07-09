@@ -62,7 +62,7 @@ class ApprovalRuleDraft(BaseModel):
 
     Field semantics mirror ``approval_rules`` columns. ``apply_to_pending``
     triggers a retroactive sweep of matching pending requests through the
-    engine in the same transaction (PLAN §7.4 — default off; the UI surfaces
+    engine in the same transaction (default off; the UI surfaces
     a checkbox).
     """
 

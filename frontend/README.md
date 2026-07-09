@@ -25,7 +25,7 @@ make setup
 make dev
 ```
 
-Open <http://localhost:3000> (default password `dev`). See [docs/dev.md](../docs/dev.md).
+Open <http://localhost:3000> (default password `dev`).
 
 Frontend-only (with backend already on `:8080`):
 

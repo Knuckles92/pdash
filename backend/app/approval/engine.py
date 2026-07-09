@@ -1,6 +1,5 @@
 """Approval engine — rule cache + matching + decision.
 
-Implements PLAN §7.1 exactly.
 
 The rule cache is an in-process singleton. It is populated lazily on the first
 call to :func:`decide` and refreshed when ``rules_version`` (an integer bumped
@@ -110,7 +109,7 @@ def reset_cache_for_tests() -> None:
 
 
 def _outcome_rank(outcome: str) -> int:
-    # deny beats auto_approve at equal specificity (PLAN §7.1).
+    # deny beats auto_approve at equal specificity.
     # prompt sits in between (so a prompt rule overrides an equally-specific
     # auto_approve — admins explicitly chose to gate it).
     return {"deny": 0, "prompt": 1, "auto_approve": 2}.get(outcome, 9)
@@ -239,7 +238,7 @@ async def decide(session: AsyncSession, req: DecisionRequest) -> Decision:
     for rule in bucket:
         if _rule_matches(rule, req):
             return Decision(status=rule.outcome, rule_id=rule.id)
-    # PLAN §7.3 — default safe.
+    # Default safe: no matching rule → prompt.
     return Decision(status="prompt", rule_id=None)
 
 

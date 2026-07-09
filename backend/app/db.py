@@ -17,7 +17,7 @@ from .config import get_settings
 
 logger = logging.getLogger(__name__)
 
-# Per-connection pragmas: PLAN §3.
+# Per-connection pragmas.
 PRAGMAS = [
     ("journal_mode", "WAL"),
     ("synchronous", "NORMAL"),
@@ -95,7 +95,7 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """
     sm = get_sessionmaker()
     async with sm() as session:
-        # PLAN §3: BEGIN IMMEDIATE for write transactions.
+        # BEGIN IMMEDIATE for write transactions.
         await session.execute(text("BEGIN IMMEDIATE"))
         try:
             yield session

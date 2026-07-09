@@ -1,6 +1,6 @@
 """sticky_note module type.
 
-A single note on a corkboard page (PLAN: corkboard board). The board orders notes
+A single note on a corkboard page. The board orders notes
 pinned-first then newest (``data.pinned`` + ``created_at``); ``data`` / ``config``
 carry the note's content and look.
 

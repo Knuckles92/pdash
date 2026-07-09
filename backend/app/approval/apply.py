@@ -6,7 +6,7 @@ transition to ``applied`` happens here, followed by an ``activity_log`` write
 in the calling router. Failures raise :class:`ApplyError`; callers translate
 those into a ``mark_application_failed`` call.
 
-Action-type dispatch table (PLAN §7.5 sub-state for fire_action):
+Action-type dispatch table (fire_action sub-state):
 
     create_module          -> :func:`apply_create_module`
     update_module_data     -> :func:`apply_update_module`
@@ -26,8 +26,8 @@ engine routes it to ``pending``, we mint the ULID *up front* and stash it in
 ``proposed_payload.provisional_id``. If/when the admin later approves the
 request, the apply function reuses that same ID as the real module's
 primary key. This way, agents that cached the provisional id from the
-202 response continue to work after approval. (Documented in
-PLAN.md open questions; the value is also returned by the propose endpoint.)
+ 202 response continue to work after approval. (The value is also
+returned by the propose endpoint.)
 """
 
 from __future__ import annotations
@@ -489,7 +489,7 @@ async def _execute_agent_message(
     """Drop a row in ``agent_messages`` for the target agent.
 
     The MCP tool surface for *reading* these messages is deferred — see
-    PLAN.md and the TODO Phase 1.5 marker below.
+    the TODO Phase 1.5 marker below.
     """
     cfg = json.loads(target.config or "{}")
     to_agent_id = cfg.get("to_agent_id")
@@ -658,7 +658,7 @@ async def apply_fire_action(
     Marks the request as ``applied`` (via the lifecycle helper), then attempts
     execution against the resolved action target. Execution success/failure
     populates ``executed_at`` and ``execution_result``. The request status
-    itself stays ``applied`` per PLAN §7.5 — the ``execution_result.ok``
+    itself stays ``applied`` — the ``execution_result.ok``
     field is the bit the UI should branch on.
 
     Async mode: the function returns immediately with a ``job_id`` in

@@ -4,7 +4,7 @@
 # whole stack is bound to localhost in docker-compose.yml; expose it via
 # Tailscale (`tailscale serve`) — never bind Caddy to a public interface.
 #
-# First-run flow (see docs/deploy.md for details):
+# First-run flow:
 #
 #   PDASH_BOOTSTRAP_ADMIN_PASSWORD=changeme docker compose up -d backend
 #   # backend prints the service secret on first init — copy it now
@@ -108,7 +108,7 @@ services:
       - frontend
     # Tailscale's `serve` is the public face. Caddy listens on the docker
     # bridge for plain HTTP from `tailscale serve` (or use `tls internal`
-    # mode and bind 443 — see docs/deploy.md for both setups).
+    # mode and bind 443).
     ports:
       - "127.0.0.1:8443:443"
       - "127.0.0.1:8080:80"
@@ -117,7 +117,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
       # If using Tailscale-issued certs, mount them in and reference the paths
-      # in the Caddyfile (commented out by default — see docs/deploy.md).
+      # in the Caddyfile (commented out by default).
       # - /var/lib/tailscale/certs:/tailscale-certs:ro
 
 volumes:

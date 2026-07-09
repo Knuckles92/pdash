@@ -59,7 +59,7 @@ function outcomeTone(outcome: string): "success" | "danger" | "warning" | "neutr
 /**
  * Compute which rules are shadowed by a strictly more-specific rule (same
  * action_type, scope is a superset, equal or higher priority). Best-effort
- * client-side detection per PLAN §7.4.
+ * client-side detection.
  */
 function computeShadows(rules: ApprovalRule[]): Map<string, string> {
   const shadows = new Map<string, string>();

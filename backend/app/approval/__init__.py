@@ -1,6 +1,6 @@
 """Approval engine: rule matching, lifecycle, and apply.
 
-Phase 3 implementation per PLAN §7. The package is split into:
+Approval-engine package. Split into:
 
 - ``engine``     — rule cache + matching + decision.
 - ``lifecycle``  — explicit state machine for ``approval_requests.status``.

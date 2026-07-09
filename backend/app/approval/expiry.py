@@ -3,7 +3,7 @@
 Phase 3 keeps this as an admin-callable function rather than a background
 daemon. Phase 6 will add a periodic scheduler.
 
-PLAN §10 P0 item 7: expired is a distinct status from denied — agents can
+Expired is a distinct status from denied — agents can
 re-submit and audit-log shows the natural reason.
 """
 

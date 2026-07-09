@@ -6,7 +6,7 @@
  * - A single ``EventSource`` for the entire app, listening to the union of
  *   subscribed channels.
  * - Consumers register via ``useChannel(channel, handler)``; we close and
- *   reopen the EventSource whenever the topic set changes (per PLAN).
+ *   reopen the EventSource whenever the topic set changes.
  * - Always-on channels: ``approvals`` and ``pages`` (the sidebar pending
  *   badge + page list need them).
  * - On ``resync_required``, any handler registered as a refetch callback for

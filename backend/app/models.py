@@ -1,4 +1,4 @@
-"""SQLAlchemy 2.0 ORM models. Mirrors PLAN §3."""
+"""SQLAlchemy 2.0 ORM models."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ class Base(DeclarativeBase):
 
 
 # ---------------------------------------------------------------------------
-# Auth / settings (not in PLAN §3 but required to bootstrap admin)
+# Auth / settings (required to bootstrap admin)
 # ---------------------------------------------------------------------------
 
 

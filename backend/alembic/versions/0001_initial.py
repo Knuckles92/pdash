@@ -27,7 +27,7 @@ def _new_id(prefix: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Default approval rules (PLAN §7.2)
+# Default approval rules
 # ---------------------------------------------------------------------------
 DEFAULT_RULES = [
     # action_type, owner_scope, outcome

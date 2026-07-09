@@ -1,6 +1,6 @@
 """Idempotency-Key handling for the ``/internal/*`` surface.
 
-Scope is ``(agent_id, tool, key)`` per PLAN §10 P1 #10. Returns the cached
+Scope is ``(agent_id, tool, key)``. Returns the cached
 response dict with the original ``status_code``; the calling route sets the
 ``X-Idempotency-Replay: true`` header.
 """

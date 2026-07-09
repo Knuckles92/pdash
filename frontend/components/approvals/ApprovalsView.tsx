@@ -355,7 +355,7 @@ export function ApprovalsView({
     request: ApprovalRequest,
     outcome: ApprovalRuleDraft["outcome"],
   ): Partial<ApprovalRuleDraft> {
-    // Compute the narrowest draft per PLAN §7.4.
+    // Compute the narrowest draft rule.
     const draft: Partial<ApprovalRuleDraft> = {
       agent_id: request.agent_id ?? "*",
       action_type: request.action_type,

@@ -6,8 +6,8 @@ FastAPI service for pdash. Phase 1 ships:
 - Admin auth (signed-cookie session + double-submit CSRF + progressive throttle).
 - Module / page / agent / iframe-allowlist / action-target CRUD endpoints (admin path).
 - Module schema registry: nine module types as Pydantic models with a JSON Schema endpoint.
-- SQLite (WAL) with all tables, indexes and CHECK constraints from PLAN §3, applied by a single Alembic migration.
-- Seeds: the `pages.home` row and the nine built-in `approval_rules` from PLAN §7.2.
+- SQLite (WAL) with tables, indexes and CHECK constraints applied by Alembic migrations.
+- Seeds: the `pages.home` row and the nine built-in `approval_rules`.
 - `/healthz`, `/readyz` (no DB ping), and a session-gated Swagger UI at `/api/v1/docs`.
 - RFC 7807 `application/problem+json` errors with stable `code` strings.
 - Pytest harness covering auth, modules, pages, agents, schemas, and idempotency replay.

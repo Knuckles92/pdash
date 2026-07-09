@@ -31,4 +31,4 @@ The skill route is unauthenticated and contains only setup guidance. It points
 the agent at the sibling `/mcp` endpoint, then walks through
 `onboarding` -> `request_registration` -> admin approval -> `claim_registration`.
 
-See [docs/dev.md](../docs/dev.md), `scripts/run.sh`, and `scripts/smoke.py`.
+See `scripts/run.sh` and `scripts/smoke.py`.

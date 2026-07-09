@@ -6,7 +6,7 @@ Two routes:
 - ``GET /api/v1/internal/events`` — service-secret auth, MCP-allowed topics
   only (``approvals`` + ``agent:<agent_id>``).
 
-Wire format (PLAN §2):
+Wire format:
 
     id: 12345
     event: module_update

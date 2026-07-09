@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO")
 
     # Auth-cache TTL: how long a resolved (api_key -> agent_info) entry stays
-    # warm. Revocation propagates within this window. PLAN §6 says ≤30s.
+    # warm. Revocation propagates within this window (≤30s).
     auth_cache_ttl_s: float = Field(default=30.0)
 
     # Idempotency dedupe window: when the calling agent doesn't pass an

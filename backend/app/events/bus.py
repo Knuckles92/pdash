@@ -1,6 +1,6 @@
 """In-process pub/sub EventBus used by the SSE endpoints.
 
-Design (PLAN §2):
+Design:
 
 - A module-level singleton :class:`EventBus`. Initialised on app startup; no
   per-request setup. Lifecycle is process-wide.
