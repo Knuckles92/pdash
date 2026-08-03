@@ -1,7 +1,8 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/cn";
 
@@ -17,23 +18,35 @@ type DialogProps = {
   className?: string;
 };
 
+/**
+ * Modal dialog. Portaled to document.body so fixed positioning is never
+ * trapped by ancestor containing blocks (backdrop-filter / transform / etc.).
+ * See Sheet.tsx for the mobile drawer case this also fixes.
+ */
 export function Dialog({ open, onClose, title, description, children, footer, className }: DialogProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      document.body.style.overflow = prevOverflow;
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
       className="anim-overlay-in fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-4 backdrop-blur-sm"
       role="dialog"
@@ -73,6 +86,7 @@ export function Dialog({ open, onClose, title, description, children, footer, cl
           </div>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
