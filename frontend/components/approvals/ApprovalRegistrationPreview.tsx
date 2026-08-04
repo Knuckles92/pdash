@@ -7,7 +7,7 @@ import type { RegistrationPreview } from "@/lib/api";
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] uppercase tracking-wide text-[var(--muted-fg)]">{label}</span>
+      <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">{label}</span>
       <span className="break-words text-[var(--fg)]">{value}</span>
     </div>
   );
@@ -15,10 +15,10 @@ function Field({ label, value }: { label: string; value: string }) {
 
 export function ApprovalRegistrationPreview({ preview }: { preview: RegistrationPreview }) {
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3">
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)] p-4">
       <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
         <UserPlus className="size-3.5 text-[var(--muted-fg)]" />
-        <span className="font-medium text-sm">
+        <span className="text-sm font-semibold tracking-tight">
           {preview.requested_name ?? "New agent"}
         </span>
       </div>

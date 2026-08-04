@@ -45,7 +45,7 @@ export function MasterDetailLayout({
       {/* List — hidden on mobile once a row is open. */}
       <div
         className={cn(
-          "flex-col gap-0.5 rounded-lg border border-[var(--border)] bg-[var(--card)] p-1.5",
+          "flex-col gap-0.5 rounded-xl border border-[var(--border)] bg-[var(--card)] p-2 shadow-[var(--shadow-sm)]",
           selected ? "hidden md:flex" : "flex",
         )}
       >
@@ -69,14 +69,14 @@ export function MasterDetailLayout({
             <button
               type="button"
               onClick={() => setSelectedId(null)}
-              className="mb-2 inline-flex items-center gap-1 text-sm text-[var(--muted-fg)] hover:text-[var(--fg)] md:hidden"
+              className="mb-2 inline-flex items-center gap-1 rounded-lg text-sm text-[var(--muted-fg)] transition-colors hover:text-[var(--fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] md:hidden"
             >
               <ChevronLeft className="size-4" /> Back to list
             </button>
             {renderCard(selected.request, { defaultExpanded: true })}
           </>
         ) : (
-          <div className="flex h-full min-h-40 items-center justify-center rounded-lg border border-dashed border-[var(--border)] text-sm text-[var(--muted-fg)]">
+          <div className="flex h-full min-h-40 items-center justify-center rounded-xl border border-dashed border-[var(--border-strong)] bg-[var(--card)]/60 text-sm text-[var(--muted-fg)]">
             Select a request to review
           </div>
         )}

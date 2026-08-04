@@ -69,7 +69,8 @@ export function FilePicker({
         </Label>
         <select
           className={cn(
-            "block w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm",
+            "block h-9 w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm shadow-[var(--shadow-xs)] transition-[border-color,box-shadow]",
+            "hover:border-[var(--border-strong)] focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-[3px] focus-visible:ring-[var(--accent-soft)]",
           )}
           value={fileId}
           onChange={(e) => selectFile(e.target.value)}
@@ -90,13 +91,13 @@ export function FilePicker({
       </div>
 
       {selected && (
-        <div className="flex items-center gap-3 rounded-md border border-[var(--border)] p-2">
+        <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 p-3">
           {selected.kind === "image" ? (
             // eslint-disable-next-line @next/next/no-img-element -- same-origin /api file
             <img
               src={selected.url}
               alt=""
-              className="size-12 rounded border border-[var(--border)] object-cover shrink-0"
+              className="size-12 rounded-md border border-[var(--border)] object-cover shrink-0"
             />
           ) : (
             <FileText className="size-8 text-[var(--muted-fg)] shrink-0" />

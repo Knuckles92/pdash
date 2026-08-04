@@ -25,7 +25,7 @@ function apply(mode: Mode) {
   }
 }
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const [mode, setMode] = useState<Mode>("system");
 
   useEffect(() => {
@@ -40,6 +40,7 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
+      className={className}
       onClick={() => {
         apply(next);
         setMode(next);

@@ -47,8 +47,13 @@ stop_dev_stack() {
   # pids for one port (uvicorn's reloader + worker), so handle each separately.
   local port holders pid
   for port in $(dev_ports); do
-    read -r -a holders <<<"$(fuser "$port/tcp" 2>/dev/null || true)" || true
-    for pid in "${holders[@]}"; do
+    holders=""
+    if command -v fuser >/dev/null 2>&1; then
+      holders="$(fuser "$port/tcp" 2>/dev/null || true)"
+    elif command -v lsof >/dev/null 2>&1; then
+      holders="$(lsof -ti "tcp:$port" 2>/dev/null || true)"
+    fi
+    for pid in $holders; do
       [[ -z "$pid" ]] && continue
       echo "Freeing orphan on port $port (pid $pid)"
       _kill_group "$pid"

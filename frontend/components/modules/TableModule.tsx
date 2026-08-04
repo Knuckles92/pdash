@@ -8,6 +8,7 @@ import { safeHref } from "@/lib/modules/safehref";
 import { severityChipClass } from "@/lib/modules/severity";
 import { formatDateTime } from "@/lib/time";
 import type {
+  Severity,
   TableCell,
   TableCellRich,
   TableColumn,
@@ -15,6 +16,15 @@ import type {
   TableData,
   TableRow,
 } from "@/lib/modules/types";
+
+// Row tints (chips use the shared severityChipClass helper).
+const SEVERITY_ROW: Record<Severity, string> = {
+  error: "bg-[var(--danger-soft)]",
+  warning: "bg-[var(--warning-soft)]",
+  success: "bg-[var(--success-soft)]",
+  info: "bg-[var(--info-soft)]",
+  muted: "bg-[var(--muted)]/60",
+};
 
 function isRich(cell: TableCell): cell is TableCellRich {
   return cell !== null && typeof cell === "object";
@@ -29,8 +39,8 @@ function renderCell(col: TableColumn, cell: TableCell) {
       return (
         <span
           className={cn(
-            "inline-flex items-center rounded-full border px-2 py-0.5 text-xs",
-            severityChipClass(typeof sev === "string" ? (sev as never) : null),
+            "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
+            severityChipClass(typeof sev === "string" ? sev : null),
           )}
         >
           {isRich(cell) ? cell.text ?? sev : String(cell)}
@@ -46,7 +56,7 @@ function renderCell(col: TableColumn, cell: TableCell) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-[var(--accent)] hover:underline"
+          className="inline-flex items-center gap-1 rounded text-[var(--accent)] transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
         >
           {text} <ExternalLink className="size-3" />
         </a>
@@ -115,7 +125,7 @@ export function TableModule({ data, config }: { data: TableData; config: TableCo
             <CardRow key={row.row_id ?? ri} row={row} cols={cols} />
           ))}
         </div>
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--card)]">
           <DesktopTable rows={rows} cols={cols} density={density} />
         </div>
       </>
@@ -124,7 +134,7 @@ export function TableModule({ data, config }: { data: TableData; config: TableCo
 
   // scroll: just put it in a scrollable container on all sizes
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--card)]">
       <DesktopTable rows={rows} cols={cols} density={density} />
     </div>
   );
@@ -141,7 +151,7 @@ function DesktopTable({
 }) {
   return (
     <table className="w-full text-sm border-collapse">
-      <thead className="border-b border-[var(--border)]">
+      <thead className="border-b border-[var(--border)] bg-[var(--muted)]/60">
         <tr>
           {cols.map((c) => (
             <th
@@ -158,13 +168,13 @@ function DesktopTable({
           ))}
         </tr>
       </thead>
-      <tbody>
+      <tbody className="divide-y divide-[var(--border)]">
         {rows.map((row, ri) => (
           <tr
             key={row.row_id ?? ri}
             className={cn(
-              "border-b border-[var(--border)] last:border-b-0",
-              row.severity && severityChipClass(row.severity),
+              "transition-colors hover:bg-[var(--muted)]/60",
+              row.severity && SEVERITY_ROW[row.severity],
             )}
           >
             {cols.map((c) => (
@@ -192,13 +202,13 @@ function CardRow({ row, cols }: { row: TableRow; cols: TableColumn[] }) {
   return (
     <div
       className={cn(
-        "rounded-md border border-[var(--border)] p-3 flex flex-col gap-1.5",
-        row.severity && severityChipClass(row.severity),
+        "rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 flex flex-col gap-1.5",
+        row.severity && SEVERITY_ROW[row.severity],
       )}
     >
       {cols.map((c) => (
         <div key={c.id} className="flex items-center justify-between gap-3 text-sm">
-          <span className="text-xs uppercase tracking-wide text-[var(--muted-fg)]">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
             {c.label}
           </span>
           <span className="text-right">{renderCell(c, row.cells?.[c.id] ?? null)}</span>

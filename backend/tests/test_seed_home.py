@@ -29,9 +29,14 @@ def test_every_tile_validates_against_its_schema() -> None:
 
 def test_layout_covers_every_module_type_once() -> None:
     types = [spec["type"] for spec in home_example_modules(_NOW)]
-    # `file` is excluded from the seed: it references a registered file that
-    # only exists once an agent/admin actually drops + registers one.
-    expected = sorted(t for t in MODULE_TYPES if t != "file")
+    # Excluded from the home seed:
+    # - `file` references a registered file that only exists once an agent/admin
+    #   actually drops + registers one.
+    # - `sticky_note` only belongs on a corkboard page, not the default grid.
+    # - `html` is the canvas-page surface; agents propose it deliberately, and
+    #   a demo document would be dead weight on the default grid.
+    excluded = {"file", "sticky_note", "html"}
+    expected = sorted(t for t in MODULE_TYPES if t not in excluded)
     assert sorted(types) == expected
     assert len(types) == len(set(types)), "each module type should appear exactly once"
 

@@ -67,7 +67,7 @@ export function ModuleHost({
     >
       <CardHeader
         className={cn(
-          "flex-row items-center justify-between gap-2 py-2",
+          "flex-row items-center justify-between gap-2 rounded-t-[11px] py-2.5",
           appearanceHeaderClass(appearance),
           solidHeader && "[&_button]:text-[var(--module-accent-fg)] [&_button:hover]:bg-white/15",
         )}
@@ -91,8 +91,8 @@ export function ModuleHost({
           </CardTitle>
           <span
             className={cn(
-              "text-[10px] uppercase tracking-wide",
-              solidHeader ? "text-[var(--module-accent-fg)] opacity-80" : "text-[var(--muted-fg)]",
+              "font-mono text-[10px] uppercase tracking-[0.1em]",
+              solidHeader ? "text-[var(--module-accent-fg)] opacity-80" : "text-[var(--muted-fg)]/80",
             )}
           >
             {MODULE_TYPE_LABELS[m.type as ModuleType] ?? m.type}
@@ -101,7 +101,7 @@ export function ModuleHost({
         <div className="flex items-center gap-1 shrink-0">
           <span
             className={cn(
-              "hidden md:inline text-xs",
+              "hidden md:inline font-mono text-[11px] tabular-nums",
               solidHeader ? "text-[var(--module-accent-fg)] opacity-80" : "text-[var(--muted-fg)]",
             )}
           >

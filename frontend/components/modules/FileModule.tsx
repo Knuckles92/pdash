@@ -23,8 +23,8 @@ export function FileModule({
 
   if (failed) {
     return (
-      <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm dark:border-amber-400/40 dark:bg-amber-400/10">
-        <AlertTriangle className="size-4 mt-0.5 text-amber-600 dark:text-amber-400" />
+      <div className="flex items-start gap-2 rounded-lg border border-[var(--warning)]/25 bg-[var(--warning-soft)] p-3 text-sm">
+        <AlertTriangle className="size-4 mt-0.5 text-[var(--warning)]" />
         <div className="min-w-0">
           <p className="font-medium">File unavailable.</p>
           <p className="text-xs text-[var(--muted-fg)] truncate">{data.display_name}</p>
@@ -43,7 +43,7 @@ export function FileModule({
           onError={() => setFailed(true)}
           style={{ maxHeight: config.max_height_px ?? 480 }}
           className={cn(
-            "w-full rounded-md border border-[var(--border)] bg-[var(--card)]",
+            "w-full rounded-lg border border-[var(--border)] bg-[var(--card)]",
             config.fit === "cover" ? "object-cover" : "object-contain",
           )}
         />
@@ -55,7 +55,7 @@ export function FileModule({
             {showDownload && (
               <a
                 href={downloadUrl}
-                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-[var(--muted)]"
+                className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 transition-colors hover:bg-[var(--muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                 aria-label="Download file"
               >
                 <Download className="size-3" />
@@ -71,7 +71,7 @@ export function FileModule({
   return (
     <a
       href={downloadUrl}
-      className="flex items-center gap-3 rounded-md border border-[var(--border)] p-3 hover:bg-[var(--muted)]"
+      className="flex items-center gap-3 rounded-lg border border-[var(--border)] p-3 transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--muted)]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
     >
       <FileText className="size-8 text-[var(--muted-fg)] shrink-0" />
       <div className="min-w-0 flex-1">

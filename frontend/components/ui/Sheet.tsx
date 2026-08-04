@@ -1,7 +1,8 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/cn";
 
@@ -20,6 +21,15 @@ type SheetProps = {
   className?: string;
 };
 
+/**
+ * Full-viewport drawer/sheet.
+ *
+ * Always portaled to document.body. Callers often mount sheets under sticky
+ * headers (or other ancestors with backdrop-filter / transform / filter), and
+ * those properties create a containing block that traps `position: fixed` —
+ * on mobile the Pages drawer was clipped to the header strip and painted
+ * under the main UI. Portaling avoids that class of stacking bugs entirely.
+ */
 export function Sheet({
   open,
   onClose,
@@ -30,60 +40,77 @@ export function Sheet({
   footer,
   className,
 }: SheetProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      document.body.style.overflow = prevOverflow;
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const sideClasses: Record<SheetSide, string> = {
-    right: "right-0 top-0 h-full w-full max-w-xl border-l",
-    left: "left-0 top-0 h-full w-full max-w-xl border-r",
-    bottom: "left-0 right-0 bottom-0 h-[85vh] max-h-[85vh] w-full border-t",
+    right: "anim-slide-in-right right-0 top-0 h-full w-full max-w-xl border-l rounded-l-2xl",
+    left: "anim-slide-in-left left-0 top-0 h-full w-full max-w-xl border-r rounded-r-2xl",
+    bottom:
+      "anim-slide-in-bottom left-0 right-0 bottom-0 h-[85vh] max-h-[85vh] w-full border-t rounded-t-2xl",
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 bg-black/50"
+      className="anim-overlay-in fixed inset-0 z-50 bg-[var(--overlay)] backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
       <div
         className={cn(
-          "absolute flex flex-col bg-[var(--card)] border-[var(--border)] shadow-xl",
+          "absolute flex flex-col border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-lg)]",
           sideClasses[side],
           className,
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between p-4 border-b border-[var(--border)]">
-          <div>
-            {title ? <h2 className="text-lg font-semibold">{title}</h2> : null}
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--border)] px-5 py-4">
+          <div className="min-w-0">
+            {title ? (
+              <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+            ) : null}
             {description ? (
               <p className="mt-1 text-sm text-[var(--muted-fg)]">{description}</p>
             ) : null}
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            aria-label="Close"
+            className="-mr-2 -mt-1 shrink-0 text-[var(--muted-fg)]"
+          >
             <X className="size-4" />
           </Button>
         </div>
-        <div className="flex-1 overflow-y-auto p-4">{children}</div>
+        <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
         {footer ? (
-          <div className="flex items-center justify-end gap-2 p-4 border-t border-[var(--border)]">
+          <div className="flex items-center justify-end gap-2 border-t border-[var(--border)] bg-[var(--muted)]/50 px-5 py-3.5">
             {footer}
           </div>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

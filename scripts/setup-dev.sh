@@ -43,7 +43,7 @@ if [[ ! -d mcp/.venv ]]; then
   python3.12 -m venv mcp/.venv
 fi
 mcp/.venv/bin/pip install -q -U pip
-(cd mcp && .venv/bin/pip install -q -e .)
+(cd mcp && .venv/bin/pip install -q -e ".[dev]")
 
 echo "==> Node: frontend"
 if [[ -f frontend/package-lock.json ]]; then

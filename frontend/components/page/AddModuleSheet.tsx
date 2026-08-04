@@ -66,6 +66,9 @@ const DEFAULT_DATA: Record<ModuleType, Record<string, unknown>> = {
   },
   action_button: { label: "Run", action_target_id: "" },
   file: { file_id: "", kind: "image", display_name: "" },
+  sticky_note: { text: "" },
+  progress: { bars: [] },
+  html: { html: "<!doctype html>\n<html>\n<head></head>\n<body>\n</body>\n</html>" },
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -96,8 +99,10 @@ function AppearanceWidget({ value, onChange, label }: Parameters<SchemaWidget>[0
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-md border border-[var(--border)] p-3">
-      <Label className="text-xs uppercase tracking-wide">{label ?? "Appearance"}</Label>
+    <div className="flex flex-col gap-3 rounded-xl border border-[var(--border)] p-4">
+      <Label className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
+        {label ?? "Appearance"}
+      </Label>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {MODULE_THEME_OPTIONS.map((option) => (
           <button
@@ -110,10 +115,10 @@ function AppearanceWidget({ value, onChange, label }: Parameters<SchemaWidget>[0
               })
             }
             className={cn(
-              "rounded-md border px-3 py-2 text-sm transition",
+              "rounded-lg border px-3 py-2 text-sm transition-colors",
               current.theme === option.value
-                ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--fg)]"
-                : "border-[var(--border)] text-[var(--muted-fg)] hover:bg-[var(--muted)]",
+                ? "border-[var(--accent-border)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                : "border-[var(--border)] text-[var(--muted-fg)] hover:border-[var(--border-strong)] hover:bg-[var(--muted)]",
             )}
           >
             {option.label}
@@ -129,7 +134,7 @@ function AppearanceWidget({ value, onChange, label }: Parameters<SchemaWidget>[0
           className={cn(
             "relative size-7 rounded-full border transition",
             current.color === null
-              ? "border-[var(--fg)] ring-2 ring-[var(--accent)]/30"
+              ? "border-[var(--fg)] ring-2 ring-[var(--accent-soft)]"
               : "border-[var(--border)] hover:scale-105",
           )}
         >
@@ -147,7 +152,7 @@ function AppearanceWidget({ value, onChange, label }: Parameters<SchemaWidget>[0
               className={cn(
                 "flex size-7 items-center justify-center rounded-full border transition",
                 selected
-                  ? "border-[var(--fg)] ring-2 ring-[var(--accent)]/30"
+                  ? "border-[var(--fg)] ring-2 ring-[var(--accent-soft)]"
                   : "border-transparent hover:scale-105",
               )}
               style={{
@@ -217,6 +222,8 @@ function advancedSummary(type: ModuleType | null, data: Record<string, unknown>)
       return countArrayField(data, "series", "series", "series");
     case "log_stream":
       return countArrayField(data, "entries", "entry", "entries");
+    case "progress":
+      return countArrayField(data, "bars", "bar", "bars");
     case "markdown":
       return data.body ? "Body set" : "Empty body";
     case "iframe":
@@ -400,7 +407,7 @@ export function AddModuleSheet({ open, onClose, pageId, nextPosition, module, on
                 key={t}
                 type="button"
                 onClick={() => selectType(t)}
-                className="text-left rounded-md border border-[var(--border)] p-3 hover:bg-[var(--muted)]"
+                className="rounded-lg border border-[var(--border)] p-3 text-left transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--muted)]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
               >
                 <div className="font-medium">{MODULE_TYPE_LABELS[t]}</div>
                 <div className="text-xs text-[var(--muted-fg)]">
@@ -440,10 +447,10 @@ export function AddModuleSheet({ open, onClose, pageId, nextPosition, module, on
                   type="button"
                   onClick={() => setWidth(opt.value)}
                   className={cn(
-                    "flex-1 rounded-md border px-3 py-2 text-sm transition",
+                    "flex-1 rounded-lg border px-3 py-2 text-sm transition-colors",
                     width === opt.value
-                      ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--fg)]"
-                      : "border-[var(--border)] text-[var(--muted-fg)] hover:bg-[var(--muted)]",
+                      ? "border-[var(--accent-border)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                      : "border-[var(--border)] text-[var(--muted-fg)] hover:border-[var(--border-strong)] hover:bg-[var(--muted)]",
                   )}
                 >
                   {opt.label}
@@ -473,7 +480,7 @@ export function AddModuleSheet({ open, onClose, pageId, nextPosition, module, on
             <section className="border-t border-[var(--border)] pt-2">
               <button
                 type="button"
-                className="flex w-full items-center justify-between gap-3 rounded-md px-2 py-2 text-left transition hover:bg-[var(--muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                className="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-[var(--muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                 aria-expanded={advancedOpen}
                 onClick={() => setAdvancedOpen((current) => !current)}
               >
@@ -494,7 +501,7 @@ export function AddModuleSheet({ open, onClose, pageId, nextPosition, module, on
                 <div className="mt-3 flex flex-col gap-4">
                   {advancedDataFormSchema && type !== "file" && (
                     <section>
-                      <h3 className="text-xs uppercase tracking-wide text-[var(--muted-fg)] mb-2">
+                      <h3 className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
                         Data
                       </h3>
                       <SchemaForm
@@ -508,7 +515,7 @@ export function AddModuleSheet({ open, onClose, pageId, nextPosition, module, on
                   )}
                   {advancedConfigFormSchema && (
                     <section>
-                      <h3 className="text-xs uppercase tracking-wide text-[var(--muted-fg)] mb-2">
+                      <h3 className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
                         Settings
                       </h3>
                       <SchemaForm

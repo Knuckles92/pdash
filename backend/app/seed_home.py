@@ -27,7 +27,7 @@ Every content row is a wide (2/3) tile beside a narrow (1/3) tile, so the rows
 tile cleanly with no gaps. Colours stay inside a cohesive cool / analogous
 palette anchored on indigo; every card uses the ``tinted`` treatment except the
 ``solid`` welcome hero. The result is meant to read as a designed page rather
-than a scatter of swatches, while still exercising all nine module types.
+than a scatter of swatches, while still exercising every module type.
 """
 
 from __future__ import annotations
@@ -63,7 +63,7 @@ def home_example_modules(now: datetime) -> list[dict]:
         # 0 ── Welcome hero (full width) ────────────────────────────────────
         {
             "type": "notification",
-            "title": "Welcome to Home Base",
+            "title": "Welcome to pdash",
             "colspan": 3,
             "data": {
                 "message": (
@@ -395,6 +395,57 @@ def home_example_modules(now: datetime) -> list[dict]:
                 "style": "secondary",
                 "show_last_result": True,
                 "appearance": {"theme": "tinted", "color": "violet"},
+            },
+        },
+        # 9 ── Storage & Backups (full-width progress band) ───────────────
+        {
+            "type": "progress",
+            "title": "Storage & Backups",
+            "colspan": 3,
+            "data": {
+                "bars": [
+                    {
+                        "id": "disk",
+                        "label": "Disk usage",
+                        "current": 1.8,
+                        "target": 2,
+                        "unit": "TB",
+                        "severity": "warning",
+                        "hint": "Primary volume /data",
+                    },
+                    {
+                        "id": "backups",
+                        "label": "Backups completed",
+                        "current": 14,
+                        "target": 14,
+                        "unit": "jobs",
+                        "severity": "success",
+                    },
+                    {
+                        "id": "snapshots",
+                        "label": "Snapshots retained",
+                        "current": 38,
+                        "target": 50,
+                        "unit": "daily",
+                        "severity": "info",
+                    },
+                    {
+                        "id": "mailbox",
+                        "label": "Mailbox",
+                        "current": 3.2,
+                        "target": 10,
+                        "unit": "GB",
+                        "severity": "success",
+                    },
+                ],
+                "updated_at": now_s,
+            },
+            "config": {
+                "show_values": True,
+                "show_percent": True,
+                "density": "normal",
+                "sort": "as-is",
+                "appearance": {"theme": "tinted", "color": "blue"},
             },
         },
     ]

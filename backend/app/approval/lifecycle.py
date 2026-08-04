@@ -1,4 +1,4 @@
-"""State machine for ``approval_requests.status`` (PLAN §7.5).
+"""State machine for ``approval_requests.status``.
 
 Allowed transitions::
 
@@ -145,7 +145,7 @@ def mark_execution_failed(
 ) -> None:
     """Mark a fire_action_button as approved + applied + execution_failed.
 
-    The status flips to ``application_failed`` per PLAN §7.4 (action button
+    The status flips to ``application_failed`` (action button
     distinct fields), with ``execution_result`` capturing the failure body.
     """
     # Allow from applied (the synchronous path applied first, then failed
@@ -155,9 +155,9 @@ def mark_execution_failed(
     request.executed_at = utcnow_iso()
     if result is not None:
         request.execution_result = json.dumps(result, separators=(",", ":"), default=str)
-    # We don't mutate the status because the PLAN distinguishes
-    # `executed | execution_failed` as sub-states under `applied`. The
-    # `execution_result.ok` field tells the UI which it is.
+    # We don't mutate the status because `executed | execution_failed`
+    # are sub-states under `applied`. The `execution_result.ok` field
+    # tells the UI which it is.
 
 
 __all__ = [

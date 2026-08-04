@@ -207,8 +207,12 @@ function ObjectField({
   const props = resolvedSchema.properties ?? {};
   const requiredSet = new Set(resolvedSchema.required ?? []);
   return (
-    <div className="flex flex-col gap-3 rounded-md border border-[var(--border)] p-3">
-      {label && <Label className="text-xs uppercase tracking-wide">{label}</Label>}
+    <div className="flex flex-col gap-3 rounded-lg border border-[var(--border)] p-3">
+      {label && (
+        <Label className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
+          {label}
+        </Label>
+      )}
       {Object.entries(props).map(([key, propSchema]) => (
         <SchemaField
           key={key}
@@ -240,6 +244,8 @@ function ArrayField({
   const root = rootSchema ?? schema;
   const arrayValue = Array.isArray(value) ? value : [];
   const itemSchema = resolvedSchema.items ?? {};
+  // Object items draw their own bordered group; box scalar rows here instead.
+  const boxedRows = typeOf(effectiveSchema(itemSchema, root)) !== "object";
   return (
     <div className="flex flex-col gap-2">
       {label && (
@@ -250,7 +256,13 @@ function ArrayField({
       )}
       <div className="flex flex-col gap-2">
         {arrayValue.map((item, index) => (
-          <div key={index} className="flex items-start gap-2">
+          <div
+            key={index}
+            className={cn(
+              "flex items-start gap-2",
+              boxedRows && "rounded-lg border border-[var(--border)] p-3",
+            )}
+          >
             <div className="flex-1">
               <SchemaField
                 schema={itemSchema}
@@ -306,7 +318,8 @@ function EnumField({ schema, value, onChange, label, required, resolvedSchema }:
       )}
       <select
         className={cn(
-          "block w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm",
+          "block h-9 w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm shadow-[var(--shadow-xs)] transition-[border-color,box-shadow]",
+          "hover:border-[var(--border-strong)] focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-[3px] focus-visible:ring-[var(--accent-soft)]",
         )}
         value={value === null || value === undefined ? "" : String(value)}
         onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
@@ -332,7 +345,7 @@ function BooleanField({ value, onChange, label, required }: FieldProps) {
         type="checkbox"
         checked={Boolean(value)}
         onChange={(e) => onChange(e.target.checked)}
-        className="size-4"
+        className="size-4 rounded border-[var(--border-strong)] accent-[var(--accent)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--accent-soft)]"
       />
       <span>
         {label}

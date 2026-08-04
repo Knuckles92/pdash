@@ -4,8 +4,8 @@ import { ExternalLink } from "lucide-react";
 
 import { cn } from "@/lib/cn";
 import { safeHref } from "@/lib/modules/safehref";
-import { severityChipClass } from "@/lib/modules/severity";
 import type { LinkListConfig, LinkListData } from "@/lib/modules/types";
+import { severityChipClass } from "@/lib/modules/severity";
 
 export function LinkListModule({
   data,
@@ -32,7 +32,7 @@ export function LinkListModule({
             target={config.open_in_new_tab !== false ? "_blank" : undefined}
             rel="noopener noreferrer"
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs hover:bg-[var(--muted)]",
+              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors hover:bg-[var(--muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
               severityChipClass(l.severity),
             )}
           >
@@ -54,7 +54,7 @@ export function LinkListModule({
             target={config.open_in_new_tab !== false ? "_blank" : undefined}
             rel="noopener noreferrer"
             className={cn(
-              "flex flex-col gap-1 rounded-md border border-[var(--border)] p-3 hover:bg-[var(--muted)]",
+              "flex flex-col gap-1 rounded-lg border border-[var(--border)] p-3 transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--muted)]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
             )}
           >
             <span className="flex items-center gap-1.5 text-sm font-medium">
@@ -81,7 +81,7 @@ export function LinkListModule({
             href={l.href}
             target={config.open_in_new_tab !== false ? "_blank" : undefined}
             rel="noopener noreferrer"
-            className="flex items-start justify-between gap-3 py-2 hover:bg-[var(--muted)] -mx-2 px-2 rounded-md"
+            className="flex items-start justify-between gap-3 py-2 -mx-2 px-2 rounded-lg transition-colors hover:bg-[var(--muted)]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
           >
             <div className="flex flex-col gap-0.5">
               <span className="text-sm font-medium">{l.label}</span>

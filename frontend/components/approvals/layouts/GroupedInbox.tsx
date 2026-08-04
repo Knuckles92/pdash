@@ -55,39 +55,39 @@ export function GroupedInbox({
         return (
           <div
             key={group.key}
-            className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card)]"
+            className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-sm)]"
           >
-            <div className="flex items-center gap-2 border-b border-[var(--border)] px-2 py-1.5">
+            <div className="flex items-center gap-2 border-b border-[var(--border)] bg-[var(--muted)]/40 px-2 py-1.5">
               <button
                 type="button"
                 onClick={() => toggleGroup(group.key)}
-                className="inline-flex size-6 items-center justify-center rounded text-[var(--muted-fg)] hover:bg-[var(--muted)]"
+                className="inline-flex size-6 items-center justify-center rounded-lg text-[var(--muted-fg)] transition-colors hover:bg-[var(--muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                 aria-label={isCollapsed ? "Expand" : "Collapse"}
               >
                 {isCollapsed ? <ChevronRight className="size-4" /> : <ChevronDown className="size-4" />}
               </button>
               <AgentAvatar agentId={group.agentId} name={group.label} size="sm" />
-              <span className="font-medium">{group.label}</span>
+              <span className="font-medium tracking-tight">{group.label}</span>
               {group.kind === "new" && (
-                <span className="rounded-full border border-[var(--border)] bg-[var(--muted)] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-[var(--muted-fg)]">
+                <span className="rounded-full border border-[var(--border)] bg-[var(--muted)] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[var(--muted-fg)]">
                   new
                 </span>
               )}
-              <span className="rounded-full bg-[var(--muted)] px-1.5 text-xs text-[var(--muted-fg)]">
+              <span className="rounded-full bg-[var(--muted)] px-1.5 text-xs tabular-nums text-[var(--muted-fg)]">
                 {group.rows.length}
               </span>
               <div className="ml-auto flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => onApproveMany(ids)}
-                  className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium text-[var(--success)] hover:bg-[var(--success)]/10"
+                  className="inline-flex h-7 items-center gap-1 rounded-lg px-2 text-xs font-medium text-[var(--success)] transition-colors hover:bg-[var(--success-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                 >
                   <Check className="size-3.5" /> all
                 </button>
                 <button
                   type="button"
                   onClick={() => onDenyMany(ids)}
-                  className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium text-[var(--danger)] hover:bg-[var(--danger)]/10"
+                  className="inline-flex h-7 items-center gap-1 rounded-lg px-2 text-xs font-medium text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                 >
                   <X className="size-3.5" /> all
                 </button>

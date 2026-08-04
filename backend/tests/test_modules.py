@@ -15,6 +15,7 @@ DEFAULT_EXAMPLE_TYPES = {
     "link_list",
     "iframe",
     "action_button",
+    "progress",
 }
 
 

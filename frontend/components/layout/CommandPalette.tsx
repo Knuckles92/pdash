@@ -107,7 +107,7 @@ export function CommandPalette({ open, onClose }: Props) {
     } else {
       url.searchParams.set("edit", "1");
     }
-    router.push(url.pathname + url.search);
+    router.push(url.pathname + url.search, { scroll: false });
     onClose();
   }, [router, onClose]);
 
@@ -147,30 +147,30 @@ export function CommandPalette({ open, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-[10vh]"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-[var(--overlay)] p-4 pt-[10vh] backdrop-blur-sm anim-overlay-in"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl rounded-lg border border-[var(--border)] bg-[var(--card)] shadow-2xl"
+        className="w-full max-w-xl overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-lg)] anim-pop-in"
         onClick={(e) => e.stopPropagation()}
       >
         <Command label="Command Palette" className="flex flex-col">
-          <div className="flex items-center gap-2 border-b border-[var(--border)] px-3 py-2">
+          <div className="flex items-center gap-2.5 border-b border-[var(--border)] px-4 py-3">
             <Search className="size-4 shrink-0 text-[var(--muted-fg)]" />
             <Command.Input
               value={query}
               onValueChange={setQuery}
               autoFocus
               placeholder="Search pages, commands, recent activity…"
-              className="flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--muted-fg)]"
+              className="flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--muted-fg)]/70"
             />
-            <kbd className="hidden md:inline rounded border border-[var(--border)] px-1.5 py-0.5 text-[10px] text-[var(--muted-fg)]">
+            <kbd className="hidden rounded-md border border-[var(--border)] bg-[var(--muted)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--muted-fg)] md:inline">
               esc
             </kbd>
           </div>
-          <Command.List className="max-h-[60vh] overflow-y-auto p-2 text-sm">
+          <Command.List className="max-h-[60vh] overflow-y-auto p-2 text-sm [&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.08em] [&_[cmdk-group-heading]]:text-[var(--muted-fg)]/80">
             <Command.Empty className="py-6 text-center text-[var(--muted-fg)]">
               No matches.
             </Command.Empty>
@@ -308,7 +308,7 @@ function PaletteItem({
     <Command.Item
       value={value}
       onSelect={onSelect}
-      className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm aria-selected:bg-[var(--muted)] aria-selected:text-[var(--fg)] text-[var(--muted-fg)]"
+      className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-[var(--muted-fg)] transition-colors aria-selected:bg-[var(--accent-soft)] aria-selected:text-[var(--accent)]"
     >
       {icon}
       <span className="flex-1 flex items-center">{children}</span>

@@ -6,13 +6,14 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
-import type { Page } from "@/lib/api";
 import { cn } from "@/lib/cn";
 
 import { PageActionsMenu } from "./PageActionsMenu";
+import { usePages } from "./PagesProvider";
 import { WarmLink } from "./WarmLink";
 
-export function MobilePagesDrawer({ pages }: { pages: Page[] }) {
+export function MobilePagesDrawer() {
+  const { pages } = usePages();
   const [open, setOpen] = useState(false);
   const pathname = usePathname() ?? "/";
   const [pendingPath, setPendingPath] = useState<string | null>(null);
@@ -43,9 +44,9 @@ export function MobilePagesDrawer({ pages }: { pages: Page[] }) {
               <div
                 key={p.id}
                 className={cn(
-                  "flex items-center rounded-md",
+                  "flex items-center rounded-lg transition-colors",
                   active
-                    ? "bg-[var(--muted)] font-medium"
+                    ? "bg-[var(--accent-soft)] font-medium text-[var(--accent)]"
                     : "hover:bg-[var(--muted)]",
                 )}
               >

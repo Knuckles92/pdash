@@ -22,7 +22,7 @@ export function SettingsTabs() {
   const pathname = usePathname() ?? "";
   const { count: orphanCount } = useOrphanCount();
   return (
-    <nav className="flex items-center gap-1 border-b border-[var(--border)]">
+    <nav className="flex items-center gap-1 overflow-x-auto border-b border-[var(--border)]">
       {TABS.map((t) => {
         const active = pathname.startsWith(t.href);
         const badge = "badge" in t ? t.badge : undefined;
@@ -32,16 +32,16 @@ export function SettingsTabs() {
             key={t.href}
             href={t.href}
             className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-2 text-sm border-b-2 -mb-px",
+              "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm border-b-2 -mb-px transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
               active
-                ? "border-[var(--accent)] text-[var(--fg)] font-medium"
-                : "border-transparent text-[var(--muted-fg)] hover:text-[var(--fg)]",
+                ? "border-[var(--accent)] font-medium text-[var(--accent)]"
+                : "border-transparent text-[var(--muted-fg)] hover:border-[var(--border-strong)] hover:text-[var(--fg)]",
             )}
           >
             {t.label}
             {orphanBadge && (
               <Badge
-                className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                tone="warning"
                 title={`${orphanCount} file${orphanCount === 1 ? "" : "s"} need attention`}
               >
                 {orphanCount}

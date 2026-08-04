@@ -46,7 +46,7 @@ def _to_out(row: Any) -> dict[str, Any]:
 
 
 def _split_kinds(kind: str | None) -> list[str]:
-    """Split a CSV of ``action_type`` values into a clean list of tokens."""
+    """Split a CSV query param (``kind``, ``outcome``) into clean tokens."""
     if not kind:
         return []
     return [k.strip() for k in kind.split(",") if k.strip()]
@@ -85,6 +85,7 @@ async def list_activity(
     _: Annotated[CurrentUser, Depends(require_session)],
     session: Annotated[AsyncSession, Depends(read_session)],
     kind: str | None = None,  # CSV of action_type values
+    outcome: str | None = None,  # CSV of outcome values
     actor: str | None = None,
     target_kind: str | None = None,
     target_id: str | None = None,
@@ -108,6 +109,12 @@ async def list_activity(
             clauses.append(f"a.action_type IN ({placeholders})")
             for i, k in enumerate(kinds):
                 params[f"kind{i}"] = k
+        outcomes = _split_kinds(outcome)
+        if outcomes:
+            placeholders = ",".join(f":outcome{i}" for i in range(len(outcomes)))
+            clauses.append(f"a.outcome IN ({placeholders})")
+            for i, o in enumerate(outcomes):
+                params[f"outcome{i}"] = o
         if actor:
             clauses.append("a.actor_id = :actor")
             params["actor"] = actor
@@ -149,6 +156,9 @@ async def list_activity(
     kinds = _split_kinds(kind)
     if kinds:
         stmt = stmt.where(ActivityLog.action_type.in_(kinds))
+    outcomes = _split_kinds(outcome)
+    if outcomes:
+        stmt = stmt.where(ActivityLog.outcome.in_(outcomes))
     if actor:
         stmt = stmt.where(ActivityLog.actor_id == actor)
     if target_kind:

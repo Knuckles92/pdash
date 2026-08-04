@@ -80,7 +80,7 @@ export function IframeAllowlistClient({ initialEntries }: Props) {
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-medium text-[var(--muted-fg)]">
+          <h2 className="text-sm font-semibold tracking-tight">
             Iframe allowlist
           </h2>
           <p className="text-xs text-[var(--muted-fg)]">
@@ -106,7 +106,7 @@ export function IframeAllowlistClient({ initialEntries }: Props) {
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-[var(--border)] text-xs uppercase tracking-wide text-[var(--muted-fg)]">
+              <thead className="border-b border-[var(--border)] bg-[var(--muted)]/60 text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
                 <tr>
                   <th className="text-left px-4 py-2">Host pattern</th>
                   <th className="text-left px-4 py-2 hidden md:table-cell">
@@ -118,12 +118,9 @@ export function IframeAllowlistClient({ initialEntries }: Props) {
                   <th className="text-right px-4 py-2">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[var(--border)]">
                 {entries.map((e) => (
-                  <tr
-                    key={e.id}
-                    className="border-b border-[var(--border)] last:border-b-0"
-                  >
+                  <tr key={e.id} className="transition-colors hover:bg-[var(--muted)]/60">
                     <td className="px-4 py-2 font-mono">{e.host_pattern}</td>
                     <td className="px-4 py-2 hidden md:table-cell text-[var(--muted-fg)] font-mono">
                       {e.path_prefix ?? "—"}

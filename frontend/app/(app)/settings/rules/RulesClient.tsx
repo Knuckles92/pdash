@@ -43,23 +43,23 @@ function scopeSummary(rule: ApprovalRule, pagesById: Map<string, Page>): string 
   return parts.join(" ");
 }
 
-function outcomeChipClass(outcome: string): string {
+function outcomeTone(outcome: string): "success" | "danger" | "warning" | "neutral" {
   switch (outcome) {
     case "auto_approve":
-      return "bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/30";
+      return "success";
     case "deny":
-      return "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30";
+      return "danger";
     case "prompt":
-      return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30";
+      return "warning";
     default:
-      return "";
+      return "neutral";
   }
 }
 
 /**
  * Compute which rules are shadowed by a strictly more-specific rule (same
  * action_type, scope is a superset, equal or higher priority). Best-effort
- * client-side detection per PLAN §7.4.
+ * client-side detection.
  */
 function computeShadows(rules: ApprovalRule[]): Map<string, string> {
   const shadows = new Map<string, string>();
@@ -206,7 +206,7 @@ export function RulesClient({ initialRules, agents, pages, pageId = null }: Rule
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-medium text-[var(--muted-fg)]">
+          <h2 className="text-sm font-semibold tracking-tight">
             {pageId
               ? `Approval rules for ${selectedPageLabel}`
               : "Approval rules (sorted by priority asc)"}
@@ -241,7 +241,7 @@ export function RulesClient({ initialRules, agents, pages, pageId = null }: Rule
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-[var(--border)] text-xs uppercase tracking-wide text-[var(--muted-fg)]">
+              <thead className="border-b border-[var(--border)] bg-[var(--muted)]/60 text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
                 <tr>
                   <th className="text-left px-3 py-2">Pri</th>
                   <th className="text-left px-3 py-2">Agent</th>
@@ -253,7 +253,7 @@ export function RulesClient({ initialRules, agents, pages, pageId = null }: Rule
                   <th className="text-right px-3 py-2">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[var(--border)]">
                 {rules.map((rule) => {
                   const agent =
                     rule.agent_id === "*"
@@ -264,7 +264,7 @@ export function RulesClient({ initialRules, agents, pages, pageId = null }: Rule
                     <tr
                       key={rule.id}
                       className={cn(
-                        "border-b border-[var(--border)] last:border-b-0",
+                        "transition-colors hover:bg-[var(--muted)]/60",
                         !rule.enabled && "opacity-60",
                       )}
                     >
@@ -273,13 +273,14 @@ export function RulesClient({ initialRules, agents, pages, pageId = null }: Rule
                         <div className="flex items-center gap-1">
                           <span className="truncate max-w-[10rem]">{agent}</span>
                           {rule.is_builtin && (
-                            <Badge className="bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30 text-[10px]">
+                            <Badge tone="info" className="text-[10px]">
                               built-in
                             </Badge>
                           )}
                           {shadowedBy && (
                             <Badge
-                              className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 text-[10px]"
+                              tone="warning"
+                              className="text-[10px]"
                               title={`Shadowed by ${shadowedBy}`}
                             >
                               shadowed
@@ -290,7 +291,7 @@ export function RulesClient({ initialRules, agents, pages, pageId = null }: Rule
                       <td className="px-3 py-2 font-mono text-xs">{rule.action_type}</td>
                       <td className="px-3 py-2 text-xs">{scopeSummary(rule, pagesById)}</td>
                       <td className="px-3 py-2">
-                        <Badge className={outcomeChipClass(rule.outcome)}>{rule.outcome}</Badge>
+                        <Badge tone={outcomeTone(rule.outcome)}>{rule.outcome}</Badge>
                       </td>
                       <td className="px-3 py-2 hidden lg:table-cell text-xs text-[var(--muted-fg)]">
                         {rule.application_count}× · {relativeTime(rule.last_applied_at)}
@@ -404,7 +405,7 @@ export function RulesClient({ initialRules, agents, pages, pageId = null }: Rule
                   <li key={m.request_id} className="py-2 text-xs">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-mono">{m.request_id}</span>
-                      <Badge className={outcomeChipClass(m.would_have_outcome)}>
+                      <Badge tone={outcomeTone(m.would_have_outcome)}>
                         → {m.would_have_outcome}
                       </Badge>
                     </div>

@@ -381,7 +381,7 @@ export function FamilyIcon({ family, className }: { family: ActionFamily; classN
 export function RiskBadge({ label }: { label: string | null }) {
   if (!label) return null;
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--warning)]/25 bg-[var(--warning-soft)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--warning)]">
       <AlertTriangle className="size-3" /> {label}
     </span>
   );
@@ -407,7 +407,7 @@ export function MiniDecide({
           e.stopPropagation();
           onApprove();
         }}
-        className="inline-flex size-7 items-center justify-center rounded-md text-[var(--success)] hover:bg-[var(--success)]/10"
+        className="inline-flex size-7 items-center justify-center rounded-lg text-[var(--success)] transition-colors hover:bg-[var(--success-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
       >
         <Check className="size-4" />
       </button>
@@ -419,7 +419,7 @@ export function MiniDecide({
           e.stopPropagation();
           onDeny();
         }}
-        className="inline-flex size-7 items-center justify-center rounded-md text-[var(--danger)] hover:bg-[var(--danger)]/10"
+        className="inline-flex size-7 items-center justify-center rounded-lg text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
       >
         <X className="size-4" />
       </button>
@@ -448,9 +448,11 @@ export function CompactRow({
     <div
       onClick={onClick}
       className={cn(
-        "group flex items-center gap-2 rounded-md py-1.5 pl-2 pr-1.5 text-sm",
+        "group flex items-center gap-2 rounded-lg py-1.5 pl-2 pr-1.5 text-sm transition-colors",
         onClick && "cursor-pointer",
-        active ? "bg-[var(--muted)]" : "hover:bg-[var(--muted)]/60",
+        active
+          ? "bg-[var(--accent-soft)] text-[var(--accent)]"
+          : "hover:bg-[var(--muted)]/60",
       )}
     >
       <span className={cn("h-7 w-1 shrink-0 rounded-full", st.rail)} />

@@ -263,7 +263,7 @@ export function ActionTargetsClient({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-medium text-[var(--muted-fg)]">
+          <h2 className="text-sm font-semibold tracking-tight">
             Action targets
           </h2>
           <p className="text-xs text-[var(--muted-fg)]">
@@ -276,17 +276,17 @@ export function ActionTargetsClient({
         </Button>
       </div>
 
-      <nav className="flex flex-wrap gap-1 border-b border-[var(--border)]">
+      <nav className="flex gap-1 overflow-x-auto border-b border-[var(--border)]">
         {KIND_TABS.map((tab) => (
           <button
             key={tab.kind}
             type="button"
             onClick={() => setActiveKind(tab.kind)}
             className={cn(
-              "px-3 py-2 text-sm border-b-2 -mb-px",
+              "shrink-0 whitespace-nowrap px-3 py-2 text-sm border-b-2 -mb-px transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
               activeKind === tab.kind
-                ? "border-[var(--accent)] text-[var(--fg)] font-medium"
-                : "border-transparent text-[var(--muted-fg)] hover:text-[var(--fg)]",
+                ? "border-[var(--accent)] font-medium text-[var(--accent)]"
+                : "border-transparent text-[var(--muted-fg)] hover:border-[var(--border-strong)] hover:text-[var(--fg)]",
             )}
           >
             {tab.label}
@@ -312,7 +312,7 @@ export function ActionTargetsClient({
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-[var(--border)] text-xs uppercase tracking-wide text-[var(--muted-fg)]">
+              <thead className="border-b border-[var(--border)] bg-[var(--muted)]/60 text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
                 <tr>
                   <th className="text-left px-4 py-2">Name</th>
                   <th className="text-left px-4 py-2 hidden md:table-cell">
@@ -322,24 +322,15 @@ export function ActionTargetsClient({
                   <th className="text-right px-4 py-2">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[var(--border)]">
                 {filtered.map((t) => (
-                  <tr
-                    key={t.id}
-                    className="border-b border-[var(--border)] last:border-b-0"
-                  >
+                  <tr key={t.id} className="transition-colors hover:bg-[var(--muted)]/60">
                     <td className="px-4 py-2 font-medium">{t.name}</td>
                     <td className="px-4 py-2 hidden md:table-cell">
-                      <Badge>{t.mode}</Badge>
+                      <Badge tone="neutral">{t.mode}</Badge>
                     </td>
                     <td className="px-4 py-2">
-                      <Badge
-                        className={cn(
-                          t.enabled
-                            ? "bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/30"
-                            : "bg-zinc-500/15 text-zinc-700 dark:text-zinc-300 border-zinc-500/30",
-                        )}
-                      >
+                      <Badge tone={t.enabled ? "success" : "neutral"}>
                         {t.enabled ? "enabled" : "disabled"}
                       </Badge>
                     </td>
@@ -464,7 +455,7 @@ export function ActionTargetsClient({
                     mode: e.target.value as ActionTargetMode,
                   }))
                 }
-                className="rounded-md border border-[var(--border)] bg-[var(--bg)] px-2 py-1.5 text-sm"
+                className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-2 py-1.5 text-sm shadow-[var(--shadow-xs)] transition-[border-color,box-shadow] hover:border-[var(--border-strong)] focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-[3px] focus-visible:ring-[var(--accent-soft)]"
               >
                 <option value="sync">sync</option>
                 <option value="async">async</option>
@@ -486,7 +477,7 @@ export function ActionTargetsClient({
             <div className="flex flex-col gap-1">
               <Label>Target agent</Label>
               <select
-                className="rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm"
+                className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm shadow-[var(--shadow-xs)] transition-[border-color,box-shadow] hover:border-[var(--border-strong)] focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-[3px] focus-visible:ring-[var(--accent-soft)]"
                 value={readToAgentId(form.configRaw)}
                 onChange={(e) => {
                   const next = { ...DEFAULT_CONFIG.agent_message, to_agent_id: e.target.value };
@@ -533,7 +524,7 @@ export function ActionTargetsClient({
                 setForm((f) => ({ ...f, configRaw: e.target.value }))
               }
               rows={10}
-              className="w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-xs font-mono"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs font-mono shadow-[var(--shadow-xs)] transition-[border-color,box-shadow] hover:border-[var(--border-strong)] focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-[3px] focus-visible:ring-[var(--accent-soft)]"
               spellCheck={false}
             />
           </div>

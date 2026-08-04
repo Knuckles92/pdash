@@ -22,7 +22,8 @@ class Settings(BaseSettings):
     # Service secret printed by `python -m app.cli init` on the backend.
     service_secret: str = Field(default="")
 
-    # MCP server bind.
+    # MCP server bind. Loopback by default for native dev; docker-compose sets
+    # 0.0.0.0 and remote tailnet agents come in through Caddy's /mcp* route.
     mcp_host: str = Field(default="127.0.0.1")
     mcp_port: int = Field(default=8090)
 
@@ -30,7 +31,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO")
 
     # Auth-cache TTL: how long a resolved (api_key -> agent_info) entry stays
-    # warm. Revocation propagates within this window. PLAN §6 says ≤30s.
+    # warm. Revocation propagates within this window (≤30s).
     auth_cache_ttl_s: float = Field(default=30.0)
 
     # Idempotency dedupe window: when the calling agent doesn't pass an

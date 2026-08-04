@@ -46,7 +46,7 @@ export function McpCallStage() {
             <span className="size-2.5 rounded-full bg-[var(--success)]/50" />
           </span>
           <AgentBadge agentId="agt_ops-bot" displayName="ops-bot" />
-          <span className="ml-auto text-[10px] uppercase tracking-wide text-[var(--muted-fg)]">
+          <span className="ml-auto text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
             MCP · tool call
           </span>
         </div>
@@ -83,7 +83,7 @@ export function RuleMatchStage({ outcome }: { outcome: OutcomeId }) {
         style={{ borderLeftColor: `var(--${current.tone})` }}
       >
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] uppercase tracking-wide text-[var(--muted-fg)]">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
             {current.matched ? "Matched rule" : "No match"}
           </span>
           <Badge className="border-[var(--border)] bg-[var(--bg)] font-mono text-[var(--muted-fg)]">
@@ -188,23 +188,17 @@ export function ReviewStage({
       <div className="flex items-center gap-2 text-xs">
         <span className="font-medium text-[var(--fg)]">Approvals</span>
         {queueCount > 0 ? (
-          <Badge className="border-transparent bg-[var(--accent)] text-[var(--accent-fg)]">
-            {queueCount} pending
-          </Badge>
+          <Badge tone="solid">{queueCount} pending</Badge>
         ) : (
-          <Badge className="border-[var(--border)] bg-[var(--muted)] text-[var(--muted-fg)]">
-            nothing to review
-          </Badge>
+          <Badge tone="neutral">nothing to review</Badge>
         )}
       </div>
 
       <Card className={cn("overflow-hidden", !actionable && "opacity-90")}>
-        <div className="flex flex-col gap-3 p-3">
+        <div className="flex flex-col gap-3 p-4">
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <AgentBadge agentId="agt_ops-bot" displayName="ops-bot" />
-            <Badge className="border-[var(--border)] bg-[var(--muted)] text-[var(--fg)]">
-              Update data
-            </Badge>
+            <Badge tone="neutral">Update data</Badge>
             <span className="truncate text-sm font-medium">System health</span>
             <span className="ml-auto text-[var(--muted-fg)]">just now</span>
           </div>
@@ -212,7 +206,7 @@ export function ReviewStage({
           <div className="text-xs text-[var(--muted-fg)]">fields: Disk</div>
 
           <div
-            className="flex items-start gap-2 rounded-md border px-2.5 py-1.5 text-xs"
+            className="flex items-start gap-2 rounded-lg border px-2.5 py-1.5 text-xs"
             style={toneTint(status.tone, { bg: 12, border: 30 })}
           >
             <StatusIcon className="mt-px size-3.5 shrink-0" />
@@ -223,7 +217,7 @@ export function ReviewStage({
             type="button"
             onClick={() => setShowDetails((s) => !s)}
             aria-expanded={showDetails}
-            className="inline-flex w-fit items-center gap-1 text-xs text-[var(--muted-fg)] hover:text-[var(--fg)]"
+            className="inline-flex w-fit items-center gap-1 rounded-md text-xs text-[var(--muted-fg)] transition-colors hover:text-[var(--fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
           >
             {showDetails ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
             {showDetails ? "Hide details" : "Show details"}
@@ -231,8 +225,8 @@ export function ReviewStage({
 
           <div className="hiw-collapsible -mt-1" data-open={showDetails}>
             <div>
-              <div className="rounded-md border border-[var(--border)] bg-[var(--muted)]/40 p-2.5">
-                <div className="mb-1.5 text-[10px] uppercase tracking-wide text-[var(--muted-fg)]">
+              <div className="rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 p-2.5">
+                <div className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
                   Preview
                 </div>
                 <div className="flex items-center gap-2 text-xs">
@@ -340,7 +334,7 @@ function MiniModuleCard({
       <CardHeader className="flex-row items-center justify-between gap-2 py-2">
         <div className="flex min-w-0 items-center gap-2">
           <CardTitle className="truncate">{title}</CardTitle>
-          <span className="text-[10px] uppercase tracking-wide text-[var(--muted-fg)]">{type}</span>
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">{type}</span>
         </div>
         <span className="hidden text-xs text-[var(--muted-fg)] sm:inline">just now</span>
       </CardHeader>
@@ -371,7 +365,7 @@ export function DashboardStage({ outcome, applied }: { outcome: OutcomeId; appli
         </dl>
         {!applied && (
           <div
-            className="mt-3 flex items-center gap-2 rounded-md border border-dashed px-2 py-1.5 text-xs"
+            className="mt-3 flex items-center gap-2 rounded-lg border border-dashed px-2 py-1.5 text-xs"
             style={{
               borderColor: `color-mix(in srgb, var(--${ghostTone}) 45%, transparent)`,
               color: `var(--${ghostTone})`,

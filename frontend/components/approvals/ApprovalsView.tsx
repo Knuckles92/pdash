@@ -14,6 +14,7 @@ import {
 import { LayoutSwitcher } from "@/components/approvals/layouts/LayoutSwitcher";
 import { useApprovalLayout } from "@/components/approvals/layouts/useApprovalLayout";
 import { RuleEditor } from "@/components/approvals/RuleEditor";
+import { ConsolePath } from "@/components/layout/ConsolePath";
 import { useChannel } from "@/components/layout/RealtimeProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -59,7 +60,12 @@ const EMPTY_FILTERS: Filters = {
 
 type RuleDialogState =
   | { open: false }
-  | { open: true; draft: Partial<ApprovalRuleDraft>; requestId: string };
+  | {
+      open: true;
+      draft: Partial<ApprovalRuleDraft>;
+      requestId: string;
+      decideAfterSave: "approve" | null;
+    };
 
 type ApprovalsViewProps = {
   initialRequests: ApprovalRequest[];
@@ -345,16 +351,15 @@ export function ApprovalsView({
     }, 5000);
   }
 
-  /** Approve/deny with a rule: open editor; on save submit decision with create_rule. */
-  function openRuleFlow(
+  function draftRuleForRequest(
     request: ApprovalRequest,
-    decision: "approve" | "deny",
-  ): void {
-    // Compute the narrowest draft per PLAN §7.4.
+    outcome: ApprovalRuleDraft["outcome"],
+  ): Partial<ApprovalRuleDraft> {
+    // Compute the narrowest draft rule.
     const draft: Partial<ApprovalRuleDraft> = {
       agent_id: request.agent_id ?? "*",
       action_type: request.action_type,
-      outcome: decision === "approve" ? "auto_approve" : "deny",
+      outcome,
       priority: 100,
       enabled: true,
     };
@@ -369,7 +374,27 @@ export function ApprovalsView({
       const t = (request.proposed_payload?.type as string | undefined) ?? null;
       if (t) draft.module_type = t;
     }
-    setRuleDialog({ open: true, draft, requestId: request.id });
+    return draft;
+  }
+
+  /** Approve the current request and create a future auto-approval rule. */
+  function openApproveFutureFlow(request: ApprovalRequest): void {
+    setRuleDialog({
+      open: true,
+      draft: draftRuleForRequest(request, "auto_approve"),
+      requestId: request.id,
+      decideAfterSave: "approve",
+    });
+  }
+
+  /** Open rule editing from the request without deciding the request itself. */
+  function openAdjustRulesFlow(request: ApprovalRequest): void {
+    setRuleDialog({
+      open: true,
+      draft: draftRuleForRequest(request, "prompt"),
+      requestId: request.id,
+      decideAfterSave: null,
+    });
   }
 
   /** Bulk-decide an explicit set of ids (no per-item undo — used by the
@@ -425,8 +450,14 @@ export function ApprovalsView({
   function handleDecision(id: string, decision: "approve" | "deny", withRule: boolean): void {
     const request = requests.find((r) => r.id === id);
     if (!request) return;
-    if (withRule) openRuleFlow(request, decision);
+    if (withRule && decision === "approve") openApproveFutureFlow(request);
     else void doDecision(request, decision);
+  }
+
+  function handleAdjustRules(id: string): void {
+    const request = requests.find((r) => r.id === id);
+    if (!request) return;
+    openAdjustRulesFlow(request);
   }
 
   /** A fully-wired ApprovalCard — the detail/expanded view used by every layout. */
@@ -455,7 +486,8 @@ export function ApprovalsView({
           pagesById={pagesById}
           busy={busyIds.has(request.id)}
           onApprove={(withRule) => handleDecision(request.id, "approve", withRule)}
-          onDeny={(withRule) => handleDecision(request.id, "deny", withRule)}
+          onDeny={() => handleDecision(request.id, "deny", false)}
+          onAdjustRules={() => handleAdjustRules(request.id)}
           onLongPress={() => toggleSelect(request.id)}
         />
       </div>
@@ -479,10 +511,11 @@ export function ApprovalsView({
   const ActiveLayout = getLayout(layoutId).Component;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-xl font-semibold">Approvals</h1>
+          <ConsolePath segments={["approvals"]} />
+          <h1 className="font-display text-xl font-semibold tracking-tight">Approvals</h1>
           <p className="text-sm text-[var(--muted-fg)]">
             {totalPending != null
               ? `${totalPending} pending`
@@ -512,12 +545,12 @@ export function ApprovalsView({
       </header>
 
       {showFilters && (
-        <Card className="p-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+        <Card className="p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <label className="flex flex-col gap-1 text-xs">
-              <span className="text-[var(--muted-fg)]">Agent</span>
+              <span className="font-medium text-[var(--muted-fg)]">Agent</span>
               <select
-                className="h-9 rounded-md border border-[var(--border)] bg-[var(--bg)] px-2 text-sm"
+                className="h-9 rounded-lg border border-[var(--border-strong)] bg-[var(--bg)] px-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                 value={filters.agent_id}
                 onChange={(e) => patchFilter({ agent_id: e.target.value })}
               >
@@ -530,9 +563,9 @@ export function ApprovalsView({
               </select>
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="text-[var(--muted-fg)]">Page</span>
+              <span className="font-medium text-[var(--muted-fg)]">Page</span>
               <select
-                className="h-9 rounded-md border border-[var(--border)] bg-[var(--bg)] px-2 text-sm"
+                className="h-9 rounded-lg border border-[var(--border-strong)] bg-[var(--bg)] px-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                 value={filters.page_id}
                 onChange={(e) => patchFilter({ page_id: e.target.value })}
               >
@@ -545,23 +578,23 @@ export function ApprovalsView({
               </select>
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="text-[var(--muted-fg)]">After</span>
+              <span className="font-medium text-[var(--muted-fg)]">After</span>
               <input
                 type="datetime-local"
-                className="h-9 rounded-md border border-[var(--border)] bg-[var(--bg)] px-2 text-sm"
+                className="h-9 rounded-lg border border-[var(--border-strong)] bg-[var(--bg)] px-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                 value={filters.created_after}
                 onChange={(e) => patchFilter({ created_after: e.target.value })}
               />
             </label>
           </div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-3 flex flex-wrap gap-1.5">
             <button
               type="button"
               className={cn(
-                "rounded-full border px-2.5 py-1 text-xs",
+                "rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
                 filters.action_type === ""
-                  ? "bg-[var(--accent)] text-[var(--accent-fg)] border-transparent"
-                  : "border-[var(--border)] text-[var(--muted-fg)]",
+                  ? "border-[var(--accent-border)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                  : "border-[var(--border)] text-[var(--muted-fg)] hover:border-[var(--border-strong)] hover:text-[var(--fg)]",
               )}
               onClick={() => patchFilter({ action_type: "" })}
             >
@@ -572,10 +605,10 @@ export function ApprovalsView({
                 key={at}
                 type="button"
                 className={cn(
-                  "rounded-full border px-2.5 py-1 text-xs",
+                  "rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
                   filters.action_type === at
-                    ? "bg-[var(--accent)] text-[var(--accent-fg)] border-transparent"
-                    : "border-[var(--border)] text-[var(--muted-fg)]",
+                    ? "border-[var(--accent-border)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                    : "border-[var(--border)] text-[var(--muted-fg)] hover:border-[var(--border-strong)] hover:text-[var(--fg)]",
                 )}
                 onClick={() =>
                   patchFilter({
@@ -592,7 +625,7 @@ export function ApprovalsView({
 
       {requests.length === 0 ? (
         <EmptyState
-          icon={<CheckCircle2 className="size-12 text-[var(--success)]" />}
+          icon={<CheckCircle2 className="size-6 text-[var(--success)]" />}
           title="Inbox zero"
           hint="No pending requests right now. Agents will queue up here when they need a decision."
         />
@@ -632,19 +665,18 @@ export function ApprovalsView({
             requests.filter((r) => r.action_type === ruleDialog.draft.action_type).length
           }
           onSaved={async () => {
-            // After the rule is saved we still need to act on the original
-            // request. Decision is encoded in the draft's outcome.
+            // Auto-approve future is a compound action: create the rule, then
+            // approve the request that prompted it. Adjust Rules only saves.
+            if (ruleDialog.decideAfterSave === null) {
+              return;
+            }
             const requestId = ruleDialog.requestId;
-            const draft = ruleDialog.draft;
             const target = requests.find((r) => r.id === requestId);
             if (!target) return;
             try {
-              if (draft.outcome === "auto_approve") {
+              if (ruleDialog.decideAfterSave === "approve") {
                 await api.approveRequest(requestId);
                 toast.success("Approved");
-              } else if (draft.outcome === "deny") {
-                await api.denyRequest(requestId);
-                toast.success("Denied");
               }
               removeFromList(requestId);
               refreshApprovalCount();

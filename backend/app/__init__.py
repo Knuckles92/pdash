@@ -1,3 +1,3 @@
-"""Home Base (pdash) backend package."""
+"""pdash backend package."""
 
 __version__ = "0.1.0"

@@ -1,4 +1,4 @@
-"""SQLAlchemy 2.0 ORM models. Mirrors PLAN §3."""
+"""SQLAlchemy 2.0 ORM models."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ class Base(DeclarativeBase):
 
 
 # ---------------------------------------------------------------------------
-# Auth / settings (not in PLAN §3 but required to bootstrap admin)
+# Auth / settings (required to bootstrap admin)
 # ---------------------------------------------------------------------------
 
 
@@ -120,7 +120,7 @@ class Page(Base):
     slug: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     name: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    kind: Mapped[str] = mapped_column(Text, nullable=False)
+    type: Mapped[str] = mapped_column(Text, nullable=False)
     owner_kind: Mapped[str | None] = mapped_column(Text)
     owner_id: Mapped[str | None] = mapped_column(Text)
     deleted_at: Mapped[str | None] = mapped_column(Text)
@@ -128,7 +128,8 @@ class Page(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "kind IN ('home','agent','custom','system')", name="ck_pages_kind",
+            "type IN ('home','agent','custom','system','corkboard','canvas')",
+            name="ck_pages_type",
         ),
         CheckConstraint(
             "owner_kind IS NULL OR owner_kind IN ('user','agent')",
@@ -176,7 +177,8 @@ class Module(Base):
         CheckConstraint("json_valid(config)", name="ck_modules_config_json"),
         CheckConstraint(
             "type IN ('markdown','key_value','table','timeseries','log_stream',"
-            "'link_list','iframe','action_button','notification','file')",
+            "'link_list','iframe','action_button','notification','file','sticky_note',"
+            "'progress','html')",
             name="ck_modules_type",
         ),
         CheckConstraint(

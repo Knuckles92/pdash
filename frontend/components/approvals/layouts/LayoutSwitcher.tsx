@@ -20,7 +20,7 @@ export function LayoutSwitcher({
     <div
       role="tablist"
       aria-label="Approvals layout"
-      className="flex shrink-0 gap-0.5 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--card)] p-0.5"
+      className="flex shrink-0 gap-0.5 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--card)] p-0.5 shadow-[var(--shadow-xs)]"
     >
       {APPROVAL_LAYOUTS.map((layout) => {
         const Icon = layout.icon;
@@ -34,9 +34,9 @@ export function LayoutSwitcher({
             onClick={() => onChange(layout.id)}
             title={layout.name}
             className={cn(
-              "inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
+              "inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
               active
-                ? "bg-[var(--accent)] text-[var(--accent-fg)]"
+                ? "bg-[var(--accent-soft)] font-medium text-[var(--accent)]"
                 : "text-[var(--muted-fg)] hover:bg-[var(--muted)] hover:text-[var(--fg)]",
             )}
           >

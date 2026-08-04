@@ -4,7 +4,6 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { useChannel } from "@/components/layout/RealtimeProvider";
 import { cn } from "@/lib/cn";
-import { severityDotClass } from "@/lib/modules/severity";
 import type {
   LogEntry,
   LogStreamConfig,
@@ -14,6 +13,19 @@ import type {
 import { relativeTime } from "@/lib/time";
 
 const SEVERITY_ORDER: Severity[] = ["error", "warning", "success", "info", "muted"];
+
+// Status-token severity dots (light/dark aware via globals.css tokens).
+const SEVERITY_DOT: Record<Severity, string> = {
+  error: "bg-[var(--danger)]",
+  warning: "bg-[var(--warning)]",
+  success: "bg-[var(--success)]",
+  info: "bg-[var(--info)]",
+  muted: "bg-[var(--muted-fg)]",
+};
+
+function severityDot(s?: Severity | null): string {
+  return s ? SEVERITY_DOT[s] : "bg-[var(--border-strong)]";
+}
 
 function severityRank(severity?: Severity | null): number {
   if (!severity) return SEVERITY_ORDER.length;
@@ -132,7 +144,7 @@ export function LogStreamModule({
       <div
         ref={containerRef}
         className={cn(
-          "max-h-80 overflow-y-auto overscroll-contain rounded-md border border-[var(--border)] bg-[var(--bg)]",
+          "max-h-80 overflow-y-auto overscroll-contain rounded-lg border border-[var(--border)] bg-[var(--bg)]",
           monospace && "font-mono",
         )}
       >
@@ -143,7 +155,7 @@ export function LogStreamModule({
             return (
               <li
                 key={key}
-                className="flex items-start gap-2 px-2 py-1 text-xs cursor-pointer hover:bg-[var(--muted)]"
+                className="flex items-start gap-2 px-2 py-1 text-xs cursor-pointer transition-colors hover:bg-[var(--muted)]/60"
                 onClick={() =>
                   setExpanded((m) => ({ ...m, [key]: !m[key] }))
                 }
@@ -151,7 +163,7 @@ export function LogStreamModule({
                 <span
                   className={cn(
                     "mt-1 size-1.5 rounded-full shrink-0",
-                    severityDotClass(entry.severity),
+                    severityDot(entry.severity),
                   )}
                   aria-label={entry.severity ?? "no severity"}
                 />
@@ -159,7 +171,7 @@ export function LogStreamModule({
                   {relativeTime(entry.t)}
                 </span>
                 {showSource && entry.source ? (
-                  <span className="text-[10px] uppercase tracking-wide px-1 rounded bg-[var(--muted)] text-[var(--muted-fg)] shrink-0">
+                  <span className="text-[10px] font-medium uppercase tracking-[0.08em] px-1.5 rounded-full bg-[var(--muted)] text-[var(--muted-fg)] shrink-0">
                     {entry.source}
                   </span>
                 ) : null}
@@ -181,7 +193,7 @@ export function LogStreamModule({
       {pendingNew > 0 && order === "oldest-first" && (
         <button
           type="button"
-          className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[var(--accent)] text-white text-xs px-3 py-1 shadow"
+          className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] text-xs font-medium px-3 py-1 shadow-[var(--shadow-md)] transition-colors hover:bg-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
           onClick={() => {
             const el = containerRef.current;
             if (!el) return;
@@ -210,7 +222,7 @@ function Filters({
       <select
         value={filter ?? ""}
         onChange={(e) => setFilter((e.target.value || null) as Severity | null)}
-        className="rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-0.5"
+        className="rounded-md border border-[var(--border)] bg-[var(--card)] px-1.5 py-0.5 transition-colors hover:border-[var(--border-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
       >
         <option value="">all</option>
         <option value="error">error</option>

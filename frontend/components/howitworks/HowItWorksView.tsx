@@ -75,7 +75,7 @@ export function HowItWorksView() {
 
   return (
     <article className="mx-auto flex w-full max-w-5xl flex-col gap-8">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--border)] bg-[var(--muted)] px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--border)] bg-[var(--muted)]/60 px-4 py-3">
         <p className="text-sm text-[var(--muted-fg)]">
           {dismissed ? (
             <>
@@ -101,7 +101,7 @@ export function HowItWorksView() {
       </div>
 
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] px-5 py-8 shadow-sm sm:px-8 sm:py-10">
+      <section className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] px-5 py-8 shadow-[var(--shadow-sm)] sm:px-8 sm:py-10">
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
           <div
             className="absolute -top-28 left-1/2 h-72 w-[44rem] max-w-[130%] -translate-x-1/2 rounded-full blur-3xl"
@@ -117,7 +117,7 @@ export function HowItWorksView() {
           </Badge>
           <div className="max-w-2xl">
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              How Home&nbsp;Base works
+              How pdash works
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-[var(--muted-fg)] sm:text-base">
               Build dashboards from modules, let AI agents keep them current over MCP — and stay in
@@ -141,14 +141,14 @@ export function HowItWorksView() {
           <div className="flex flex-wrap gap-2 pt-1">
             <Link
               href="/settings/agents"
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-4 text-sm font-medium text-[var(--accent-fg)] outline-none transition-colors hover:bg-[var(--accent)]/90 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]"
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-[var(--accent)] px-4 text-sm font-medium text-[var(--accent-fg)] shadow-[var(--shadow-xs)] outline-none transition-colors hover:bg-[var(--accent-hover)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]"
             >
               Register your first agent
               <ArrowRight className="size-4" />
             </Link>
             <a
               href="#hiw-flow"
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[var(--border)] bg-[var(--card)] px-4 text-sm font-medium outline-none transition-colors hover:bg-[var(--muted)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]"
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--card)] px-4 text-sm font-medium shadow-[var(--shadow-xs)] outline-none transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--muted)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]"
             >
               See the flow
             </a>
@@ -156,15 +156,15 @@ export function HowItWorksView() {
         </div>
       </section>
 
-      {/* What is Home Base? */}
+      {/* What is pdash? */}
       <section aria-labelledby="hiw-what" className="flex flex-col gap-3">
-        <h2 id="hiw-what" className="text-lg font-semibold">
-          What is Home&nbsp;Base?
+        <h2 id="hiw-what" className="text-lg font-semibold tracking-tight">
+          What is pdash?
         </h2>
         <Card>
           <CardBody>
             <p className="text-sm leading-relaxed text-[var(--fg)]">
-              Home Base is a self-hosted, single-admin command center for your homelab. You build
+              pdash is a self-hosted, single-admin command center for your homelab. You build
               dashboards out of <span className="font-medium">modules</span>, and AI agents connect
               over <span className="font-medium">MCP</span> to keep them up to date. The catch:
               agents never change anything directly — every write they make flows through an{" "}
@@ -177,7 +177,7 @@ export function HowItWorksView() {
       {/* The core flow — interactive */}
       <section id="hiw-flow" aria-labelledby="hiw-flow-h" className="flex flex-col gap-3 scroll-mt-4">
         <div>
-          <h2 id="hiw-flow-h" className="text-lg font-semibold">
+          <h2 id="hiw-flow-h" className="text-lg font-semibold tracking-tight">
             See how a change flows
           </h2>
           <p className="mt-0.5 text-sm text-[var(--muted-fg)]">
@@ -190,7 +190,7 @@ export function HowItWorksView() {
 
       {/* Core usages */}
       <section aria-labelledby="hiw-use" className="flex flex-col gap-3">
-        <h2 id="hiw-use" className="text-lg font-semibold">
+        <h2 id="hiw-use" className="text-lg font-semibold tracking-tight">
           What you&apos;ll use
         </h2>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -199,9 +199,9 @@ export function HowItWorksView() {
             return (
               <div
                 key={u.title}
-                className="group flex gap-3 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm transition-all hover:border-[var(--accent)]/40 hover:shadow-md motion-safe:hover:-translate-y-0.5"
+                className="group flex gap-3 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-[var(--shadow-sm)] transition-all hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-md)] motion-safe:hover:-translate-y-0.5"
               >
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--muted)] text-[var(--fg)] transition-colors group-hover:bg-[var(--accent)] group-hover:text-[var(--accent-fg)]">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] transition-colors group-hover:bg-[var(--accent)] group-hover:text-[var(--accent-fg)]">
                   <Icon className="size-5" />
                 </div>
                 <div className="min-w-0">
@@ -225,7 +225,7 @@ export function HowItWorksView() {
 
       {/* Getting started */}
       <section aria-labelledby="hiw-start" className="flex flex-col gap-3">
-        <h2 id="hiw-start" className="text-lg font-semibold">
+        <h2 id="hiw-start" className="text-lg font-semibold tracking-tight">
           Get started in three steps
         </h2>
         <Card>
@@ -235,7 +235,7 @@ export function HowItWorksView() {
                 <li key={step.title} className="flex gap-4">
                   <span
                     aria-hidden
-                    className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--muted)] text-sm font-semibold tabular-nums text-[var(--accent)]"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-sm font-semibold tabular-nums text-[var(--accent)]"
                   >
                     {i + 1}
                   </span>
@@ -250,7 +250,7 @@ export function HowItWorksView() {
             </ol>
             <Link
               href="/settings/agents"
-              className="inline-flex h-9 w-fit items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-4 text-sm font-medium text-[var(--accent-fg)] outline-none transition-colors hover:bg-[var(--accent)]/90 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]"
+              className="inline-flex h-9 w-fit items-center justify-center gap-2 rounded-lg bg-[var(--accent)] px-4 text-sm font-medium text-[var(--accent-fg)] shadow-[var(--shadow-xs)] outline-none transition-colors hover:bg-[var(--accent-hover)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]"
             >
               Register your first agent
               <ArrowRight className="size-4" />

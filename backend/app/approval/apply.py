@@ -6,7 +6,7 @@ transition to ``applied`` happens here, followed by an ``activity_log`` write
 in the calling router. Failures raise :class:`ApplyError`; callers translate
 those into a ``mark_application_failed`` call.
 
-Action-type dispatch table (PLAN §7.5 sub-state for fire_action):
+Action-type dispatch table (fire_action sub-state):
 
     create_module          -> :func:`apply_create_module`
     update_module_data     -> :func:`apply_update_module`
@@ -26,8 +26,8 @@ engine routes it to ``pending``, we mint the ULID *up front* and stash it in
 ``proposed_payload.provisional_id``. If/when the admin later approves the
 request, the apply function reuses that same ID as the real module's
 primary key. This way, agents that cached the provisional id from the
-202 response continue to work after approval. (Documented in
-PLAN.md open questions; the value is also returned by the propose endpoint.)
+ 202 response continue to work after approval. (The value is also
+returned by the propose endpoint.)
 """
 
 from __future__ import annotations
@@ -45,6 +45,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import modules as module_registry
 from ..auth.secrets import get_kv
+from ..config import get_settings
 from ..errors import ProblemDetail
 from ..events.publish import publish_after_commit
 from ..ids import new_id
@@ -88,7 +89,7 @@ def _page_summary(row: Page) -> dict[str, Any]:
         "id": row.id,
         "slug": row.slug,
         "name": row.name,
-        "kind": row.kind,
+        "type": row.type,
         "owner_kind": row.owner_kind,
         "owner_id": row.owner_id,
         "deleted_at": row.deleted_at,
@@ -285,7 +286,8 @@ async def apply_create_page(
         slug=payload["slug"],
         name=payload["name"],
         description=payload.get("description"),
-        kind=payload.get("kind", "custom"),
+        # Prefer ``type``; fall back to legacy ``kind`` for in-flight approvals.
+        type=payload.get("type") or payload.get("kind") or "custom",
         owner_kind="agent",
         owner_id=request.agent_id,
         created_at=utcnow_iso(),
@@ -311,7 +313,7 @@ async def apply_delete_page(
     row = await session.get(Page, pid)
     if row is None or row.deleted_at is not None:
         raise ApplyError("page.not_found", f"page {pid} not found")
-    if row.kind == "home":
+    if row.type == "home":
         raise ApplyError("page.cannot_delete_home", "home page cannot be deleted")
     row.deleted_at = utcnow_iso()
     # `cascade=true` is a hint for the FK — modules.page_id has ON DELETE
@@ -487,7 +489,7 @@ async def _execute_agent_message(
     """Drop a row in ``agent_messages`` for the target agent.
 
     The MCP tool surface for *reading* these messages is deferred — see
-    PLAN.md and the TODO Phase 1.5 marker below.
+    the TODO Phase 1.5 marker below.
     """
     cfg = json.loads(target.config or "{}")
     to_agent_id = cfg.get("to_agent_id")
@@ -656,7 +658,7 @@ async def apply_fire_action(
     Marks the request as ``applied`` (via the lifecycle helper), then attempts
     execution against the resolved action target. Execution success/failure
     populates ``executed_at`` and ``execution_result``. The request status
-    itself stays ``applied`` per PLAN §7.5 — the ``execution_result.ok``
+    itself stays ``applied`` — the ``execution_result.ok``
     field is the bit the UI should branch on.
 
     Async mode: the function returns immediately with a ``job_id`` in

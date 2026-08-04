@@ -112,10 +112,10 @@ export function AgentsClient({ initialAgents }: Props) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-sm font-medium text-[var(--muted-fg)]">Registered agents</h2>
+        <h2 className="text-sm font-semibold tracking-tight">Registered agents</h2>
         <div className="flex flex-wrap items-center gap-2">
           <div
-            className="inline-flex h-8 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--card)]"
+            className="inline-flex h-8 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-xs)]"
             role="group"
             aria-label="Filter agents by status"
           >
@@ -126,9 +126,9 @@ export function AgentsClient({ initialAgents }: Props) {
                 onClick={() => setStatusFilter(filter.value)}
                 aria-pressed={statusFilter === filter.value}
                 className={cn(
-                  "inline-flex items-center gap-1 border-r border-[var(--border)] px-3 text-xs font-medium last:border-r-0 hover:bg-[var(--muted)]",
+                  "inline-flex items-center gap-1 border-r border-[var(--border)] px-3 text-xs font-medium last:border-r-0 transition-colors hover:bg-[var(--muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]",
                   statusFilter === filter.value
-                    ? "bg-[var(--fg)] text-[var(--bg)] hover:bg-[var(--fg)]"
+                    ? "bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent-soft)]"
                     : "text-[var(--muted-fg)]",
                 )}
               >
@@ -158,7 +158,7 @@ export function AgentsClient({ initialAgents }: Props) {
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-[var(--border)] text-xs uppercase tracking-wide text-[var(--muted-fg)]">
+              <thead className="border-b border-[var(--border)] bg-[var(--muted)]/60 text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
                 <tr>
                   <th className="text-left px-4 py-2">Name</th>
                   <th className="text-left px-4 py-2 hidden md:table-cell">Description</th>
@@ -167,9 +167,9 @@ export function AgentsClient({ initialAgents }: Props) {
                   <th className="text-right px-4 py-2">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[var(--border)]">
                 {filteredAgents.map((a) => (
-                  <tr key={a.id} className="border-b border-[var(--border)] last:border-b-0">
+                  <tr key={a.id} className="transition-colors hover:bg-[var(--muted)]/60">
                     <td className="px-4 py-2 font-medium">{a.display_name}</td>
                     <td className="px-4 py-2 hidden md:table-cell text-[var(--muted-fg)]">
                       <div className="flex flex-col gap-1">
@@ -187,11 +187,13 @@ export function AgentsClient({ initialAgents }: Props) {
                     </td>
                     <td className="px-4 py-2">
                       <Badge
-                        className={cn(
-                          a.status === "active" && "bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/30",
-                          a.status === "disabled" && "bg-zinc-500/15 text-zinc-700 dark:text-zinc-300 border-zinc-500/30",
-                          a.status === "revoked" && "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30",
-                        )}
+                        tone={
+                          a.status === "active"
+                            ? "success"
+                            : a.status === "revoked"
+                              ? "danger"
+                              : "neutral"
+                        }
                       >
                         {a.status}
                       </Badge>
@@ -351,15 +353,18 @@ export function AgentsClient({ initialAgents }: Props) {
       >
         {revealedKey && (
           <div className="flex flex-col gap-3">
-            <div className="flex items-stretch gap-2">
+            <div className="flex items-center gap-2 rounded-lg bg-[var(--muted)] py-1 pl-3 pr-1">
               <Input
                 readOnly
                 value={revealedKey.key}
-                className="font-mono text-xs"
+                className="h-auto min-w-0 flex-1 border-none bg-transparent p-0 font-mono text-xs shadow-none focus-visible:ring-0"
                 onFocus={(e) => e.currentTarget.select()}
               />
               <Button
-                variant="secondary"
+                variant="ghost"
+                size="icon"
+                aria-label="Copy API key"
+                title="Copy API key"
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(revealedKey.key);
@@ -369,7 +374,7 @@ export function AgentsClient({ initialAgents }: Props) {
                   }
                 }}
               >
-                <Copy className="size-4" /> Copy
+                <Copy className="size-4" />
               </Button>
             </div>
             <p className="text-xs text-[var(--muted-fg)]">
@@ -388,7 +393,7 @@ export function AgentsClient({ initialAgents }: Props) {
       >
         <div className="flex flex-col gap-4 text-sm">
           <div className="flex flex-col gap-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-fg)]">
+            <h4 className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
               Option A — mint a key yourself
             </h4>
             <ol className="flex flex-col gap-2 list-decimal pl-5 marker:text-[var(--muted-fg)]">
@@ -411,7 +416,7 @@ export function AgentsClient({ initialAgents }: Props) {
             </ol>
           </div>
           <div className="flex flex-col gap-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-fg)]">
+            <h4 className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
               Option B — let the agent self-register
             </h4>
             <ol className="flex flex-col gap-2 list-decimal pl-5 marker:text-[var(--muted-fg)]">

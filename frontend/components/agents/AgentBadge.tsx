@@ -14,10 +14,8 @@ export function AgentBadge({ agentId, displayName, className }: AgentBadgeProps)
   const label = displayName ?? agentId ?? "Unknown agent";
   return (
     <Badge
-      className={cn(
-        "bg-[var(--muted)] text-[var(--fg)] border-[var(--border)] gap-1",
-        className,
-      )}
+      tone="neutral"
+      className={cn("gap-1 text-[var(--fg)]", className)}
       title={agentId ?? undefined}
     >
       <Bot className="size-3" />

@@ -57,7 +57,7 @@ def build_server() -> FastMCP:
     mcp = FastMCP(
         name="pdash",
         instructions=(
-            "Home Base (pdash) MCP server. First add this server to your MCP client "
+            "pdash MCP server. First add this server to your MCP client "
             "configuration (streamable HTTP, no Authorization header). If you have no "
             "hb_agt_ API key, call 'onboarding' for the full setup flow, then "
             "'request_registration' to ask the admin for access and "

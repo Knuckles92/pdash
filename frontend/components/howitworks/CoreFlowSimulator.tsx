@@ -113,7 +113,7 @@ export function CoreFlowSimulator() {
 
   return (
     <Card className="overflow-hidden">
-      <div className="flex flex-col gap-5 p-4 sm:p-6">
+      <div className="flex flex-col gap-5 p-5 sm:p-6">
         {/* Pipeline rail = tablist */}
         <div className="relative">
           <div
@@ -180,7 +180,7 @@ export function CoreFlowSimulator() {
           <fieldset className="flex flex-wrap items-center gap-2">
             <legend className="sr-only">Engine outcome</legend>
             <span className="text-xs font-medium text-[var(--muted-fg)]">If a rule says…</span>
-            <div className="inline-flex rounded-lg border border-[var(--border)] bg-[var(--bg)] p-0.5">
+            <div className="inline-flex rounded-lg border border-[var(--border)] bg-[var(--muted)]/60 p-0.5 shadow-[var(--shadow-xs)]">
               {OUTCOMES.map((o) => {
                 const on = o.id === outcome;
                 const Icon = o.icon;
@@ -242,7 +242,7 @@ export function CoreFlowSimulator() {
             aria-labelledby={`hiw-tab-${current.id}`}
             className="hiw-panel-enter rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]"
           >
-            <h3 className="text-base font-semibold">{current.title}</h3>
+            <h3 className="text-base font-semibold tracking-tight">{current.title}</h3>
             <p className="mb-4 mt-1 text-sm leading-relaxed text-[var(--muted-fg)]">
               {current.explain}
             </p>

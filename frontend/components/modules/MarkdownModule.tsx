@@ -25,7 +25,7 @@ export function MarkdownModule({ data, config }: Props) {
       {config.callout_severity && (
         <div
           className={cn(
-            "rounded-md border px-3 py-2 text-xs",
+            "rounded-lg border px-3 py-2 text-xs font-medium",
             severityChipClass(config.callout_severity),
           )}
         >

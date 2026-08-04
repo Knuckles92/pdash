@@ -32,8 +32,8 @@ export function IframeModule({
 
   if (!allowed) {
     return (
-      <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm dark:border-amber-400/40 dark:bg-amber-400/10">
-        <AlertTriangle className="size-4 mt-0.5 text-amber-600 dark:text-amber-400" />
+      <div className="flex items-start gap-2 rounded-lg border border-[var(--warning)]/25 bg-[var(--warning-soft)] p-3 text-sm">
+        <AlertTriangle className="size-4 mt-0.5 text-[var(--warning)]" />
         <div className="min-w-0">
           <p className="font-medium">Iframe blocked: host not allowlisted.</p>
           <p className="text-xs text-[var(--muted-fg)] break-all">
@@ -61,7 +61,7 @@ export function IframeModule({
             rel="noopener noreferrer"
             aria-label="Open in new tab"
             title="Open in new tab"
-            className="inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-[var(--muted)]"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md transition-colors hover:bg-[var(--muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
           >
             <ExternalLink className="size-3" />
           </a>
@@ -87,7 +87,7 @@ export function IframeModule({
             // with the rest of the dashboard in both themes; many embeds
             // render transparent so we want the host card color showing
             // through, not always-white.
-            "w-full rounded-md border border-[var(--border)] bg-[var(--card)]",
+            "w-full rounded-lg border border-[var(--border)] bg-[var(--card)]",
             "h-[var(--iframe-h-mobile)] md:h-[var(--iframe-h-desktop)]",
           )}
         />

@@ -71,6 +71,14 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+start_session() {
+  if command -v setsid >/dev/null 2>&1; then
+    exec setsid "$@"
+  else
+    exec python3 "$REPO_ROOT/scripts/lib/run-in-session.py" "$@"
+  fi
+}
+
 echo "Starting pdash dev stack (logs in $LOG_DIR/)"
 echo ""
 
@@ -80,19 +88,19 @@ echo ""
 export REPO_ROOT PDASH_DATABASE_PATH
 
 # --timeout-graceful-shutdown: don't let open SSE streams hang a --reload.
-setsid bash -c 'cd "$REPO_ROOT/backend" && exec .venv/bin/uvicorn app.main:app \
+start_session bash -c 'cd "$REPO_ROOT/backend" && exec .venv/bin/uvicorn app.main:app \
   --reload --host 127.0.0.1 --port 8080 --timeout-graceful-shutdown 2' \
   >>"$LOG_DIR/backend.log" 2>&1 &
 PIDS+=($!)
 echo "backend=$!" >>"$PID_FILE"
 
-setsid bash -c 'cd "$REPO_ROOT/mcp" && exec .venv/bin/python -m app.main' \
+start_session bash -c 'cd "$REPO_ROOT/mcp" && exec .venv/bin/python -m app.main' \
   >>"$LOG_DIR/mcp.log" 2>&1 &
 PIDS+=($!)
 echo "mcp=$!" >>"$PID_FILE"
 
 export PDASH_BACKEND_URL="${PDASH_BACKEND_URL:-http://127.0.0.1:8080}"
-setsid bash -c 'cd "$REPO_ROOT/frontend" && exec npm run dev' \
+start_session bash -c 'cd "$REPO_ROOT/frontend" && exec npm run dev' \
   >>"$LOG_DIR/frontend.log" 2>&1 &
 PIDS+=($!)
 echo "frontend=$!" >>"$PID_FILE"

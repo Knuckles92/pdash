@@ -43,7 +43,7 @@ function skillUrlFromMcpUrl(mcpUrl: string): string {
 function buildOnboardingPrompt(mcpUrl: string, skillUrl: string): string {
   const url = mcpUrl || "<your pdash MCP URL>";
   const skill = skillUrl || "<your pdash skill file URL>";
-  return `You are connecting to Home Base (pdash), a self-hosted dashboard, over MCP.
+  return `You are connecting to pdash, a self-hosted dashboard, over MCP.
 
 First read and follow the hosted pdash skill file:
 ${skill}
@@ -92,10 +92,14 @@ raw curl unless debugging.
 
 const REFRESH_MS = 5000;
 
-const OK = "bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/30";
-const WARN = "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30";
-const BAD = "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30";
-const NEUTRAL = "bg-zinc-500/15 text-zinc-700 dark:text-zinc-300 border-zinc-500/30";
+type StatusTone = "success" | "warning" | "danger" | "neutral";
+
+const TONE_SURFACE: Record<StatusTone, string> = {
+  success: "border-[var(--success)]/25 bg-[var(--success-soft)] text-[var(--success)]",
+  warning: "border-[var(--warning)]/25 bg-[var(--warning-soft)] text-[var(--warning)]",
+  danger: "border-[var(--danger)]/25 bg-[var(--danger-soft)] text-[var(--danger)]",
+  neutral: "border-[var(--border)] bg-[var(--muted)] text-[var(--muted-fg)]",
+};
 
 type Health = "connected" | "degraded" | "down";
 
@@ -154,7 +158,7 @@ export function McpClient({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-medium text-[var(--muted-fg)]">MCP control center</h2>
+          <h2 className="text-sm font-semibold tracking-tight">MCP control center</h2>
           <LiveDot health={health} />
         </div>
         <Button size="sm" variant="secondary" onClick={() => void refresh(true)} disabled={refreshing}>
@@ -321,10 +325,10 @@ function OnboardingPrompt({ status }: { status: McpStatus | null }) {
 function LiveDot({ health }: { health: Health }) {
   const color =
     health === "connected"
-      ? "bg-green-500"
+      ? "bg-[var(--success)]"
       : health === "degraded"
-        ? "bg-amber-500"
-        : "bg-red-500";
+        ? "bg-[var(--warning)]"
+        : "bg-[var(--danger)]";
   return (
     <span className="relative flex size-2" title="Live — auto-refreshing">
       <span className={cn("absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping", color)} />
@@ -335,9 +339,9 @@ function LiveDot({ health }: { health: Health }) {
 
 function StatusBanner({ status, health }: { status: McpStatus | null; health: Health }) {
   const config = {
-    connected: { label: "Connected", className: OK, Icon: Wifi },
-    degraded: { label: "Degraded", className: WARN, Icon: Activity },
-    down: { label: "Down", className: BAD, Icon: WifiOff },
+    connected: { label: "Connected", tone: "success" as const, Icon: Wifi },
+    degraded: { label: "Degraded", tone: "warning" as const, Icon: Activity },
+    down: { label: "Down", tone: "danger" as const, Icon: WifiOff },
   }[health];
   const { Icon } = config;
 
@@ -348,15 +352,17 @@ function StatusBanner({ status, health }: { status: McpStatus | null; health: He
           <div
             className={cn(
               "flex size-10 shrink-0 items-center justify-center rounded-full border",
-              config.className,
+              TONE_SURFACE[config.tone],
             )}
           >
             <Icon className="size-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-base font-semibold text-[var(--fg)]">MCP server</span>
-              <Badge className={config.className}>{config.label}</Badge>
+              <span className="text-base font-semibold tracking-tight text-[var(--fg)]">
+                MCP server
+              </span>
+              <Badge tone={config.tone}>{config.label}</Badge>
             </div>
             <p className="text-sm text-[var(--muted-fg)]">
               {health === "down"
@@ -398,11 +404,11 @@ function ConnectionDetails({ status }: { status: McpStatus | null }) {
           label="Event stream (SSE)"
           value={
             status?.sse_connected == null ? (
-              <Badge className={NEUTRAL}>unknown</Badge>
+              <Badge tone="neutral">unknown</Badge>
             ) : status.sse_connected ? (
-              <Badge className={OK}>connected</Badge>
+              <Badge tone="success">connected</Badge>
             ) : (
-              <Badge className={WARN}>disconnected</Badge>
+              <Badge tone="warning">disconnected</Badge>
             )
           }
         />
@@ -410,9 +416,9 @@ function ConnectionDetails({ status }: { status: McpStatus | null }) {
           label="Service secret"
           value={
             status?.service_secret_configured ? (
-              <Badge className={OK}>configured</Badge>
+              <Badge tone="success">configured</Badge>
             ) : (
-              <Badge className={BAD}>missing</Badge>
+              <Badge tone="danger">missing</Badge>
             )
           }
         />
@@ -442,9 +448,9 @@ function ScreenshotSidecar({ status }: { status: McpStatus | null }) {
           label="Configured"
           value={
             sidecar?.configured ? (
-              <Badge className={OK}>enabled</Badge>
+              <Badge tone="success">enabled</Badge>
             ) : (
-              <Badge className={NEUTRAL}>disabled</Badge>
+              <Badge tone="neutral">disabled</Badge>
             )
           }
         />
@@ -454,11 +460,11 @@ function ScreenshotSidecar({ status }: { status: McpStatus | null }) {
             !sidecar?.configured ? (
               <span className="text-[var(--muted-fg)]">—</span>
             ) : sidecar.reachable == null ? (
-              <Badge className={NEUTRAL}>unknown</Badge>
+              <Badge tone="neutral">unknown</Badge>
             ) : sidecar.reachable ? (
-              <Badge className={OK}>reachable</Badge>
+              <Badge tone="success">reachable</Badge>
             ) : (
-              <Badge className={BAD}>unreachable</Badge>
+              <Badge tone="danger">unreachable</Badge>
             )
           }
         />
@@ -485,7 +491,7 @@ function AgentConnectivity({ agents }: { agents: Agent[] }) {
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <Bot className="size-4 text-[var(--muted-fg)]" />
-        <h3 className="text-sm font-medium text-[var(--muted-fg)]">Agent connectivity</h3>
+        <h3 className="text-sm font-semibold tracking-tight">Agent connectivity</h3>
       </div>
       {agents.length === 0 ? (
         <EmptyState
@@ -497,24 +503,26 @@ function AgentConnectivity({ agents }: { agents: Agent[] }) {
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-[var(--border)] text-xs uppercase tracking-wide text-[var(--muted-fg)]">
+              <thead className="border-b border-[var(--border)] bg-[var(--muted)]/60 text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
                 <tr>
                   <th className="px-4 py-2 text-left">Agent</th>
                   <th className="px-4 py-2 text-left">Status</th>
                   <th className="px-4 py-2 text-left">Last active</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[var(--border)]">
                 {agents.map((a) => (
-                  <tr key={a.id} className="border-b border-[var(--border)] last:border-b-0">
+                  <tr key={a.id} className="transition-colors hover:bg-[var(--muted)]/60">
                     <td className="px-4 py-2 font-medium">{a.display_name}</td>
                     <td className="px-4 py-2">
                       <Badge
-                        className={cn(
-                          a.status === "active" && OK,
-                          a.status === "disabled" && NEUTRAL,
-                          a.status === "revoked" && BAD,
-                        )}
+                        tone={
+                          a.status === "active"
+                            ? "success"
+                            : a.status === "revoked"
+                              ? "danger"
+                              : "neutral"
+                        }
                       >
                         {a.status}
                       </Badge>
@@ -549,7 +557,7 @@ function CommandCatalog({
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <Terminal className="size-4 text-[var(--muted-fg)]" />
-        <h3 className="text-sm font-medium text-[var(--muted-fg)]">
+        <h3 className="text-sm font-semibold tracking-tight">
           Command catalog{total > 0 ? ` (${total})` : ""}
         </h3>
       </div>
@@ -569,21 +577,21 @@ function CommandCatalog({
             title="Write commands"
             subtitle="Route through the approval engine"
             tools={writeTools}
-            badgeClass={WARN}
+            badgeTone="warning"
             badgeLabel="write"
           />
           <ToolGroup
             title="Read commands"
             subtitle="Read-only — no approval needed"
             tools={readTools}
-            badgeClass={OK}
+            badgeTone="success"
             badgeLabel="read"
           />
           <ToolGroup
             title="Onboarding commands"
             subtitle="No API key required — for first-time setup"
             tools={bootstrapTools}
-            badgeClass={NEUTRAL}
+            badgeTone="neutral"
             badgeLabel="open"
           />
         </div>
@@ -596,13 +604,13 @@ function ToolGroup({
   title,
   subtitle,
   tools,
-  badgeClass,
+  badgeTone,
   badgeLabel,
 }: {
   title: string;
   subtitle: string;
   tools: McpTool[];
-  badgeClass: string;
+  badgeTone: StatusTone;
   badgeLabel: string;
 }) {
   if (tools.length === 0) return null;
@@ -613,14 +621,16 @@ function ToolGroup({
           <CardTitle>{title}</CardTitle>
           <p className="text-xs text-[var(--muted-fg)]">{subtitle}</p>
         </div>
-        <Badge className={badgeClass}>{tools.length}</Badge>
+        <Badge tone={badgeTone}>{tools.length}</Badge>
       </CardHeader>
       <ul className="divide-y divide-[var(--border)]">
         {tools.map((t) => (
           <li key={t.name} className="flex flex-col gap-1 px-4 py-3">
             <div className="flex items-center gap-2">
-              <code className="text-sm font-medium text-[var(--fg)]">{t.name}</code>
-              <Badge className={cn("text-[10px]", badgeClass)}>{badgeLabel}</Badge>
+              <code className="font-mono text-sm font-medium text-[var(--fg)]">{t.name}</code>
+              <Badge tone={badgeTone} className="text-[10px]">
+                {badgeLabel}
+              </Badge>
             </div>
             {t.description && (
               <p className="line-clamp-3 text-xs text-[var(--muted-fg)]">{t.description}</p>

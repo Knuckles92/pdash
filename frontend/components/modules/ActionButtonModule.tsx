@@ -128,10 +128,10 @@ export function ActionButtonModule({
       {showLastResult && localLast && (
         <div
           className={cn(
-            "flex items-start gap-2 text-xs rounded-md border px-2 py-1.5",
+            "flex items-start gap-2 text-xs rounded-lg border px-2.5 py-1.5",
             localLast.ok
-              ? "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-300"
-              : "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300",
+              ? "border-[var(--success)]/25 bg-[var(--success-soft)] text-[var(--success)]"
+              : "border-[var(--danger)]/25 bg-[var(--danger-soft)] text-[var(--danger)]",
           )}
         >
           {localLast.ok ? (

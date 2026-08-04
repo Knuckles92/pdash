@@ -51,7 +51,7 @@ def test_csrf_enforced_on_state_changing(admin_client: TestClient) -> None:
     resp = bare.post("/api/v1/pages", json={
         "slug": "foo",
         "name": "Foo",
-        "kind": "custom",
+        "type": "custom",
     })
     assert resp.status_code == 403
     assert resp.json()["code"] == "auth.csrf"

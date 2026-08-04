@@ -51,7 +51,15 @@ from .internal import (
     WhoAmIOut,
 )
 from .modules import ModuleCreate, ModuleOut, ModulePatch
-from .pages import DefaultExamplesMutationOut, PageCreate, PageOut, PagePatch
+from .pages import (
+    DefaultExamplesMutationOut,
+    PageAgentAccessItem,
+    PageAgentAccessOut,
+    PageAgentAccessSet,
+    PageCreate,
+    PageOut,
+    PagePatch,
+)
 
 __all__ = [
     "ActionTargetCreate",
@@ -96,6 +104,9 @@ __all__ = [
     "ModuleCreate",
     "ModuleOut",
     "ModulePatch",
+    "PageAgentAccessItem",
+    "PageAgentAccessOut",
+    "PageAgentAccessSet",
     "PageCreate",
     "PageOut",
     "PagePatch",

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { ConsolePath } from "@/components/layout/ConsolePath";
 import { api } from "@/lib/api";
 import { requireSession } from "@/lib/session";
 
@@ -20,7 +21,8 @@ export default async function SettingsLayout({ children }: { children: ReactNode
   return (
     <div className="flex flex-col gap-4">
       <header>
-        <h1 className="text-xl font-semibold">Settings</h1>
+        <ConsolePath segments={["settings"]} />
+        <h1 className="font-display text-xl font-semibold tracking-tight">Settings</h1>
         <p className="text-sm text-[var(--muted-fg)]">
           Manage agents, pages, rules, and integrations.
         </p>
@@ -29,7 +31,7 @@ export default async function SettingsLayout({ children }: { children: ReactNode
       <div>{children}</div>
       {version && (
         <footer className="pt-2 text-xs text-[var(--muted-fg)]">
-          Home Base v{version}
+          pdash v{version}
         </footer>
       )}
     </div>

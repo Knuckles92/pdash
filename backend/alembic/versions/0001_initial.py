@@ -27,7 +27,7 @@ def _new_id(prefix: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Default approval rules (PLAN §7.2)
+# Default approval rules
 # ---------------------------------------------------------------------------
 DEFAULT_RULES = [
     # action_type, owner_scope, outcome
@@ -454,9 +454,20 @@ def upgrade() -> None:
             "last_updated_by": "system:bootstrap",
         }
 
+    # Seed only the module types this migration's own CHECK constraint allows.
+    # Later migrations widen the constraint AND seed any tiles for newly added
+    # types (see e.g. 0009_progress), so home_example_modules() may carry types
+    # that 0001 cannot yet insert.
+    _seed_types = {
+        "markdown", "key_value", "table", "timeseries", "log_stream",
+        "link_list", "iframe", "action_button", "notification",
+    }
+    _seed_specs = [
+        spec for spec in home_example_modules(now_dt) if spec["type"] in _seed_types
+    ]
     op.bulk_insert(
         modules_table,
-        [module_row(spec, i) for i, spec in enumerate(home_example_modules(now_dt))],
+        [module_row(spec, i) for i, spec in enumerate(_seed_specs)],
     )
 
     # ------------------------------------------------------------------

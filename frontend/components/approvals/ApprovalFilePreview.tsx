@@ -9,7 +9,7 @@ import { humanizeBytes } from "@/lib/bytes";
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] uppercase tracking-wide text-[var(--muted-fg)]">{label}</span>
+      <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">{label}</span>
       <span className="break-all text-[var(--fg)]">{value}</span>
     </div>
   );
@@ -20,15 +20,11 @@ export function ApprovalFilePreview({ preview }: { preview: FilePreview }) {
   const Icon = preview.kind === "image" ? ImageIcon : FileText;
 
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3">
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)] p-4">
       <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
         <Icon className="size-3.5 text-[var(--muted-fg)]" />
-        <span className="font-medium text-sm">{preview.display_name ?? preview.inbox_name ?? "File"}</span>
-        {preview.kind && (
-          <Badge className="bg-[var(--muted)] text-[var(--fg)] border-[var(--border)]">
-            {preview.kind}
-          </Badge>
-        )}
+        <span className="text-sm font-semibold tracking-tight">{preview.display_name ?? preview.inbox_name ?? "File"}</span>
+        {preview.kind && <Badge tone="neutral">{preview.kind}</Badge>}
       </div>
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">

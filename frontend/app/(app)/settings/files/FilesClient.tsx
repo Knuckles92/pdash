@@ -30,18 +30,13 @@ type PendingConfirm =
   | { kind: "registered"; file: RegisteredFile };
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    unclaimed: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-    pending_registration:
-      "border-[var(--accent)]/40 bg-[var(--accent)]/10 text-[var(--accent)]",
-    missing: "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-300",
+  const map: Record<string, "warning" | "accent" | "danger"> = {
+    unclaimed: "warning",
+    pending_registration: "accent",
+    missing: "danger",
   };
   const label = status === "pending_registration" ? "pending" : status;
-  return (
-    <Badge className={map[status] ?? "border-[var(--border)] text-[var(--muted-fg)]"}>
-      {label}
-    </Badge>
-  );
+  return <Badge tone={map[status] ?? "neutral"}>{label}</Badge>;
 }
 
 export function FilesClient({ initialOverview, pages }: Props) {
@@ -121,7 +116,7 @@ export function FilesClient({ initialOverview, pages }: Props) {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-medium text-[var(--muted-fg)]">Files</h2>
+          <h2 className="text-sm font-semibold tracking-tight">Files</h2>
           <p className="text-xs text-[var(--muted-fg)]">
             Agents drop files into the inbox, then register them. Unclaimed drops and
             files whose bytes vanished show up here for cleanup.
@@ -149,13 +144,13 @@ export function FilesClient({ initialOverview, pages }: Props) {
 
       {inbox.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
+          <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
             Inbox ({inbox.length})
           </h3>
           <Card className="overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="border-b border-[var(--border)] text-xs uppercase tracking-wide text-[var(--muted-fg)]">
+                <thead className="border-b border-[var(--border)] bg-[var(--muted)]/60 text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
                   <tr>
                     <th className="text-left px-4 py-2">Filename</th>
                     <th className="text-left px-4 py-2 hidden md:table-cell">Page</th>
@@ -164,11 +159,11 @@ export function FilesClient({ initialOverview, pages }: Props) {
                     <th className="text-right px-4 py-2">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-[var(--border)]">
                   {inbox.map((f) => (
                     <tr
                       key={`${f.page_id ?? "_"}/${f.name}`}
-                      className="border-b border-[var(--border)] last:border-b-0"
+                      className="transition-colors hover:bg-[var(--muted)]/60"
                     >
                       <td className="px-4 py-2 font-mono flex items-center gap-2">
                         {f.kind === "image" ? (
@@ -218,13 +213,13 @@ export function FilesClient({ initialOverview, pages }: Props) {
 
       {files.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
+          <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
             Registered ({files.length})
           </h3>
           <Card className="overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="border-b border-[var(--border)] text-xs uppercase tracking-wide text-[var(--muted-fg)]">
+                <thead className="border-b border-[var(--border)] bg-[var(--muted)]/60 text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
                   <tr>
                     <th className="text-left px-4 py-2">File</th>
                     <th className="text-left px-4 py-2 hidden md:table-cell">Type</th>
@@ -233,12 +228,9 @@ export function FilesClient({ initialOverview, pages }: Props) {
                     <th className="text-right px-4 py-2">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-[var(--border)]">
                   {files.map((f) => (
-                    <tr
-                      key={f.id}
-                      className="border-b border-[var(--border)] last:border-b-0"
-                    >
+                    <tr key={f.id} className="transition-colors hover:bg-[var(--muted)]/60">
                       <td className="px-4 py-2">
                         <div className="flex items-center gap-2 min-w-0">
                           {f.kind === "image" && f.present_on_disk ? (
@@ -246,7 +238,7 @@ export function FilesClient({ initialOverview, pages }: Props) {
                             <img
                               src={f.url}
                               alt=""
-                              className="size-9 rounded border border-[var(--border)] object-cover shrink-0"
+                              className="size-9 rounded-lg border border-[var(--border)] object-cover shrink-0"
                             />
                           ) : f.kind === "image" ? (
                             <ImageIcon className="size-5 text-[var(--muted-fg)] shrink-0" />
@@ -269,7 +261,7 @@ export function FilesClient({ initialOverview, pages }: Props) {
                       <td className="px-4 py-2 text-right whitespace-nowrap">
                         <a
                           href={`/api/v1/files/${f.id}/download`}
-                          className="inline-flex items-center rounded px-2 py-1 text-xs hover:bg-[var(--muted)]"
+                          className="inline-flex items-center rounded-lg px-2 py-1 text-xs font-medium transition-colors hover:bg-[var(--muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                         >
                           Download
                         </a>

@@ -160,13 +160,14 @@ export function TimeseriesModule({
               String(name),
             ]}
             contentStyle={{
-              background: "var(--bg)",
+              background: "var(--card)",
               border: "1px solid var(--border)",
-              borderRadius: 6,
+              borderRadius: 10,
+              boxShadow: "var(--shadow-md)",
               fontSize: 12,
             }}
           />
-          {showLegend && <Legend wrapperStyle={{ fontSize: 12 }} />}
+          {showLegend && <Legend wrapperStyle={{ fontSize: 12, color: "var(--muted-fg)" }} />}
           {series.map((s) => {
             const color = seriesColors[s.id] ?? paletteHex(0);
             if (chartType === "bar") {

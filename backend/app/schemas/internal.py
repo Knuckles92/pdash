@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -79,6 +79,7 @@ class ProposePageIn(BaseModel):
     name: str = Field(..., min_length=1, max_length=120)
     slug: str | None = Field(default=None, pattern=r"^[a-z0-9-]{1,40}$")
     description: str | None = Field(default=None, max_length=500)
+    type: Literal["agent", "canvas"] = "agent"
     rationale: str | None = Field(default=None, max_length=1000)
 
 

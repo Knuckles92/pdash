@@ -245,7 +245,7 @@ def main() -> int:
             "name": f"Delete me {PREFIX}",
             "slug": f"del-page-{PREFIX}",
             "description": "Fixture for delete_page approval",
-            "kind": "custom",
+            "type": "custom",
         },
     )
     apr_del_page = _insert_delete_page_approval(agent_id, del_page["id"])

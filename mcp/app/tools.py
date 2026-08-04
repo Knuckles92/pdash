@@ -1,6 +1,6 @@
 """MCP tool definitions.
 
-The agent-facing tools (the write/read set from PLAN §6 plus the visibility +
+The agent-facing tools (the write/read set plus the visibility +
 self-diagnosis tools), registered on a :class:`FastMCP` server. Each tool:
 
 1. Extracts the calling agent from the MCP request's Authorization header.
@@ -18,7 +18,7 @@ decides what to do.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Literal
 
 from mcp import McpError, types as mcp_types
 from mcp.server.fastmcp import Context, FastMCP, Image
@@ -108,6 +108,7 @@ class ProposePageArgs(BaseModel):
     name: str = Field(..., min_length=1, max_length=120)
     slug: str | None = Field(default=None, pattern=r"^[a-z0-9-]{1,40}$")
     description: str | None = Field(default=None, max_length=500)
+    type: Literal["agent", "canvas"] = "agent"
     idempotency_key: str | None = None
     rationale: str | None = Field(default=None, max_length=1000)
 
@@ -338,7 +339,7 @@ def _backend_error_to_mcp(exc: BackendError) -> McpError:
 def _status_envelope(status_code: int, body: dict[str, Any]) -> dict[str, Any]:
     """Translate a backend triad response into the documented MCP envelope.
 
-    PLAN §6: ``{status: applied|pending|denied, request_id?, reason?,
+    Response shape: ``{status: applied|pending|denied, request_id?, reason?,
     applied_at?, module?, ...}``. The backend returns ``denied_by_rule``;
     we normalise to ``denied`` for the MCP surface, but preserve ``rule_id``.
     """
@@ -438,7 +439,7 @@ async def _require_agent(ctx: Context) -> AgentInfo:
 
 
 # ---------------------------------------------------------------------------
-# Tool descriptions (≤400 tokens each, lifted from PLAN §6)
+# Tool descriptions (≤400 tokens each)
 # ---------------------------------------------------------------------------
 
 
@@ -527,6 +528,14 @@ When to use:
   - You need a fresh page to organise your modules. Prefer adding modules to
     an existing page (list_pages) before requesting a new one.
 
+type:
+  - "agent" (default) — a normal module grid page.
+  - "canvas" — a full-bleed page that renders a single `html` module as an
+    app-like surface (sandboxed iframe; no pdash session/API access). After
+    the page is approved, propose one `html` module on it — see
+    get_module_schema("html") for the injected --pdash-* theme tokens.
+    Content updates on html modules always require admin approval.
+
 Returns:
   - {status:"applied", page, request_id, applied_at} — rare.
   - {status:"pending", request_id, expires_at} — DO NOT retry.
@@ -611,7 +620,7 @@ List every dashboard page, so you can find a page_id to place a widget on
 (propose_module) or pick a page to render/screenshot.
 
 Args: limit (1-200, default 50), cursor.
-Returns: {items: [{id, slug, name, kind, owned, module_count,
+Returns: {items: [{id, slug, name, type, owned, module_count,
 my_module_count}], next_cursor}. "owned" means you can edit modules on it
 without admin approval; "my_module_count" is how many modules there you own.
 
@@ -674,7 +683,7 @@ which modules are broken. Use this to understand a dashboard's content and
 arrangement without pixels. For an actual image, use screenshot_page.
 
 Args: page_id.
-Returns: {page:{id,name,slug,kind}, modules:[{...module, health}],
+Returns: {page:{id,name,slug,type}, modules:[{...module, health}],
 layout:{columns, rows, ascii}, broken_module_ids, summary:{total, broken}}.
 Errors: not_found (page), rate_limit, service_unavailable.
 """
@@ -995,6 +1004,7 @@ def register_tools(mcp: FastMCP) -> None:
         name: str,
         slug: str | None = None,
         description: str | None = None,
+        type: Literal["agent", "canvas"] = "agent",
         idempotency_key: str | None = None,
         rationale: str | None = None,
         ctx: Context | None = None,
@@ -1005,11 +1015,12 @@ def register_tools(mcp: FastMCP) -> None:
             name=name,
             slug=slug,
             description=description,
+            type=type,
             idempotency_key=idempotency_key,
             rationale=rationale,
         )
         key = await _acquire_idem_key(agent.agent_id, "propose_page", args)
-        body: dict[str, Any] = {"name": args.name}
+        body: dict[str, Any] = {"name": args.name, "type": args.type}
         if args.slug is not None:
             body["slug"] = args.slug
         if args.description is not None:

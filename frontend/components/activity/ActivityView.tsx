@@ -1,11 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { Filter, RefreshCw, Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { RefreshCw, Search, SlidersHorizontal } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import {
+  ActivityFiltersPanel,
+  EMPTY_ACTIVITY_FILTERS,
+  TIME_PRESETS,
+  hasActiveFilters,
+  type ActivityFilters,
+} from "@/components/activity/ActivityFilters";
 import { ActivityRow } from "@/components/activity/ActivityRow";
+import { ConsolePath } from "@/components/layout/ConsolePath";
 import { useChannel } from "@/components/layout/RealtimeProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -15,6 +23,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import {
   api,
   errorMessage,
+  type ActionTarget,
   type ActivityLogDetail,
   type ActivityLogRow,
   type Agent,
@@ -23,45 +32,7 @@ import {
 } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { indexById } from "@/lib/collections";
-import { formatDateTime } from "@/lib/time";
-
-type Filters = {
-  kind: string;
-  actor: string;
-  target_kind: string;
-  target_id: string;
-  q: string;
-  after: string;
-  before: string;
-};
-
-const EMPTY_FILTERS: Filters = {
-  kind: "",
-  actor: "",
-  target_kind: "",
-  target_id: "",
-  q: "",
-  after: "",
-  before: "",
-};
-
-const SELECT_CLASS =
-  "h-9 rounded-md border border-[var(--border)] bg-[var(--bg)] px-2 text-sm w-full";
-
-const KIND_OPTIONS = [
-  "create_module",
-  "update_module_data",
-  "update_module_config",
-  "update_module_meta",
-  "delete_module",
-  "create_page",
-  "delete_page",
-  "fire_action_button",
-  "create_approval_rule",
-  "update_approval_rule",
-  "delete_approval_rule",
-  "revoke_approval_rule",
-];
+import { dayLabel, formatDateTime } from "@/lib/time";
 
 type ActivityViewProps = {
   initialItems: ActivityLogRow[];
@@ -69,6 +40,7 @@ type ActivityViewProps = {
   agents: Agent[];
   pages: Page[];
   modules: Module[];
+  actionTargets: ActionTarget[];
 };
 
 export function ActivityView({
@@ -77,13 +49,15 @@ export function ActivityView({
   agents,
   pages,
   modules,
+  actionTargets,
 }: ActivityViewProps) {
   const [items, setItems] = useState<ActivityLogRow[]>(initialItems);
   const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
-  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
-  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<ActivityFilters>(EMPTY_ACTIVITY_FILTERS);
+  const [qInput, setQInput] = useState("");
+  const [q, setQ] = useState("");
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedKinds, setSelectedKinds] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<ActivityLogDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [newCount, setNewCount] = useState(0);
@@ -91,48 +65,35 @@ export function ActivityView({
   const agentsById = useMemo(() => indexById(agents), [agents]);
   const pagesById = useMemo(() => indexById(pages), [pages]);
   const modulesById = useMemo(() => indexById(modules), [modules]);
+  const actionTargetsById = useMemo(() => indexById(actionTargets), [actionTargets]);
 
-  const moduleFilterOptions = useMemo(() => {
-    return [...modules].sort((a, b) => {
-      const pa = pagesById.get(a.page_id)?.name ?? "";
-      const pb = pagesById.get(b.page_id)?.name ?? "";
-      if (pa !== pb) return pa.localeCompare(pb);
-      const ta = a.title?.trim() || a.type;
-      const tb = b.title?.trim() || b.type;
-      return ta.localeCompare(tb);
-    });
-  }, [modules, pagesById]);
-
-  const pageFilterOptions = useMemo(
-    () => [...pages].sort((a, b) => a.name.localeCompare(b.name)),
-    [pages],
-  );
-
-  const targetIdIsKnown =
-    filters.target_kind === "module"
-      ? moduleFilterOptions.some((m) => m.id === filters.target_id)
-      : filters.target_kind === "page"
-        ? pageFilterOptions.some((p) => p.id === filters.target_id)
-        : true;
+  // Debounce free-text search so we don't hit FTS on every keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => setQ(qInput.trim()), 300);
+    return () => clearTimeout(t);
+  }, [qInput]);
 
   const fetchPage = useCallback(
     async (opts: { cursor?: string; replace?: boolean }) => {
-      const kindCsv =
-        selectedKinds.size > 0 ? Array.from(selectedKinds).join(",") : filters.kind || undefined;
+      const presetMs = TIME_PRESETS.find((p) => p.value === filters.preset)?.ms ?? 0;
       const res = await api.listActivity({
-        kind: kindCsv || undefined,
+        kind: filters.kinds.size > 0 ? Array.from(filters.kinds).join(",") : undefined,
+        outcome:
+          filters.outcomes.size > 0 ? Array.from(filters.outcomes).join(",") : undefined,
         actor: filters.actor || undefined,
-        target_kind: filters.target_kind || undefined,
-        target_id: filters.target_id || undefined,
-        q: filters.q || undefined,
-        after: filters.after || undefined,
+        target_kind: filters.targetKind || undefined,
+        target_id: filters.targetId || undefined,
+        q: q || undefined,
+        after: presetMs
+          ? new Date(Date.now() - presetMs).toISOString()
+          : filters.after || undefined,
         before: filters.before || undefined,
         cursor: opts.cursor,
       });
       setItems((prev) => (opts.replace ? res.items : [...prev, ...res.items]));
       setNextCursor(res.next_cursor);
     },
-    [filters, selectedKinds],
+    [filters, q],
   );
 
   const reload = useCallback(async () => {
@@ -146,14 +107,19 @@ export function ActivityView({
     }
   }, [fetchPage]);
 
-  // Reload on filter change.
+  // Reload on filter/search change; the initial render already carries page 1.
+  const firstRun = useRef(true);
   useEffect(() => {
+    if (firstRun.current) {
+      firstRun.current = false;
+      return;
+    }
     void reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, selectedKinds]);
+  }, [filters, q]);
 
   // Phase 5: count new activity rows arriving via SSE; do NOT auto-prepend
-  // (per PLAN — disorienting in a log).
+  // (disorienting in a log).
   useChannel("activity", (ev) => {
     if (ev.kind === "activity_appended") {
       setNewCount((c) => c + 1);
@@ -161,15 +127,6 @@ export function ActivityView({
       void reload();
     }
   });
-
-  function toggleKind(k: string): void {
-    setSelectedKinds((prev) => {
-      const next = new Set(prev);
-      if (next.has(k)) next.delete(k);
-      else next.add(k);
-      return next;
-    });
-  }
 
   async function openDetail(row: ActivityLogRow): Promise<void> {
     setDetail({ ...row });
@@ -184,12 +141,43 @@ export function ActivityView({
     }
   }
 
+  const filtersActive = hasActiveFilters(filters) || !!q;
+
+  // Group rows by calendar day. FTS results are relevance-ordered, so day
+  // headers would jumble — fall back to a flat list with dates on each row.
+  const searching = !!q;
+  const dayGroups = useMemo(() => {
+    if (searching) return null;
+    const groups: Array<{ label: string; rows: ActivityLogRow[] }> = [];
+    for (const row of items) {
+      const label = dayLabel(row.timestamp);
+      const last = groups[groups.length - 1];
+      if (last && last.label === label) last.rows.push(row);
+      else groups.push({ label, rows: [row] });
+    }
+    return groups;
+  }, [items, searching]);
+
+  const rowProps = {
+    agentsById,
+    modulesById,
+    pagesById,
+    actionTargetsById,
+    onActorClick: (actorId: string) => setFilters((f) => ({ ...f, actor: actorId })),
+  };
+
+  const clearAll = () => {
+    setFilters(EMPTY_ACTIVITY_FILTERS);
+    setQInput("");
+    setQ("");
+  };
+
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       {newCount > 0 && (
         <button
           type="button"
-          className="sticky top-2 z-20 self-center rounded-full bg-[var(--accent)] text-[var(--accent-fg)] px-3 py-1 text-xs shadow"
+          className="sticky top-2 z-20 self-center rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-medium text-[var(--accent-fg)] shadow-[var(--shadow-md)] transition-colors hover:bg-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
           onClick={() => {
             setNewCount(0);
             void reload();
@@ -198,9 +186,11 @@ export function ActivityView({
           {newCount} new {newCount === 1 ? "entry" : "entries"} — show
         </button>
       )}
+
       <header className="flex items-center justify-between gap-2">
         <div>
-          <h1 className="text-xl font-semibold">Activity</h1>
+          <ConsolePath segments={["activity"]} />
+          <h1 className="font-display text-xl font-semibold tracking-tight">Activity</h1>
           <p className="text-sm text-[var(--muted-fg)]">
             Audit log of admin + agent decisions.
           </p>
@@ -209,10 +199,15 @@ export function ActivityView({
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => setShowFilters((s) => !s)}
-            aria-pressed={showFilters}
+            className={cn(
+              "lg:hidden",
+              showMobileFilters &&
+                "bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent-soft)]",
+            )}
+            onClick={() => setShowMobileFilters((s) => !s)}
+            aria-pressed={showMobileFilters}
           >
-            <Filter className="size-4" /> Filters
+            <SlidersHorizontal className="size-4" /> Filters
           </Button>
           <Button
             size="sm"
@@ -226,153 +221,118 @@ export function ActivityView({
         </div>
       </header>
 
-      <div className="relative">
-        <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-4 text-[var(--muted-fg)]" />
-        <Input
-          className="pl-8"
-          placeholder="Type here to search…"
-     
-          value={filters.q}
-          onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
-        />
-      </div>
+      <div className="flex items-start gap-6">
+        <aside className="sticky top-6 hidden max-h-[calc(100vh-3rem)] w-56 shrink-0 overflow-y-auto pb-2 lg:block">
+          <ActivityFiltersPanel
+            filters={filters}
+            onChange={setFilters}
+            agents={agents}
+            modules={modules}
+            pages={pages}
+            actionTargets={actionTargets}
+            pagesById={pagesById}
+          />
+        </aside>
 
-      {showFilters && (
-        <Card className="p-3 flex flex-col gap-2">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <label className="flex flex-col gap-1 text-xs">
-              <span className="text-[var(--muted-fg)]">Actor</span>
-              <Input
-                className="h-9"
-                list="activity-actor-suggestions"
-                placeholder="All actors"
-                value={filters.actor}
-                onChange={(e) => setFilters((f) => ({ ...f, actor: e.target.value }))}
-              />
-              <datalist id="activity-actor-suggestions">
-                {agents.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.display_name}
-                  </option>
-                ))}
-              </datalist>
-            </label>
-            <label className="flex flex-col gap-1 text-xs">
-              <span className="text-[var(--muted-fg)]">Target kind</span>
-              <select
-                className={SELECT_CLASS}
-                value={filters.target_kind}
-                onChange={(e) =>
-                  setFilters((f) => ({
-                    ...f,
-                    target_kind: e.target.value,
-                    target_id: "",
-                  }))
-                }
-              >
-                <option value="">all</option>
-                <option value="module">module</option>
-                <option value="page">page</option>
-                <option value="action_target">action_target</option>
-                <option value="approval_rule">approval_rule</option>
-              </select>
-            </label>
-            <label className="flex flex-col gap-1 text-xs">
-              <span className="text-[var(--muted-fg)]">
-                {filters.target_kind === "module"
-                  ? "Module"
-                  : filters.target_kind === "page"
-                    ? "Page"
-                    : "Target id"}
-              </span>
-              <TargetIdField
-                targetKind={filters.target_kind}
-                value={filters.target_id}
-                onChange={(value) =>
-                  setFilters((f) => ({ ...f, target_id: value }))
-                }
-                moduleOptions={moduleFilterOptions}
-                pageOptions={pageFilterOptions}
-                pagesById={pagesById}
-                isKnown={targetIdIsKnown}
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-xs">
-              <span className="text-[var(--muted-fg)]">After</span>
-              <input
-                type="datetime-local"
-                className={SELECT_CLASS}
-                value={filters.after}
-                onChange={(e) => setFilters((f) => ({ ...f, after: e.target.value }))}
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-xs">
-              <span className="text-[var(--muted-fg)]">Before</span>
-              <input
-                type="datetime-local"
-                className={SELECT_CLASS}
-                value={filters.before}
-                onChange={(e) => setFilters((f) => ({ ...f, before: e.target.value }))}
-              />
-            </label>
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[var(--muted-fg)]" />
+            <Input
+              className="pl-8"
+              placeholder="Search the log — actors, targets, ids…"
+              value={qInput}
+              onChange={(e) => setQInput(e.target.value)}
+            />
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {KIND_OPTIONS.map((k) => (
-              <button
-                key={k}
-                type="button"
-                className={cn(
-                  "rounded-full border px-2.5 py-1 text-xs",
-                  selectedKinds.has(k)
-                    ? "bg-[var(--accent)] text-[var(--accent-fg)] border-transparent"
-                    : "border-[var(--border)] text-[var(--muted-fg)]",
-                )}
-                onClick={() => toggleKind(k)}
-              >
-                {k}
-              </button>
-            ))}
-          </div>
-        </Card>
-      )}
 
-      {items.length === 0 ? (
-        <EmptyState
-          icon={<Filter className="size-12" />}
-          title="No activity matches"
-          hint={
-            filters.q || selectedKinds.size > 0
-              ? "Loosen the filters or search term to see more history."
-              : "Audit rows land here as soon as agents or admins touch state."
-          }
-        />
-      ) : (
-        <Card className="overflow-hidden">
-          <div className="divide-y divide-[var(--border)]">
-            {items.map((row) => (
-              <ActivityRow
-                key={row.id}
-                row={row}
-                agentsById={agentsById}
-                modulesById={modulesById}
+          {showMobileFilters && (
+            <Card className="p-4 lg:hidden">
+              <ActivityFiltersPanel
+                filters={filters}
+                onChange={setFilters}
+                agents={agents}
+                modules={modules}
+                pages={pages}
+                actionTargets={actionTargets}
                 pagesById={pagesById}
-                onClick={() => void openDetail(row)}
               />
-            ))}
-          </div>
-          {nextCursor && (
-            <div className="p-2 text-center">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => void fetchPage({ cursor: nextCursor })}
-              >
-                Load more
-              </Button>
-            </div>
+            </Card>
           )}
-        </Card>
-      )}
+
+          <div className="flex items-center justify-between px-1 font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--muted-fg)]/80">
+            <span>
+              {items.length}
+              {nextCursor ? "+" : ""} {items.length === 1 ? "event" : "events"}
+              {searching && " · by relevance"}
+            </span>
+            {filtersActive && (
+              <button
+                type="button"
+                onClick={clearAll}
+                className="normal-case tracking-normal text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
+
+          {items.length === 0 ? (
+            <EmptyState
+              icon={<Search className="size-6" />}
+              title="No activity matches"
+              hint={
+                filtersActive
+                  ? "Loosen the filters or search term to see more history."
+                  : "Audit rows land here as soon as agents or admins touch state."
+              }
+            />
+          ) : (
+            // overflow-clip (not -hidden) so the sticky day headers still stick
+            <Card className="overflow-clip">
+              {dayGroups ? (
+                dayGroups.map((group, i) => (
+                  <section key={group.label} className={cn(i > 0 && "border-t border-[var(--border)]")}>
+                    <h2 className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--card)] px-4 py-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--muted-fg)]/80">
+                      {group.label}
+                    </h2>
+                    {group.rows.map((row) => (
+                      <ActivityRow
+                        key={row.id}
+                        row={row}
+                        {...rowProps}
+                        onClick={() => void openDetail(row)}
+                      />
+                    ))}
+                  </section>
+                ))
+              ) : (
+                <div className="divide-y divide-[var(--border)]">
+                  {items.map((row) => (
+                    <ActivityRow
+                      key={row.id}
+                      row={row}
+                      {...rowProps}
+                      showDate
+                      onClick={() => void openDetail(row)}
+                    />
+                  ))}
+                </div>
+              )}
+              {nextCursor && (
+                <div className="border-t border-[var(--border)] p-3 text-center">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => void fetchPage({ cursor: nextCursor })}
+                  >
+                    Load more
+                  </Button>
+                </div>
+              )}
+            </Card>
+          )}
+        </div>
+      </div>
 
       <Sheet
         open={!!detail}
@@ -389,13 +349,11 @@ export function ActivityView({
             {detail.target_kind && (
               <Field label="Target">{`${detail.target_kind}:${detail.target_id ?? ""}`}</Field>
             )}
-            {detail.request_id && (
-              <Field label="Request">{detail.request_id}</Field>
-            )}
+            {detail.request_id && <Field label="Request">{detail.request_id}</Field>}
             {detail.rule_id && (
               <Field label="Rule">
                 <Link
-                  className="underline"
+                  className="text-[var(--accent)] underline underline-offset-2 transition-colors hover:text-[var(--accent-hover)]"
                   href={`/settings/rules?id=${detail.rule_id}`}
                   onClick={() => setDetail(null)}
                 >
@@ -410,20 +368,20 @@ export function ActivityView({
             )}
             {detail.payload_summary && (
               <div>
-                <div className="text-[10px] uppercase tracking-wide text-[var(--muted-fg)]">
+                <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
                   Payload {detailLoading ? "(loading…)" : "summary"}
                 </div>
-                <pre className="mt-1 max-h-80 overflow-auto rounded-md bg-[var(--muted)] p-2 text-[11px]">
+                <pre className="mt-1.5 max-h-80 overflow-auto rounded-lg bg-[var(--muted)] p-3 font-mono text-xs leading-relaxed">
                   {JSON.stringify(detail.payload_summary, null, 2)}
                 </pre>
               </div>
             )}
             {detail.audit_blob && (
               <div>
-                <div className="text-[10px] uppercase tracking-wide text-[var(--muted-fg)]">
+                <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
                   Full payload (blob)
                 </div>
-                <pre className="mt-1 max-h-96 overflow-auto rounded-md bg-[var(--muted)] p-2 text-[11px]">
+                <pre className="mt-1.5 max-h-96 overflow-auto rounded-lg bg-[var(--muted)] p-3 font-mono text-xs leading-relaxed">
                   {JSON.stringify(detail.audit_blob, null, 2)}
                 </pre>
               </div>
@@ -435,98 +393,13 @@ export function ActivityView({
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-baseline gap-2">
-      <span className="w-20 shrink-0 text-[10px] uppercase tracking-wide text-[var(--muted-fg)]">
+      <span className="w-20 shrink-0 text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
         {label}
       </span>
       <span className="font-mono text-xs break-all">{children}</span>
     </div>
-  );
-}
-
-/**
- * Target-id picker that adapts to the chosen target kind: a module/page
- * <select> (with an "Unknown X (id)" fallback when the current id isn't in the
- * options) or a free-text id <Input> for every other kind.
- */
-function TargetIdField({
-  targetKind,
-  value,
-  onChange,
-  moduleOptions,
-  pageOptions,
-  pagesById,
-  isKnown,
-}: {
-  targetKind: string;
-  value: string;
-  onChange: (value: string) => void;
-  moduleOptions: Module[];
-  pageOptions: Page[];
-  pagesById: Map<string, Page>;
-  isKnown: boolean;
-}) {
-  if (targetKind === "module") {
-    return (
-      <select
-        className={SELECT_CLASS}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">All modules</option>
-        {moduleOptions.map((m) => {
-          const pageName = pagesById.get(m.page_id)?.name;
-          const label = m.title?.trim() || m.type;
-          return (
-            <option key={m.id} value={m.id}>
-              {pageName ? `${label} (${pageName})` : label}
-            </option>
-          );
-        })}
-        {value && !isKnown && (
-          <option value={value}>Unknown module ({value})</option>
-        )}
-      </select>
-    );
-  }
-  if (targetKind === "page") {
-    return (
-      <select
-        className={SELECT_CLASS}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">All pages</option>
-        {pageOptions.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-        {value && !isKnown && (
-          <option value={value}>Unknown page ({value})</option>
-        )}
-      </select>
-    );
-  }
-  return (
-    <Input
-      placeholder={
-        targetKind === "action_target"
-          ? "act_…"
-          : targetKind === "approval_rule"
-            ? "rule_…"
-            : "mod_… / pg_…"
-      }
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    />
   );
 }

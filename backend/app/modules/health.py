@@ -1,6 +1,6 @@
 """Module health + dashboard render helpers (read-only, no DB access).
 
-These power the agent-facing visibility endpoints (PLAN §6):
+These power the agent-facing visibility endpoints:
 
 - :func:`validate_payload` — dry-run a module's data/config against its type's
   Pydantic schema and report structured per-field errors. This is the same

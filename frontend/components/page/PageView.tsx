@@ -4,11 +4,14 @@ import { LayoutDashboard, Pencil, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import { ConsolePath } from "@/components/layout/ConsolePath";
 import { useChannel } from "@/components/layout/RealtimeProvider";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { api, type IframeAllowlistEntry, type Module, type Page } from "@/lib/api";
 
+import { CanvasView } from "./CanvasView";
+import { CorkboardBoard } from "./CorkboardBoard";
 import { EditablePageGrid } from "./EditablePageGrid";
 import { PageGrid } from "./PageGrid";
 
@@ -24,7 +27,15 @@ export function PageView({ page, modules, iframeAllowlist }: Props) {
   const editMode = search?.get("edit") === "1";
 
   // Phase 5: subscribe to page:<id> for live module add/update/remove/reorder.
+  // Reset synchronously on page change — a useEffect reset would leave one
+  // render with the previous page's modules, which can mount an html iframe
+  // and then rewrite its srcdoc when the new page's modules arrive (blank frame).
   const [liveModules, setLiveModules] = useState<Module[]>(modules);
+  const [livePageId, setLivePageId] = useState(page.id);
+  if (page.id !== livePageId) {
+    setLivePageId(page.id);
+    setLiveModules(modules);
+  }
   useEffect(() => {
     setLiveModules(modules);
   }, [modules]);
@@ -76,11 +87,17 @@ export function PageView({ page, modules, iframeAllowlist }: Props) {
     else params.set("edit", "1");
     const qs = params.toString();
     const basePath = page.slug === "home" ? "/" : `/pages/${page.slug}`;
-    router.push(qs ? `${basePath}?${qs}` : basePath);
+    router.push(qs ? `${basePath}?${qs}` : basePath, { scroll: false });
   }
 
-  const body =
-    sorted.length === 0 && !editMode ? (
+  const isCorkboard = page.type === "corkboard";
+  const isCanvas = page.type === "canvas";
+
+  const body = isCorkboard ? (
+    <CorkboardBoard pageId={page.id} modules={sorted} />
+  ) : isCanvas && !editMode ? (
+    <CanvasView modules={sorted} onEnterEdit={toggleEdit} />
+  ) : sorted.length === 0 && !editMode ? (
       <EmptyState
         icon={<LayoutDashboard className="size-12" />}
         title={page.slug === "home" ? "Your dashboard is empty" : "This page has no modules yet"}
@@ -99,9 +116,12 @@ export function PageView({ page, modules, iframeAllowlist }: Props) {
 
   return (
     <div className="grid grid-cols-[1fr_auto] gap-x-3">
-      <div className="flex min-w-0 flex-col gap-4">
-        <header>
-          <h1 className="text-xl font-semibold">{page.name}</h1>
+      <div className="flex min-w-0 flex-col gap-5">
+        <header className="flex flex-col gap-1">
+          <ConsolePath
+            segments={page.slug === "home" ? ["home"] : ["pages", page.slug]}
+          />
+          <h1 className="font-display text-xl font-semibold tracking-tight">{page.name}</h1>
           {page.description && (
             <p className="text-sm text-[var(--muted-fg)]">{page.description}</p>
           )}
@@ -109,19 +129,21 @@ export function PageView({ page, modules, iframeAllowlist }: Props) {
         {body}
       </div>
       <div>
-        <div className="sticky top-4 z-20 shrink-0">
-          <Button variant={editMode ? "primary" : "secondary"} size="sm" onClick={toggleEdit}>
-            {editMode ? (
-              <>
-                <X className="size-4" /> Done
-              </>
-            ) : (
-              <>
-                <Pencil className="size-4" /> Edit
-              </>
-            )}
-          </Button>
-        </div>
+        {!isCorkboard && (
+          <div className="sticky top-4 z-20 shrink-0">
+            <Button variant={editMode ? "primary" : "secondary"} size="sm" onClick={toggleEdit}>
+              {editMode ? (
+                <>
+                  <X className="size-4" /> Done
+                </>
+              ) : (
+                <>
+                  <Pencil className="size-4" /> Edit
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

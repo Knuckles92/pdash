@@ -29,5 +29,12 @@ export default async function HomePage() {
     { page_id: home.id },
     { cookieHeader },
   );
-  return <PageView page={home} modules={modules} iframeAllowlist={allowlist} />;
+  return (
+    <PageView
+      key={home.id}
+      page={home}
+      modules={modules}
+      iframeAllowlist={allowlist}
+    />
+  );
 }

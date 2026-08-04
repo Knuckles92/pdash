@@ -8,7 +8,7 @@ from typing import Any
 def onboarding_payload() -> dict[str, Any]:
     """Return the structured guidance used by the ungated onboarding tool."""
     return {
-        "service": "Home Base (pdash) - a self-hosted dashboard you publish modules to.",
+        "service": "pdash - a self-hosted dashboard you publish modules to.",
         "auth_model": (
             "Add this MCP server to your client's MCP configuration first (streamable HTTP, "
             "no Authorization header). Three tools work without a key: onboarding, "
@@ -46,7 +46,7 @@ def onboarding_payload() -> dict[str, Any]:
 def skill_markdown(mcp_url: str) -> str:
     """Render the standard SKILL.md served to fresh agents."""
     description = (
-        "Connect to Home Base (pdash), a self-hosted dashboard exposed over MCP. "
+        "Connect to pdash, a self-hosted dashboard exposed over MCP. "
         "Use when an AI agent needs to configure the pdash MCP server, request "
         "keyless registration, claim its hb_agt_ API key after admin approval, "
         "or safely publish/read dashboard modules through pdash tools."
@@ -58,7 +58,7 @@ description: {description}
 
 # pdash Onboarding
 
-Use this skill when connecting to Home Base (pdash). pdash is a self-hosted
+Use this skill when connecting to pdash. pdash is a self-hosted
 dashboard that agents update through MCP tools. You must configure the MCP
 server before using pdash tools.
 

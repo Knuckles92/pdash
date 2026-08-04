@@ -54,7 +54,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--card)] pb-[env(safe-area-inset-bottom)]"
+      className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--card)]/90 pb-[env(safe-area-inset-bottom)] backdrop-blur"
       aria-label="Primary navigation"
     >
       <ul className={cn("grid", items.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
@@ -67,18 +67,18 @@ export function BottomNav() {
                 href={it.href}
                 onNavigate={() => setPendingPath(it.href)}
                 className={cn(
-                  "relative flex flex-col items-center justify-center gap-1 py-2 text-[11px]",
+                  "relative flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium",
                   "featured" in it && it.featured
                     ? "text-[var(--accent)]"
                     : active
-                      ? "text-[var(--fg)]"
+                      ? "text-[var(--accent)]"
                       : "text-[var(--muted-fg)]",
                 )}
               >
                 <Icon className="size-5" />
                 <span>{it.label}</span>
                 {it.label === "Approvals" && approvalCount > 0 && (
-                  <Badge className="absolute top-1 right-1/3 bg-[var(--accent)] text-[var(--accent-fg)] border-transparent">
+                  <Badge tone="solid" className="absolute top-1 right-1/3">
                     {approvalCount}
                   </Badge>
                 )}

@@ -28,9 +28,9 @@ export default function AppError({
     console.error(error);
   }, [error]);
   return (
-    <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4">
-      <h2 className="text-base font-semibold mb-1">Couldn&apos;t load this view</h2>
-      <p className="text-sm text-[var(--muted-fg)] mb-3">{error.message}</p>
+    <div className="rounded-xl border border-[var(--danger)]/25 bg-[var(--danger-soft)] p-5">
+      <h2 className="mb-1 text-base font-semibold tracking-tight">Couldn&apos;t load this view</h2>
+      <p className="mb-4 text-sm text-[var(--muted-fg)]">{error.message}</p>
       <Button variant="secondary" onClick={reset}>
         Retry
       </Button>

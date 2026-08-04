@@ -82,7 +82,7 @@ async def test_skill_file_is_open_and_points_at_mcp(mcp_server: FastMCP) -> None
     body = resp.body.decode()
     assert body.startswith("---\n")
     assert "name: pdash-onboarding" in body
-    assert "description: Connect to Home Base (pdash)" in body
+    assert "description: Connect to pdash" in body
     assert '"url": "http://testserver/mcp"' in body
     assert "Do not call the\nMCP endpoint with raw curl, WebFetch" in body
     assert "Do not call `request_registration` again while waiting." in body

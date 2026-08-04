@@ -42,3 +42,9 @@ backups/
 
 # Logs
 *.log
+
+# Local docs (not versioned)
+docs/
+
+AGENTS.md
+CLAUDE.md

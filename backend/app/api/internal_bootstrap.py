@@ -115,7 +115,8 @@ async def register_request(
 
     # display_name is globally unique on agents; reject a clash up front so the
     # client picks a free name. (This intentionally signals name availability on
-    # the ungated path — harmless on a single-admin tailnet.) Also reject a name
+    # the ungated path — harmless on a single-admin tailnet, whose perimeter also
+    # covers agents connecting from other tailnet devices.) Also reject a name
     # already awaiting approval/claim so duplicates can't accumulate and dead-end.
     if await session.scalar(select(Agent).where(Agent.display_name == body.display_name)):
         raise conflict(

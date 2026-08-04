@@ -8,7 +8,7 @@ import type { ApprovalLayoutProps } from "./shared";
  */
 export function RailCardsLayout({ rows, renderCard }: ApprovalLayoutProps) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       {rows.map((vm) => (
         <div key={vm.request.id}>{renderCard(vm.request)}</div>
       ))}

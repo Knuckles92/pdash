@@ -203,6 +203,17 @@ export type IframeConfig = {
   appearance?: ModuleAppearance;
 };
 
+// ---- html -------------------------------------------------------------------
+export type HtmlData = {
+  html: string;
+  title?: string | null;
+};
+export type HtmlConfig = {
+  height_px?: number;
+  mobile_height_px?: number;
+  appearance?: ModuleAppearance;
+};
+
 // ---- notification ----------------------------------------------------------
 export type NotificationAction = {
   label: string;
@@ -271,6 +282,55 @@ export type FileConfig = {
   appearance?: ModuleAppearance;
 };
 
+// ---- sticky_note ------------------------------------------------------------
+export type NoteColor = "yellow" | "pink" | "blue" | "green" | "orange" | "purple" | "white";
+export type PinStyle = "pin" | "tape" | "none";
+export type NoteFont = "hand" | "normal";
+export type ChecklistItem = {
+  text: string;
+  done: boolean;
+};
+export type StickyNoteData = {
+  title?: string;
+  text?: string;
+  items?: ChecklistItem[];
+  done?: boolean;
+  pinned?: boolean;
+  created_at?: IsoTimestamp | null;
+};
+export type StickyNoteConfig = {
+  color?: NoteColor;
+  pin_style?: PinStyle;
+  font?: NoteFont;
+  appearance?: ModuleAppearance;
+};
+
+// ---- progress ---------------------------------------------------------------
+export type ProgressBar = {
+  id?: string;
+  label: string;
+  current?: number;
+  target: number;
+  unit?: string | null;
+  severity?: Severity | null;
+  icon?: IconName | null;
+  hint?: string | null;
+};
+export type ProgressData = {
+  bars: ProgressBar[];
+  updated_at?: IsoTimestamp | null;
+};
+export type ProgressDensity = "compact" | "normal";
+export type ProgressSort = "as-is" | "percent-asc" | "percent-desc" | "label";
+export type ProgressConfig = {
+  show_values?: boolean;
+  show_percent?: boolean;
+  density?: ProgressDensity;
+  sort?: ProgressSort;
+  empty_message?: string | null;
+  appearance?: ModuleAppearance;
+};
+
 // ---- registry --------------------------------------------------------------
 export const PHASE_2_TYPES = ["markdown", "key_value", "table", "link_list"] as const;
 export type Phase2Type = (typeof PHASE_2_TYPES)[number];
@@ -299,9 +359,33 @@ export function isPhase5Type(s: string): s is Phase5Type {
   return (PHASE_5_TYPES as readonly string[]).includes(s);
 }
 
+export const CORKBOARD_TYPES = ["sticky_note"] as const;
+export type CorkboardType = (typeof CORKBOARD_TYPES)[number];
+
+export function isCorkboardType(s: string): s is CorkboardType {
+  return (CORKBOARD_TYPES as readonly string[]).includes(s);
+}
+
+export const PROGRESS_TYPES = ["progress"] as const;
+export type ProgressType = (typeof PROGRESS_TYPES)[number];
+
+export function isProgressType(s: string): s is ProgressType {
+  return (PROGRESS_TYPES as readonly string[]).includes(s);
+}
+
+export const CANVAS_TYPES = ["html"] as const;
+export type CanvasType = (typeof CANVAS_TYPES)[number];
+
+export function isCanvasType(s: string): s is CanvasType {
+  return (CANVAS_TYPES as readonly string[]).includes(s);
+}
+
 export const ALL_MODULE_TYPES = [
   ...PHASE_2_TYPES,
   ...PHASE_4_TYPES,
   ...PHASE_5_TYPES,
+  ...CORKBOARD_TYPES,
+  ...PROGRESS_TYPES,
+  ...CANVAS_TYPES,
 ] as const;
 export type ModuleType = (typeof ALL_MODULE_TYPES)[number];

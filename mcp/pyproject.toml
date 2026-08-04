@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pdash-mcp"
 version = "0.1.0"
-description = "MCP server for Home Base (pdash) — translates MCP tool calls to /api/v1/internal/* HTTP"
+description = "MCP server for pdash — translates MCP tool calls to /api/v1/internal/* HTTP"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

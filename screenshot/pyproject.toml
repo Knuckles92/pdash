@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pdash-screenshot"
 version = "0.1.0"
-description = "Headless-Chromium screenshot sidecar for Home Base (pdash)"
+description = "Headless-Chromium screenshot sidecar for pdash"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

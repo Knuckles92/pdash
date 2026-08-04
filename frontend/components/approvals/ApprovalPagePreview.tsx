@@ -44,15 +44,15 @@ function RemovedModulePlaceholder({ module: m }: { module: Module }) {
   return (
     <div
       className={cn(
-        "flex flex-col rounded-lg border-2 border-dashed border-[var(--danger)]/50",
-        "bg-[var(--danger)]/5 min-h-[6rem]",
+        "flex flex-col rounded-xl border-2 border-dashed border-[var(--danger)]/40",
+        "bg-[var(--danger-soft)]/60 min-h-[6rem]",
       )}
     >
       <div className="flex items-center gap-2 border-b border-[var(--danger)]/20 px-3 py-2">
         <span className="truncate text-sm font-medium text-[var(--fg)]">
           {m.title ?? `Untitled ${m.type}`}
         </span>
-        <Badge className="ml-auto shrink-0 bg-[var(--danger)]/15 text-[var(--danger)] border-[var(--danger)]/30">
+        <Badge tone="danger" className="ml-auto shrink-0">
           Will be removed
         </Badge>
       </div>
@@ -87,16 +87,20 @@ export function ApprovalPagePreview({
       : preview.highlight.change === "update"
         ? "Updated module"
         : "Removed module";
+  const changeTone =
+    preview.highlight.change === "create"
+      ? ("accent" as const)
+      : preview.highlight.change === "update"
+        ? ("info" as const)
+        : ("danger" as const);
 
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3">
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)] p-4">
       <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
         <LayoutDashboard className="size-3.5 text-[var(--muted-fg)]" />
-        <span className="font-medium text-sm">{preview.page.name}</span>
-        <span className="text-[var(--muted-fg)]">/{preview.page.slug}</span>
-        <Badge className="bg-[var(--muted)] text-[var(--fg)] border-[var(--border)]">
-          {changeLabel}
-        </Badge>
+        <span className="text-sm font-semibold tracking-tight">{preview.page.name}</span>
+        <span className="font-mono text-[var(--muted-fg)]">/{preview.page.slug}</span>
+        <Badge tone={changeTone}>{changeLabel}</Badge>
       </div>
 
       {items.length === 0 ? (
@@ -114,7 +118,10 @@ export function ApprovalPagePreview({
             return (
               <div key={m.id} className={cn("relative", colspanClass(m.grid))}>
                 {isHighlighted && (
-                  <Badge className="absolute -top-2 right-2 z-10 bg-[var(--accent)] text-[var(--accent-fg)] border-transparent shadow-sm">
+                  <Badge
+                    tone="solid"
+                    className="absolute -top-2 right-2 z-10 shadow-[var(--shadow-sm)]"
+                  >
                     Proposed
                   </Badge>
                 )}

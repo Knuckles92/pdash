@@ -16,6 +16,7 @@ DEFAULT_EXAMPLE_TYPES = {
     "link_list",
     "iframe",
     "action_button",
+    "progress",
 }
 
 
@@ -29,7 +30,7 @@ def _home_page_id(client: TestClient) -> str:
 def _custom_page_id(client: TestClient) -> str:
     resp = client.post(
         "/api/v1/pages",
-        json={"slug": "demo-page", "name": "Demo", "kind": "custom"},
+        json={"slug": "demo-page", "name": "Demo", "type": "custom"},
     )
     assert resp.status_code == 201, resp.text
     return resp.json()["id"]
@@ -42,18 +43,18 @@ def _default_example_count(client: TestClient, page_id: str) -> int:
     return sum(1 for item in items if item["permissions"].get("pdash_default_example") is True)
 
 
-def test_fresh_home_has_nine_default_examples(admin_client: TestClient) -> None:
+def test_fresh_home_has_default_examples(admin_client: TestClient) -> None:
     page_id = _home_page_id(admin_client)
     assert _default_example_count(admin_client, page_id) == len(DEFAULT_EXAMPLE_TYPES)
 
 
 def test_clear_default_examples(admin_client: TestClient) -> None:
     page_id = _home_page_id(admin_client)
-    assert _default_example_count(admin_client, page_id) == 9
+    assert _default_example_count(admin_client, page_id) == len(DEFAULT_EXAMPLE_TYPES)
 
     resp = admin_client.delete(f"/api/v1/pages/{page_id}/default-examples")
     assert resp.status_code == 200, resp.text
-    assert resp.json()["cleared"] == 9
+    assert resp.json()["cleared"] == len(DEFAULT_EXAMPLE_TYPES)
     assert _default_example_count(admin_client, page_id) == 0
 
     resp = admin_client.delete(f"/api/v1/pages/{page_id}/default-examples")
@@ -68,12 +69,12 @@ def test_deploy_default_examples(admin_client: TestClient) -> None:
 
     resp = admin_client.post(f"/api/v1/pages/{page_id}/default-examples")
     assert resp.status_code == 200, resp.text
-    assert resp.json()["deployed"] == 9
+    assert resp.json()["deployed"] == len(DEFAULT_EXAMPLE_TYPES)
 
     modules_resp = admin_client.get(f"/api/v1/modules?page_id={page_id}&limit=200")
     assert modules_resp.status_code == 200, modules_resp.text
     items = modules_resp.json()["items"]
-    assert len(items) == 9
+    assert len(items) == len(DEFAULT_EXAMPLE_TYPES)
     assert {item["type"] for item in items} == DEFAULT_EXAMPLE_TYPES
     for item in items:
         assert item["permissions"]["pdash_default_example"] is True
@@ -86,12 +87,12 @@ def test_deploy_replaces_partial_default_examples(admin_client: TestClient) -> N
     assert modules_resp.status_code == 200
     first_id = modules_resp.json()["items"][0]["id"]
     assert admin_client.delete(f"/api/v1/modules/{first_id}").status_code == 204
-    assert _default_example_count(admin_client, page_id) == 8
+    assert _default_example_count(admin_client, page_id) == len(DEFAULT_EXAMPLE_TYPES) - 1
 
     resp = admin_client.post(f"/api/v1/pages/{page_id}/default-examples")
     assert resp.status_code == 200, resp.text
-    assert resp.json()["deployed"] == 9
-    assert _default_example_count(admin_client, page_id) == 9
+    assert resp.json()["deployed"] == len(DEFAULT_EXAMPLE_TYPES)
+    assert _default_example_count(admin_client, page_id) == len(DEFAULT_EXAMPLE_TYPES)
 
 
 def test_default_examples_endpoints_reject_non_home_page(admin_client: TestClient) -> None:

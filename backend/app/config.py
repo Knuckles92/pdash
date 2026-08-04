@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import json
 from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
+from typing import Annotated
 
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -84,7 +86,7 @@ class Settings(BaseSettings):
         default=25 * 1024 * 1024,
         description="Maximum size (bytes) of a file an agent may register.",
     )
-    file_mime_allowlist: list[str] = Field(
+    file_mime_allowlist: Annotated[list[str], NoDecode] = Field(
         default_factory=list,
         description=(
             "If non-empty, only these MIME types may be registered. Empty means "
@@ -124,6 +126,24 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
     log_json: bool = False
+
+    @field_validator("file_mime_allowlist", mode="before")
+    @classmethod
+    def _parse_file_mime_allowlist(cls, value: object) -> object:
+        if value is None:
+            return []
+        if not isinstance(value, str):
+            return value
+
+        raw = value.strip()
+        if not raw:
+            return []
+        if raw.startswith("["):
+            parsed = json.loads(raw)
+            if isinstance(parsed, list):
+                return [str(item).strip() for item in parsed if str(item).strip()]
+            return parsed
+        return [item.strip() for item in raw.split(",") if item.strip()]
 
     def resolved_database_url(self) -> str:
         if self.database_path:

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown, ChevronUp, ShieldCheck, ShieldX, X } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, ShieldCheck, SlidersHorizontal, X } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { AgentBadge } from "@/components/agents/AgentBadge";
@@ -51,7 +51,8 @@ type ApprovalCardProps = {
   pagesById: Map<string, Page>;
   busy?: boolean;
   onApprove: (withRule: boolean) => void;
-  onDeny: (withRule: boolean) => void;
+  onDeny: () => void;
+  onAdjustRules: () => void;
   /**
    * Long-press handler used on mobile to enter multi-select mode without
    * needing a visible checkbox tap.
@@ -79,6 +80,7 @@ export function ApprovalCard({
   busy,
   onApprove,
   onDeny,
+  onAdjustRules,
   onLongPress,
 }: ApprovalCardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded ?? false);
@@ -152,7 +154,7 @@ export function ApprovalCard({
       if (dx > 0) {
         onApprove(false);
       } else {
-        onDeny(false);
+        onDeny();
       }
     }
     // Reset visual position whether or not we triggered.
@@ -171,8 +173,8 @@ export function ApprovalCard({
   return (
     <Card
       className={cn(
-        "relative overflow-hidden transition-shadow",
-        selected && "ring-2 ring-[var(--accent)]",
+        "relative overflow-hidden transition-all",
+        selected && "border-[var(--accent-border)] ring-2 ring-[var(--accent)]",
       )}
     >
       {/* Family-colored rail (action type at a glance). */}
@@ -195,7 +197,7 @@ export function ApprovalCard({
       )}
       <div
         ref={containerRef}
-        className="relative flex items-start gap-3 p-3 pl-4 bg-[var(--card)] touch-pan-y"
+        className="relative flex items-start gap-3 p-4 pl-5 bg-[var(--card)] touch-pan-y"
         style={{
           transform: `translateX(${swipeX}px)`,
           transition: swipeStartRef.current ? "none" : "transform 0.18s ease-out",
@@ -216,7 +218,7 @@ export function ApprovalCard({
           aria-label="Select for bulk action"
           checked={selected}
           onChange={onToggleSelect}
-          className="mt-1 size-4 shrink-0"
+          className="mt-1 size-4 shrink-0 accent-[var(--accent)]"
         />
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -247,7 +249,7 @@ export function ApprovalCard({
 
           <button
             type="button"
-            className="mt-2 inline-flex items-center gap-1 text-xs text-[var(--muted-fg)] hover:text-[var(--fg)]"
+            className="mt-2 inline-flex items-center gap-1 rounded-lg text-xs text-[var(--muted-fg)] transition-colors hover:text-[var(--fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             onClick={() => {
               setExpanded((e) => {
                 const next = !e;
@@ -302,7 +304,7 @@ export function ApprovalCard({
 
               <button
                 type="button"
-                className="inline-flex items-center gap-1 text-xs text-[var(--muted-fg)] hover:text-[var(--fg)]"
+                className="inline-flex items-center gap-1 rounded-lg text-xs text-[var(--muted-fg)] transition-colors hover:text-[var(--fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                 onClick={() => setShowTechnical((s) => !s)}
               >
                 {showTechnical ? (
@@ -320,19 +322,19 @@ export function ApprovalCard({
                 <div className="space-y-2">
                   {diffPreview && Object.keys(diffPreview).length > 0 && (
                     <div>
-                      <div className="text-[10px] uppercase tracking-wide text-[var(--muted-fg)]">
+                      <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
                         Diff
                       </div>
-                      <pre className="mt-1 max-h-64 overflow-auto rounded-md bg-[var(--muted)] p-2 text-[11px] leading-snug">
+                      <pre className="mt-1 max-h-64 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--muted)] p-3 font-mono text-[11px] leading-snug">
                         {JSON.stringify(diffPreview, null, 2)}
                       </pre>
                     </div>
                   )}
                   <div>
-                    <div className="text-[10px] uppercase tracking-wide text-[var(--muted-fg)]">
+                    <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
                       Proposed payload
                     </div>
-                    <pre className="mt-1 max-h-96 overflow-auto rounded-md bg-[var(--muted)] p-2 text-[11px] leading-snug">
+                    <pre className="mt-1 max-h-96 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--muted)] p-3 font-mono text-[11px] leading-snug">
                       {JSON.stringify(request.proposed_payload, null, 2)}
                     </pre>
                   </div>
@@ -351,13 +353,14 @@ export function ApprovalCard({
               disabled={busy}
               onClick={() => onApprove(true)}
             >
-              <ShieldCheck className="size-4" /> Approve + rule
+              <ShieldCheck className="size-4" /> Approve + Auto-Approve Future Matches
             </Button>
             <Button
               size="sm"
-              variant="outline"
+              variant="secondary"
+              className="text-[var(--danger)] hover:border-[var(--danger)]/25 hover:bg-[var(--danger-soft)]"
               disabled={busy}
-              onClick={() => onDeny(false)}
+              onClick={onDeny}
             >
               <X className="size-4" /> Deny
             </Button>
@@ -365,9 +368,9 @@ export function ApprovalCard({
               size="sm"
               variant="outline"
               disabled={busy}
-              onClick={() => onDeny(true)}
+              onClick={onAdjustRules}
             >
-              <ShieldX className="size-4" /> Deny + rule
+              <SlidersHorizontal className="size-4" /> Adjust Rules
             </Button>
           </div>
         </div>

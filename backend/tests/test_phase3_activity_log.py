@@ -76,6 +76,38 @@ def test_activity_log_filter_by_actor(admin_client: TestClient) -> None:
     assert all(i["actor_id"] == agent_id for i in items)
 
 
+def test_activity_log_filter_by_outcome(admin_client: TestClient) -> None:
+    agent_id, _ = register_agent(admin_client, name="filter-outcome")
+    secret = get_service_secret()
+    page_id = home_page_id(admin_client)
+    # Pending proposal writes a 'queued' row; admin approval writes 'applied'.
+    resp = admin_client.post(
+        "/api/v1/internal/propose-module",
+        json={
+            "type": "markdown",
+            "page_id": page_id,
+            "data": {"body": "outcome test"},
+            "config": {},
+        },
+        headers=internal_headers(agent_id, secret, idempotency_key="outcome-1"),
+    )
+    request_id = resp.json()["request_id"]
+    admin_client.post(f"/api/v1/approval-requests/{request_id}/approve", json={})
+
+    queued = admin_client.get("/api/v1/activity-log?outcome=queued")
+    assert queued.status_code == 200
+    items = queued.json()["items"]
+    assert items
+    assert all(i["outcome"] == "queued" for i in items)
+
+    # CSV of outcomes matches either value.
+    both = admin_client.get("/api/v1/activity-log?outcome=queued,applied")
+    assert both.status_code == 200
+    outcomes = {i["outcome"] for i in both.json()["items"]}
+    assert outcomes <= {"queued", "applied"}
+    assert "queued" in outcomes and "applied" in outcomes
+
+
 def test_activity_log_get_one(admin_client: TestClient) -> None:
     page_id = home_page_id(admin_client)
     # Use admin create which writes an applied row

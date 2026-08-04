@@ -1,8 +1,8 @@
 "use client";
 
 import type { KeyValueConfig, KeyValueData, KeyValueField } from "@/lib/modules/types";
-import { humanizeBytes } from "@/lib/modules/format";
 import { severityChipClass } from "@/lib/modules/severity";
+import { humanizeBytes } from "@/lib/modules/format";
 import { cn } from "@/lib/cn";
 
 function formatValue(v: KeyValueField["value"], format?: KeyValueConfig["value_format"]): string {
@@ -47,12 +47,15 @@ export function KeyValueModule({ data, config }: { data: KeyValueData; config: K
     return (
       <dl className="flex flex-col gap-3">
         {fields.map((f, i) => (
-          <div key={`${f.key}-${i}`} className="flex flex-col gap-0.5">
-            <dt className="text-xs uppercase tracking-wide text-[var(--muted-fg)]">{f.key}</dt>
+          <div key={`${f.key}-${i}`} className="flex flex-col gap-1">
+            <dt className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
+              {f.key}
+            </dt>
             <dd
               className={cn(
-                "inline-flex w-fit items-center gap-1.5 rounded-md border px-2 py-0.5",
-                severityChipClass(f.severity),
+                "inline-flex w-fit items-center gap-1.5 text-sm",
+                f.severity && "rounded-lg border px-2 py-0.5",
+                f.severity && severityChipClass(f.severity),
                 valueClass,
               )}
               title={f.hint ?? undefined}
@@ -66,18 +69,23 @@ export function KeyValueModule({ data, config }: { data: KeyValueData; config: K
     );
   }
 
-  // two-column
+  // two-column — a refined table-like list; subgrid keeps the key column aligned
+  // across rows while each row stays a real box (dividers + hover).
   return (
-    <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2 text-sm">
+    <dl className="grid grid-cols-[max-content_1fr] divide-y divide-[var(--border)] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm">
       {fields.map((f, i) => (
-        <div key={`${f.key}-${i}`} className="contents">
+        <div
+          key={`${f.key}-${i}`}
+          className="col-span-2 grid grid-cols-subgrid items-center gap-x-4 px-3 py-2 transition-colors hover:bg-[var(--muted)]/60"
+        >
           <dt className="text-[var(--muted-fg)]" title={f.hint ?? undefined}>
             {f.key}
           </dt>
           <dd
             className={cn(
-              "inline-flex w-fit items-center gap-1.5 rounded-md border px-2 py-0.5",
-              severityChipClass(f.severity),
+              "inline-flex w-fit items-center gap-1.5",
+              f.severity && "rounded-full border px-2 py-0.5 text-xs font-medium",
+              f.severity && severityChipClass(f.severity),
               valueClass,
             )}
           >

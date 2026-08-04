@@ -156,7 +156,7 @@ export type Page = {
   slug: string;
   name: string;
   description: string | null;
-  kind: string;
+  type: string;
   owner_kind: string | null;
   owner_id: string | null;
   created_at: string;
@@ -181,6 +181,17 @@ export type Module = {
   updated_at: string;
   last_updated_by: string;
   deleted_at: string | null;
+};
+
+export type PageAgentAccessLevel = "default" | "free" | "blocked" | "custom";
+
+export type PageAgentAccessItem = {
+  agent_id: string;
+  display_name: string;
+  status: "active" | "disabled" | "revoked";
+  module_count: number;
+  access: PageAgentAccessLevel;
+  custom_rule_count: number;
 };
 
 export type Agent = {
@@ -390,7 +401,7 @@ export type DashboardPreviewHighlight = {
 };
 
 export type DashboardPreview = {
-  page: { id: string; name: string; slug: string; description?: string | null; kind?: string };
+  page: { id: string; name: string; slug: string; description?: string | null; type?: string };
   modules: Module[];
   highlight: DashboardPreviewHighlight;
 };
@@ -557,7 +568,7 @@ export const api = {
     slug: string;
     name: string;
     description?: string;
-    kind?: string;
+    type?: string;
   }) => apiFetch<Page>("/api/v1/pages", { method: "POST", json: body }),
   updatePage: (id: string, body: Partial<{ slug: string; name: string; description: string }>) =>
     apiFetch<Page>(`/api/v1/pages/${id}`, { method: "PATCH", json: body }),
@@ -570,6 +581,20 @@ export const api = {
   deployHomeExamples: (pageId: string) =>
     apiFetch<{ deployed: number }>(`/api/v1/pages/${pageId}/default-examples`, {
       method: "POST",
+    }),
+  getPageAgentAccess: (pageId: string, opts: ApiRequestInit = {}) =>
+    apiFetch<{ page_id: string; items: PageAgentAccessItem[] }>(
+      `/api/v1/pages/${pageId}/agent-access`,
+      opts,
+    ),
+  setPageAgentAccess: (
+    pageId: string,
+    agentId: string,
+    access: "default" | "free" | "blocked",
+  ) =>
+    apiFetch<PageAgentAccessItem>(`/api/v1/pages/${pageId}/agent-access/${agentId}`, {
+      method: "PUT",
+      json: { access },
     }),
 
   // modules
@@ -815,6 +840,7 @@ export const api = {
   listActivity: (
     params: {
       kind?: string;
+      outcome?: string;
       actor?: string;
       target_kind?: string;
       target_id?: string;
@@ -829,6 +855,7 @@ export const api = {
     return apiFetch<ActivityLogPage>(
       `/api/v1/activity-log${buildQuery({
         kind: params.kind,
+        outcome: params.outcome,
         actor: params.actor,
         target_kind: params.target_kind,
         target_id: params.target_id,

@@ -47,6 +47,25 @@ def test_events_rejects_unknown_topic_prefix(admin_client: TestClient) -> None:
     assert resp.json()["code"] == "events.unknown_topic"
 
 
+def test_events_headers_forbid_proxy_transform(
+    admin_client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SSE responses must carry ``no-transform`` so proxies (e.g. the Next.js
+    rewrite proxy's gzip) don't buffer the stream — a compressed SSE stream
+    delivers no events until the compressor flushes, i.e. never."""
+    from app.api import events as events_mod
+
+    # The real stream never ends; stub it so TestClient can drain the response.
+    async def finite_stream(*args: object, **kwargs: object) -> AsyncGenerator[dict, None]:
+        yield {"event": "ping", "data": "{}"}
+
+    monkeypatch.setattr(events_mod, "_stream", finite_stream)
+    resp = admin_client.get("/api/v1/events?topics=pages")
+    assert resp.status_code == 200
+    assert "no-transform" in resp.headers["cache-control"]
+    assert resp.headers["x-accel-buffering"] == "no"
+
+
 def test_internal_events_requires_service_secret(client: TestClient) -> None:
     # No Authorization header.
     resp = client.get("/api/v1/internal/events?topics=approvals")

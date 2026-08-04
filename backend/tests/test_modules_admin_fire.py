@@ -1,6 +1,6 @@
 """Tests for the admin-side `POST /api/v1/modules/{id}/fire` endpoint.
 
-Admin firing bypasses the approval engine entirely (PLAN §0). The endpoint
+Admin firing bypasses the approval engine entirely. The endpoint
 should:
 
 - 404 if the module doesn't exist.

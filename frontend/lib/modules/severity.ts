@@ -1,36 +1,36 @@
 import type { Severity } from "./types";
 
-/** Tailwind class map for severity chips/text. */
-export function severityChipClass(s?: Severity | null): string {
+/** Chip/callout class map for severities, on the theme's status tokens. */
+export function severityChipClass(s?: Severity | string | null): string {
   switch (s) {
     case "success":
-      return "bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/30";
+      return "border-[var(--success)]/25 bg-[var(--success-soft)] text-[var(--success)]";
     case "warning":
-      return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30";
+      return "border-[var(--warning)]/25 bg-[var(--warning-soft)] text-[var(--warning)]";
     case "error":
-      return "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30";
+      return "border-[var(--danger)]/25 bg-[var(--danger-soft)] text-[var(--danger)]";
     case "info":
-      return "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30";
+      return "border-[var(--info)]/25 bg-[var(--info-soft)] text-[var(--info)]";
     case "muted":
-      return "bg-zinc-500/15 text-zinc-700 dark:text-zinc-300 border-zinc-500/30";
+      return "border-[var(--border)] bg-[var(--muted)] text-[var(--muted-fg)]";
     default:
-      return "bg-zinc-500/10 text-zinc-700 dark:text-zinc-300 border-zinc-500/20";
+      return "border-[var(--border)] bg-[var(--muted)]/60 text-[var(--muted-fg)]";
   }
 }
 
-export function severityDotClass(s?: Severity | null): string {
+export function severityDotClass(s?: Severity | string | null): string {
   switch (s) {
     case "success":
-      return "bg-green-500";
+      return "bg-[var(--success)]";
     case "warning":
-      return "bg-amber-500";
+      return "bg-[var(--warning)]";
     case "error":
-      return "bg-red-500";
+      return "bg-[var(--danger)]";
     case "info":
-      return "bg-sky-500";
+      return "bg-[var(--info)]";
     case "muted":
-      return "bg-zinc-500";
+      return "bg-[var(--muted-fg)]";
     default:
-      return "bg-zinc-400";
+      return "bg-[var(--border-strong)]";
   }
 }

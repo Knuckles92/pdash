@@ -60,6 +60,9 @@ from .api import (
     modules as modules_api,
 )
 from .api import (
+    page_agent_access as page_agent_access_api,
+)
+from .api import (
     pages as pages_api,
 )
 from .auth.deps import CurrentUser, require_session
@@ -88,7 +91,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
     openapi_url = "/api/v1/openapi.json"
     app = FastAPI(
-        title="Home Base (pdash)",
+        title="pdash",
         version=app_version(),
         docs_url=None,
         redoc_url=None,
@@ -147,6 +150,7 @@ def create_app() -> FastAPI:
     app.include_router(module_schemas.router)
     app.include_router(modules_api.router)
     app.include_router(pages_api.router)
+    app.include_router(page_agent_access_api.router)
     app.include_router(agents_api.router)
     app.include_router(agent_registrations_api.router)
     app.include_router(mcp_status_api.router)

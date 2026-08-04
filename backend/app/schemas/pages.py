@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
@@ -15,7 +15,7 @@ class PageCreate(BaseModel):
     slug: SlugStr
     name: str = Field(..., min_length=1, max_length=120)
     description: str | None = Field(default=None, max_length=500)
-    kind: str = Field(default="custom")  # checked against allowed enum at write
+    type: str = Field(default="custom")  # checked against allowed enum at write
     owner_kind: str | None = None
     owner_id: str | None = None
 
@@ -33,7 +33,7 @@ class PageOut(BaseModel):
     slug: str
     name: str
     description: str | None = None
-    kind: str
+    type: str
     owner_kind: str | None = None
     owner_id: str | None = None
     created_at: str
@@ -43,3 +43,32 @@ class PageOut(BaseModel):
 class DefaultExamplesMutationOut(BaseModel):
     cleared: int | None = None
     deployed: int | None = None
+
+
+# ---------------------------------------------------------------------------
+# Per-page agent access (the quick-toggle layer over approval rules)
+# ---------------------------------------------------------------------------
+
+# "custom" is read-only: it means agent+page rules exist that the quick
+# toggles don't fully describe (edit them in Settings → Rules).
+PageAgentAccessLevel = Literal["default", "free", "blocked", "custom"]
+
+
+class PageAgentAccessItem(BaseModel):
+    agent_id: str
+    display_name: str
+    status: str
+    module_count: int
+    access: PageAgentAccessLevel
+    custom_rule_count: int
+
+
+class PageAgentAccessOut(BaseModel):
+    page_id: str
+    items: list[PageAgentAccessItem]
+
+
+class PageAgentAccessSet(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    access: Literal["default", "free", "blocked"]

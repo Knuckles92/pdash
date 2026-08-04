@@ -1,5 +1,5 @@
-# Home Base (pdash) — convenience tasks.
-# Local dev: docs/dev.md  |  Production: docs/deploy.md
+# pdash — convenience tasks.
+# Local development and production docker-compose helpers.
 
 SHELL := bash
 .ONESHELL:

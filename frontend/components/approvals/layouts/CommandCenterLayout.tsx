@@ -24,15 +24,15 @@ export function CommandCenterLayout(props: ApprovalLayoutProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {FAMILY_ORDER.map((family) => (
           <FamilyTile key={family} family={family} count={counts[family]} />
         ))}
-        <div className="col-span-2 flex items-center gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 sm:col-span-1">
-          <AlertTriangle className="size-5 text-amber-600 dark:text-amber-400" />
+        <div className="col-span-2 flex items-center gap-3 rounded-xl border border-[var(--warning)]/25 bg-[var(--warning-soft)] p-3 sm:col-span-1">
+          <AlertTriangle className="size-5 text-[var(--warning)]" />
           <div>
-            <div className="text-xl font-semibold tabular-nums">{needsLook}</div>
-            <div className="text-xs text-amber-700 dark:text-amber-300">need a look</div>
+            <div className="font-display text-xl font-semibold tracking-tight tabular-nums">{needsLook}</div>
+            <div className="text-xs text-[var(--warning)]">need a look</div>
           </div>
         </div>
       </div>
@@ -65,14 +65,14 @@ function FamilyTile({ family, count }: { family: ActionFamily; count: number }) 
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-lg border p-3",
+        "flex items-center gap-2 rounded-xl border p-3",
         count > 0 ? st.border : "border-[var(--border)]",
-        count > 0 ? st.tint : "opacity-50",
+        count > 0 ? st.tint : "bg-[var(--card)] opacity-50",
       )}
     >
       <Icon className={cn("size-5", st.text)} />
       <div>
-        <div className="text-xl font-semibold tabular-nums">{count}</div>
+        <div className="font-display text-xl font-semibold tracking-tight tabular-nums">{count}</div>
         <div className={cn("text-xs capitalize", st.text)}>{family}</div>
       </div>
     </div>

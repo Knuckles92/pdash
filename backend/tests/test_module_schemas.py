@@ -15,6 +15,9 @@ EXPECTED_TYPES = {
     "action_button",
     "notification",
     "file",
+    "sticky_note",
+    "progress",
+    "html",
 }
 
 

@@ -12,12 +12,15 @@ from typing import Any
 from . import (
     action_button,
     file,
+    html,
     iframe,
     key_value,
     link_list,
     log_stream,
     markdown,
     notification,
+    progress,
+    sticky_note,
     table,
     timeseries,
 )
@@ -33,6 +36,9 @@ MODULE_TYPES: tuple[str, ...] = (
     "action_button",
     "notification",
     "file",
+    "sticky_note",
+    "progress",
+    "html",
 )
 
 REGISTRY: dict[str, dict[str, Any]] = {
@@ -46,6 +52,9 @@ REGISTRY: dict[str, dict[str, Any]] = {
     "action_button": {"data": action_button.Data, "config": action_button.Config},
     "notification": {"data": notification.Data, "config": notification.Config},
     "file": {"data": file.Data, "config": file.Config},
+    "sticky_note": {"data": sticky_note.Data, "config": sticky_note.Config},
+    "progress": {"data": progress.Data, "config": progress.Config},
+    "html": {"data": html.Data, "config": html.Config},
 }
 
 

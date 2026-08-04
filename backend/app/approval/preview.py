@@ -135,7 +135,8 @@ async def build_dashboard_preview(
                 "name": payload.get("name") or "Untitled page",
                 "slug": payload.get("slug") or "",
                 "description": payload.get("description"),
-                "kind": payload.get("kind") or "custom",
+                # Prefer ``type``; fall back to legacy ``kind`` for in-flight approvals.
+                "type": payload.get("type") or payload.get("kind") or "custom",
             },
             "modules": [],
             "highlight": {

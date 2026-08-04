@@ -21,12 +21,14 @@ import type {
   Severity,
 } from "@/lib/modules/types";
 
-const SEV_BORDER: Record<Severity, string> = {
-  error: "border-l-red-500",
-  warning: "border-l-amber-500",
-  success: "border-l-green-500",
-  info: "border-l-sky-500",
-  muted: "border-l-zinc-400",
+// Soft status-token pairs (light/dark aware via globals.css tokens): a colored
+// left rail on a matching tinted wash.
+const SEV_BANNER: Record<Severity, string> = {
+  error: "border-l-[var(--danger)] bg-[var(--danger-soft)]",
+  warning: "border-l-[var(--warning)] bg-[var(--warning-soft)]",
+  success: "border-l-[var(--success)] bg-[var(--success-soft)]",
+  info: "border-l-[var(--info)] bg-[var(--info-soft)]",
+  muted: "border-l-[var(--border-strong)] bg-[var(--muted)]/60",
 };
 
 const SEV_ICON: Record<Severity, LucideIcon> = {
@@ -38,11 +40,11 @@ const SEV_ICON: Record<Severity, LucideIcon> = {
 };
 
 const SEV_ICON_COLOR: Record<Severity, string> = {
-  error: "text-red-600",
-  warning: "text-amber-600",
-  success: "text-green-600",
-  info: "text-sky-600",
-  muted: "text-zinc-500",
+  error: "text-[var(--danger)]",
+  warning: "text-[var(--warning)]",
+  success: "text-[var(--success)]",
+  info: "text-[var(--info)]",
+  muted: "text-[var(--muted-fg)]",
 };
 
 export function NotificationModule({
@@ -113,8 +115,8 @@ export function NotificationModule({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-md border-l-4 bg-[var(--card)] p-3",
-        SEV_BORDER[data.severity],
+        "flex items-start gap-3 rounded-lg border border-l-4 border-[var(--border)] p-3",
+        SEV_BANNER[data.severity],
       )}
     >
       <Icon className={cn("size-5 mt-0.5 shrink-0", SEV_ICON_COLOR[data.severity])} />

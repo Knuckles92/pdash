@@ -32,5 +32,12 @@ export default async function SlugPage({
     { page_id: page.id },
     { cookieHeader },
   );
-  return <PageView page={page} modules={modules} iframeAllowlist={allowlist} />;
+  return (
+    <PageView
+      key={page.id}
+      page={page}
+      modules={modules}
+      iframeAllowlist={allowlist}
+    />
+  );
 }

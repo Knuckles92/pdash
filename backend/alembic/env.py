@@ -55,7 +55,15 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
-        connection.exec_driver_sql("PRAGMA foreign_keys=ON")
+        # Run migrations with FK enforcement OFF. SQLite can only change a CHECK
+        # constraint (or many other column edits) via a full table rebuild, and
+        # `op.batch_alter_table(recreate=...)` does that by renaming/dropping the
+        # table — which would cascade-delete child rows of any parent table being
+        # rebuilt (e.g. `modules`/`files` under `pages`). The pragma must be set
+        # outside a transaction to take effect, which is the case here (before
+        # `context.begin_transaction()`). The running app still enforces FKs: it
+        # sets `PRAGMA foreign_keys=ON` per connection (see app/db.py).
+        connection.exec_driver_sql("PRAGMA foreign_keys=OFF")
         connection.exec_driver_sql("PRAGMA busy_timeout=30000")
         context.configure(
             connection=connection,

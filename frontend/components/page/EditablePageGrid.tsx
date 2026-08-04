@@ -131,8 +131,10 @@ export function EditablePageGrid({ pageId, initialModules }: Props) {
                 setSheetOpen(true);
               }}
               className={cn(
-                "flex min-h-32 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed",
-                "border-[var(--border)] text-[var(--muted-fg)] hover:border-[var(--accent)] hover:text-[var(--fg)] transition",
+                "flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed",
+                "border-[var(--border-strong)] text-[var(--muted-fg)] transition-colors",
+                "hover:border-[var(--accent-border)] hover:bg-[var(--accent-soft)]/50 hover:text-[var(--accent)]",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
               )}
             >
               <Plus className="size-6" />
@@ -267,7 +269,7 @@ function SortableModule({
         dragHandle={
           <button
             type="button"
-            className="cursor-grab active:cursor-grabbing text-[var(--muted-fg)]"
+            className="grid size-6 cursor-grab place-items-center rounded-lg text-[var(--muted-fg)] transition-colors hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] active:cursor-grabbing"
             aria-label="Drag to reorder"
             {...attributes}
             {...listeners}
@@ -290,7 +292,7 @@ function SortableModule({
           onPointerCancel={handleResizeEnd}
           className={cn(
             "absolute right-0 top-0 z-10 hidden h-full w-2 touch-none cursor-col-resize lg:block",
-            "rounded-r-lg hover:bg-[var(--accent)]/20",
+            "rounded-r-xl transition-colors hover:bg-[var(--accent-soft)]",
           )}
         />
       )}

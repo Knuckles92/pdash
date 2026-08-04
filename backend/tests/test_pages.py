@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 def test_create_get_patch_delete_page(admin_client: TestClient) -> None:
     resp = admin_client.post(
         "/api/v1/pages",
-        json={"slug": "ops", "name": "Operations", "kind": "custom"},
+        json={"slug": "ops", "name": "Operations", "type": "custom"},
     )
     assert resp.status_code == 201, resp.text
     body = resp.json()
@@ -40,8 +40,8 @@ def test_create_get_patch_delete_page(admin_client: TestClient) -> None:
 
 
 def test_duplicate_slug_conflicts(admin_client: TestClient) -> None:
-    admin_client.post("/api/v1/pages", json={"slug": "dash", "name": "Dash", "kind": "custom"})
-    resp = admin_client.post("/api/v1/pages", json={"slug": "dash", "name": "Dash2", "kind": "custom"})
+    admin_client.post("/api/v1/pages", json={"slug": "dash", "name": "Dash", "type": "custom"})
+    resp = admin_client.post("/api/v1/pages", json={"slug": "dash", "name": "Dash2", "type": "custom"})
     assert resp.status_code == 409
     assert resp.json()["code"] == "page.slug_taken"
 
@@ -56,7 +56,7 @@ def test_home_page_undeletable(admin_client: TestClient) -> None:
 
 def test_invalid_slug_rejected(admin_client: TestClient) -> None:
     resp = admin_client.post(
-        "/api/v1/pages", json={"slug": "Bad Slug!", "name": "x", "kind": "custom"}
+        "/api/v1/pages", json={"slug": "Bad Slug!", "name": "x", "type": "custom"}
     )
     # pydantic regex rejection → 422
     assert resp.status_code == 422

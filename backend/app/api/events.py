@@ -6,7 +6,7 @@ Two routes:
 - ``GET /api/v1/internal/events`` — service-secret auth, MCP-allowed topics
   only (``approvals`` + ``agent:<agent_id>``).
 
-Wire format (PLAN §2):
+Wire format:
 
     id: 12345
     event: module_update
@@ -43,6 +43,15 @@ from .internal_auth import _require_service_secret
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["events"])
+
+# ``no-transform`` stops intermediaries from compressing the stream. Without it
+# the Next.js server's gzip (dev rewrite proxy and standalone alike) buffers the
+# SSE stream indefinitely — the connection opens fine but no event ever reaches
+# the browser. ``X-Accel-Buffering`` is the same opt-out for nginx-style proxies.
+SSE_HEADERS = {
+    "Cache-Control": "no-store, no-transform",
+    "X-Accel-Buffering": "no",
+}
 
 
 def _parse_last_event_id(request: Request, override: str | None) -> int | None:
@@ -151,7 +160,7 @@ async def admin_events(
         raise bad_request("events.unknown_topic", str(exc)) from exc
     last = _parse_last_event_id(request, last_event_id)
     gen = _stream(set(valid), last, request)
-    return EventSourceResponse(gen, ping=15)
+    return EventSourceResponse(gen, ping=15, headers=SSE_HEADERS)
 
 
 # ---------------------------------------------------------------------------
@@ -182,7 +191,7 @@ async def internal_events(
         raise bad_request("events.topic_not_allowed", str(exc)) from exc
     last = _parse_last_event_id(request, last_event_id)
     gen = _stream(set(valid), last, request)
-    return EventSourceResponse(gen, ping=15)
+    return EventSourceResponse(gen, ping=15, headers=SSE_HEADERS)
 
 
 __all__ = ["router"]

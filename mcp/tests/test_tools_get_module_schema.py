@@ -21,6 +21,7 @@ ALL_TYPES = [
     "iframe",
     "action_button",
     "notification",
+    "progress",
 ]
 
 

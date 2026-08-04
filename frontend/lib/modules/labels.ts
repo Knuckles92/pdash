@@ -12,6 +12,9 @@ export const MODULE_TYPE_LABELS: Record<ModuleType, string> = {
   notification: "Notification",
   action_button: "Action button",
   file: "File",
+  sticky_note: "Sticky note",
+  progress: "Progress bars",
+  html: "HTML (canvas)",
 };
 
 export const MODULE_TYPE_DESCRIPTIONS: Record<ModuleType, string> = {
@@ -25,6 +28,9 @@ export const MODULE_TYPE_DESCRIPTIONS: Record<ModuleType, string> = {
   notification: "Banner card with optional action or pin-to-top.",
   action_button: "Button that fires a configured action_target.",
   file: "Show a registered image inline or a file as a download card.",
+  sticky_note: "A note for a corkboard page — title, markdown body, and checklists. Agents can leave you notes here.",
+  progress: "A list of named progress bars (current / target) with severity colors. Goal and quota tracking.",
+  html: "A full agent-authored HTML document in a sandboxed iframe. Powers canvas pages; also embeddable as a grid tile.",
 };
 
 export function isKnownModuleType(value: string): value is ModuleType {

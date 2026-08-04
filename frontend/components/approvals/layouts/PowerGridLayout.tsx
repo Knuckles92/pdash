@@ -49,10 +49,10 @@ export function PowerGridLayout({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
+    <div className="overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--card)]">
       <table className="w-full min-w-[640px] text-sm">
         <thead>
-          <tr className="border-b border-[var(--border)] bg-[var(--muted)]/40 text-left text-xs text-[var(--muted-fg)]">
+          <tr className="border-b border-[var(--border)] bg-[var(--muted)]/60 text-left text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
             <th className="w-9 px-2 py-2" />
             <SortTh label="Action" active={sort.key === "family"} dir={sort.dir} onClick={() => toggleSort("family")} />
             <th className="px-2 py-2 font-medium">Target</th>
@@ -70,8 +70,8 @@ export function PowerGridLayout({
                 <tr
                   onClick={() => toggleRow(vm.request.id)}
                   className={cn(
-                    "cursor-pointer border-b border-[var(--border)] hover:bg-[var(--muted)]/40",
-                    isExpanded && "bg-[var(--muted)]/40",
+                    "cursor-pointer border-b border-[var(--border)] transition-colors hover:bg-[var(--muted)]/60",
+                    isExpanded && "bg-[var(--accent-soft)]/50",
                   )}
                 >
                   <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
@@ -80,7 +80,7 @@ export function PowerGridLayout({
                       aria-label="Select for bulk action"
                       checked={selectedIds.has(vm.request.id)}
                       onChange={() => onToggleSelect(vm.request.id)}
-                      className="size-4"
+                      className="size-4 accent-[var(--accent)]"
                     />
                   </td>
                   <td className="px-2 py-1.5">
@@ -109,7 +109,7 @@ export function PowerGridLayout({
                 </tr>
                 {isExpanded && (
                   <tr className="border-b border-[var(--border)] bg-[var(--bg)]">
-                    <td colSpan={6} className="p-2">
+                    <td colSpan={6} className="p-3">
                       {renderCard(vm.request, { defaultExpanded: true })}
                     </td>
                   </tr>
@@ -145,8 +145,8 @@ function SortTh({
         type="button"
         onClick={onClick}
         className={cn(
-          "inline-flex items-center gap-1 hover:text-[var(--fg)]",
-          active && "text-[var(--fg)]",
+          "inline-flex items-center gap-1 rounded transition-colors hover:text-[var(--fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
+          active && "text-[var(--accent)]",
         )}
       >
         {label}
