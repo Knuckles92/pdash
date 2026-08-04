@@ -2,9 +2,9 @@
   "venvPath": ".",
   "venv": ".venv",
   "pythonVersion": "3.12",
-  "include": ["app", "tests"],
+  "include": ["app", "tests", "alembic"],
   "exclude": ["**/__pycache__", "**/.venv", "**/.pytest_cache"],
-  "extraPaths": [".", ".venv/lib/python3.12/site-packages"],
+  "extraPaths": ["."],
   "reportMissingImports": "error",
   "reportMissingTypeStubs": "none"
 }
