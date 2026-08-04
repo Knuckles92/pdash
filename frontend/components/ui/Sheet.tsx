@@ -1,7 +1,8 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/cn";
 
@@ -20,6 +21,15 @@ type SheetProps = {
   className?: string;
 };
 
+/**
+ * Full-viewport drawer/sheet.
+ *
+ * Always portaled to document.body. Callers often mount sheets under sticky
+ * headers (or other ancestors with backdrop-filter / transform / filter), and
+ * those properties create a containing block that traps `position: fixed` —
+ * on mobile the Pages drawer was clipped to the header strip and painted
+ * under the main UI. Portaling avoids that class of stacking bugs entirely.
+ */
 export function Sheet({
   open,
   onClose,
@@ -30,20 +40,27 @@ export function Sheet({
   footer,
   className,
 }: SheetProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      document.body.style.overflow = prevOverflow;
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const sideClasses: Record<SheetSide, string> = {
     right: "anim-slide-in-right right-0 top-0 h-full w-full max-w-xl border-l rounded-l-2xl",
@@ -52,7 +69,7 @@ export function Sheet({
       "anim-slide-in-bottom left-0 right-0 bottom-0 h-[85vh] max-h-[85vh] w-full border-t rounded-t-2xl",
   };
 
-  return (
+  return createPortal(
     <div
       className="anim-overlay-in fixed inset-0 z-50 bg-[var(--overlay)] backdrop-blur-sm"
       role="dialog"
@@ -93,6 +110,7 @@ export function Sheet({
           </div>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
