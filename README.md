@@ -1,8 +1,19 @@
 # pdash
 
-Self-hosted personal command center and agent integration surface. Tailscale-only;
-not for public internet exposure. The stack runs co-located on one host; AI
-agents connect from anywhere on your tailnet.
+Your private Tailscale command center — AI agents propose dashboard changes;
+you approve them.
+
+![Home dashboard with sample modules](docs/images/home.png)
+
+## Screenshots
+
+**Approvals** — agents propose; you decide.
+
+![Approvals inbox](docs/images/approvals.png)
+
+**Sign-in**
+
+![Sign-in](docs/images/login.png)
 
 ## Quickstart (local development)
 
@@ -37,7 +48,7 @@ Agents on other tailnet devices connect to `https://<host>.<tailnet>.ts.net/mcp`
 | `mcp/` | MCP server (HTTP-streamable) — thin translator over `/api/v1/internal/*`. |
 | `frontend/` | Next.js admin UI (App Router). |
 | `screenshot/` | Optional Playwright sidecar for the `screenshot_page` MCP tool. |
-| `scripts/` | `setup-dev.sh`, `dev.sh`, `backup.sh`. |
+| `scripts/` | `setup-dev.sh`, `dev.sh`, `backup.sh`, README screenshot helper. |
 | `Caddyfile` | Reverse proxy in front of all three services. |
 | `docker-compose.yml` | Production stack (backend / mcp / frontend / caddy). |
 
