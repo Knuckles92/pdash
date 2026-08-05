@@ -43,8 +43,10 @@ backups/
 # Logs
 *.log
 
-# Local docs (not versioned)
+# Local docs (not versioned) — keep README screenshot assets tracked
 docs/
+!docs/images/
+!docs/images/**
 
 AGENTS.md
 CLAUDE.md
