@@ -43,8 +43,9 @@ backups/
 # Logs
 *.log
 
-# Local docs (not versioned) — keep README screenshot assets tracked
-docs/
+# Local docs (not versioned) — keep README screenshot assets tracked.
+# Use docs/* (not docs/) so negation of docs/images/ works.
+docs/*
 !docs/images/
 !docs/images/**
 
