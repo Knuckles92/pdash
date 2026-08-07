@@ -113,7 +113,7 @@ services:
     # mode and bind 443).
     ports:
       - "127.0.0.1:8443:443"
-      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8899:80"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
