@@ -17,6 +17,7 @@
 import {
   AlertTriangle,
   Check,
+  Loader2,
   Pencil,
   Plus,
   Trash2,
@@ -25,11 +26,11 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 import type { Agent, ApprovalRequest, Module, Page } from "@/lib/api";
 import { cn } from "@/lib/cn";
-import { relativeTime } from "@/lib/time";
+import { formatDateTime, relativeTime } from "@/lib/time";
 
 // --- Action families -------------------------------------------------------
 
@@ -285,6 +286,8 @@ export type ApprovalLayoutProps = {
   agents: Agent[];
   selectedIds: Set<string>;
   busyIds: Set<string>;
+  /** A bulk decision is in flight — group/bulk actions should lock out. */
+  bulkBusy?: boolean;
   onToggleSelect: (id: string) => void;
   onApprove: (id: string, withRule: boolean) => void;
   onDeny: (id: string, withRule: boolean) => void;
@@ -378,6 +381,83 @@ export function FamilyIcon({ family, className }: { family: ActionFamily; classN
   return <Icon className={cn("size-3.5", className)} />;
 }
 
+/**
+ * Bulk-select checkbox. Supports the indeterminate ("some of this group") state
+ * that only the DOM node can express, and never lets its click reach the row
+ * underneath it.
+ */
+export function SelectCheckbox({
+  checked,
+  indeterminate,
+  label,
+  onChange,
+  className,
+}: {
+  checked: boolean;
+  indeterminate?: boolean;
+  label: string;
+  onChange: () => void;
+  className?: string;
+}) {
+  const ref = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (ref.current) ref.current.indeterminate = Boolean(indeterminate) && !checked;
+  }, [indeterminate, checked]);
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      aria-label={label}
+      title={label}
+      checked={checked}
+      onChange={onChange}
+      onClick={(e) => e.stopPropagation()}
+      className={cn(
+        "size-4 shrink-0 cursor-pointer accent-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
+        className,
+      )}
+    />
+  );
+}
+
+/** What's inside a group, at a glance — one counted dot per action family. */
+export function FamilyDots({
+  rows,
+  className,
+}: {
+  rows: ApprovalRowVM[];
+  className?: string;
+}) {
+  const counts = familyCounts(rows);
+  const present = FAMILY_ORDER.filter((f) => counts[f] > 0);
+  if (present.length === 0) return null;
+  return (
+    <span
+      className={cn("inline-flex items-center gap-1.5", className)}
+      title={present.map((f) => `${counts[f]} ${FAMILY_STYLES[f].label.toLowerCase()}`).join(" · ")}
+    >
+      {present.map((f) => (
+        <span
+          key={f}
+          className="inline-flex items-center gap-1 text-[10px] tabular-nums text-[var(--muted-fg)]"
+        >
+          <span className={cn("size-1.5 rounded-full", FAMILY_STYLES[f].rail)} />
+          {counts[f]}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** Keycap chip for the inbox shortcut legend. */
+export function Kbd({ children }: { children: ReactNode }) {
+  return (
+    <kbd className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded border border-[var(--border-strong)] bg-[var(--muted)] px-1 font-mono text-[10px] font-medium text-[var(--fg)]">
+      {children}
+    </kbd>
+  );
+}
+
 export function RiskBadge({ label }: { label: string | null }) {
   if (!label) return null;
   return (
@@ -391,35 +471,39 @@ export function RiskBadge({ label }: { label: string | null }) {
 export function MiniDecide({
   onApprove,
   onDeny,
+  disabled,
   className,
 }: {
   onApprove: () => void;
   onDeny: () => void;
+  disabled?: boolean;
   className?: string;
 }) {
   return (
     <span className={cn("inline-flex shrink-0 items-center gap-1", className)}>
       <button
         type="button"
-        title="Approve"
+        title="Approve (a)"
         aria-label="Approve"
+        disabled={disabled}
         onClick={(e) => {
           e.stopPropagation();
           onApprove();
         }}
-        className="inline-flex size-7 items-center justify-center rounded-lg text-[var(--success)] transition-colors hover:bg-[var(--success-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+        className="inline-flex size-7 items-center justify-center rounded-lg text-[var(--success)] transition-colors hover:bg-[var(--success-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:pointer-events-none disabled:opacity-40"
       >
         <Check className="size-4" />
       </button>
       <button
         type="button"
-        title="Deny"
+        title="Deny (d)"
         aria-label="Deny"
+        disabled={disabled}
         onClick={(e) => {
           e.stopPropagation();
           onDeny();
         }}
-        className="inline-flex size-7 items-center justify-center rounded-lg text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+        className="inline-flex size-7 items-center justify-center rounded-lg text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:pointer-events-none disabled:opacity-40"
       >
         <X className="size-4" />
       </button>
@@ -427,45 +511,112 @@ export function MiniDecide({
   );
 }
 
-/** A single dense request row with a colored family rail. */
+/**
+ * A single dense request row with a colored family rail.
+ *
+ * The row carries a roving tabindex: the layout's keyboard cursor owns
+ * `tabIndex={0}` so Tab lands on the row you were last on rather than walking
+ * every row in the queue. It stays a plain focusable div — the approve/deny
+ * buttons and the select checkbox live inside it, which `role="button"` would
+ * forbid — so the caller owns the surrounding list semantics.
+ */
 export function CompactRow({
   vm,
   active,
+  cursor,
+  expanded,
+  busy,
   showAgent,
+  selected,
+  onToggleSelect,
   onClick,
   onApprove,
   onDeny,
+  elementRef,
+  tabIndex,
 }: {
   vm: ApprovalRowVM;
+  /** Row is the current selection in a master/detail pane. */
   active?: boolean;
+  /** Row holds the keyboard cursor (shows a persistent focus ring). */
+  cursor?: boolean;
+  /** Row's detail card is open below it. */
+  expanded?: boolean;
+  /** A decision for this row is in flight. */
+  busy?: boolean;
   showAgent?: boolean;
+  selected?: boolean;
+  /** Omit to hide the bulk-select checkbox entirely. */
+  onToggleSelect?: () => void;
   onClick?: () => void;
   onApprove: () => void;
   onDeny: () => void;
+  elementRef?: (el: HTMLDivElement | null) => void;
+  tabIndex?: number;
 }) {
   const st = FAMILY_STYLES[vm.family];
+  const highlighted = expanded || active;
   return (
     <div
+      ref={elementRef}
+      tabIndex={onClick ? (tabIndex ?? -1) : undefined}
+      aria-expanded={onClick ? Boolean(expanded) : undefined}
+      aria-current={cursor ? true : undefined}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (!onClick) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       className={cn(
-        "group flex items-center gap-2 rounded-lg py-1.5 pl-2 pr-1.5 text-sm transition-colors",
+        "group flex scroll-mt-24 items-center gap-2 rounded-lg py-1.5 pl-2 pr-1.5 text-sm outline-none transition-colors",
         onClick && "cursor-pointer",
-        active
-          ? "bg-[var(--accent-soft)] text-[var(--accent)]"
-          : "hover:bg-[var(--muted)]/60",
+        highlighted ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--muted)]/60",
+        cursor && "ring-2 ring-inset ring-[var(--accent)]",
+        busy && "opacity-60",
       )}
     >
-      <span className={cn("h-7 w-1 shrink-0 rounded-full", st.rail)} />
-      <FamilyIcon family={vm.family} className={cn("shrink-0", st.text)} />
+      <span aria-hidden="true" className={cn("h-7 w-1 shrink-0 rounded-full", st.rail)} />
+      {onToggleSelect && (
+        <SelectCheckbox
+          checked={Boolean(selected)}
+          label="Select for bulk action"
+          onChange={onToggleSelect}
+        />
+      )}
+      {busy ? (
+        <Loader2 className="size-3.5 shrink-0 animate-spin text-[var(--muted-fg)]" />
+      ) : (
+        <FamilyIcon family={vm.family} className={cn("shrink-0", st.text)} />
+      )}
       {showAgent && <AgentAvatar agentId={vm.request.agent_id} name={vm.agentLabel} size="sm" />}
       <span className="shrink-0 font-medium">{actionTypeLabel(vm.request.action_type)}</span>
-      <span className="truncate font-mono text-xs text-[var(--muted-fg)]" title={vm.target}>
+      <span
+        className="min-w-0 flex-1 truncate font-mono text-xs text-[var(--muted-fg)]"
+        title={vm.target}
+      >
         {vm.target}
       </span>
+      {vm.summary && (
+        <span
+          className="hidden max-w-[22ch] shrink truncate text-xs text-[var(--muted-fg)]/80 lg:inline"
+          title={vm.summary}
+        >
+          {vm.summary}
+        </span>
+      )}
       <RiskBadge label={vm.risk} />
-      <span className="ml-auto shrink-0 text-xs tabular-nums text-[var(--muted-fg)]">{vm.age}</span>
+      <span
+        className="shrink-0 whitespace-nowrap text-xs tabular-nums text-[var(--muted-fg)]"
+        title={formatDateTime(vm.request.created_at)}
+      >
+        {vm.age}
+      </span>
       <MiniDecide
-        className="opacity-60 transition-opacity group-hover:opacity-100"
+        disabled={busy}
+        className="opacity-70 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
         onApprove={onApprove}
         onDeny={onDeny}
       />
