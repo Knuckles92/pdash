@@ -55,6 +55,7 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
+        connection.exec_driver_sql("PRAGMA foreign_keys=ON")
         # Run migrations with FK enforcement OFF. SQLite can only change a CHECK
         # constraint (or many other column edits) via a full table rebuild, and
         # `op.batch_alter_table(recreate=...)` does that by renaming/dropping the
