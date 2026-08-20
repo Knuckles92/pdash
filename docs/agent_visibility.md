@@ -49,10 +49,9 @@ Fix loop:
 
 1. `module_health(only_broken=true)` → list of broken modules, each with
    structured `errors: [{section, loc, msg, type}]`.
-2. Build a corrected payload; `validate_module(type, data, config)` to confirm
-   it's clean *before* writing.
+2. Build a corrected payload. Writes return the same structured errors; `validate_module` is optional.
 3. `update_module(module_id, data=..., config=...)` to apply the fix (owner
-   data-only edits typically auto-apply).
+   content/config edits typically auto-apply; capability fields still prompt).
 
 `propose_module` / `update_module` now also return those same structured errors
 under `errors` on a `module.invalid_payload` (400), so a rejected write tells

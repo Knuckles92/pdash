@@ -21,7 +21,10 @@ ALL_TYPES = [
     "iframe",
     "action_button",
     "notification",
+    "file",
+    "sticky_note",
     "progress",
+    "html",
 ]
 
 

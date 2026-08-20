@@ -64,10 +64,9 @@ def build_server() -> FastMCP:
             "'claim_registration' to pick up your key once approved — those three tools "
             "need no key; every other tool does until you update your MCP config with "
             "the key. Use MCP tools, not raw HTTP. All write tools route through the "
-            "approval engine; responses use status=applied/pending/denied. Call "
-            "get_module_schema before propose_module. Do NOT retry pending responses; "
-            "poll list_my_pending_requests instead. Honor retry_after_ms on rate-limit "
-            "errors."
+            "approval engine; responses use status=applied/pending/denied. Do NOT "
+            "retry pending responses as new writes; poll list_my_pending_requests "
+            "(~5s). Honor retry_after_ms on rate-limit errors."
         ),
         host=settings.mcp_host,
         port=settings.mcp_port,

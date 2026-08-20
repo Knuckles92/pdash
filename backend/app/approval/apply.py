@@ -12,6 +12,7 @@ Action-type dispatch table (fire_action sub-state):
     update_module_data     -> :func:`apply_update_module`
     update_module_config   -> :func:`apply_update_module`
     update_module_meta     -> :func:`apply_update_module`
+    update_module_capability -> :func:`apply_update_module`
     delete_module          -> :func:`apply_delete_module`
     create_page            -> :func:`apply_create_page`
     delete_page            -> :func:`apply_delete_page`
@@ -48,6 +49,7 @@ from ..auth.secrets import get_kv
 from ..config import get_settings
 from ..errors import ProblemDetail
 from ..events.publish import publish_after_commit
+from ..services.iframe_src import is_allowed_iframe_src, load_allowlist
 from ..ids import new_id
 from ..models import (
     ActionTarget,
@@ -131,6 +133,21 @@ def _agent_actor_for(request: ApprovalRequest) -> str:
     return f"agent:{request.agent_id}"
 
 
+async def _assert_iframe_allowed(
+    session: AsyncSession, module_type: str, data: dict[str, Any]
+) -> None:
+    if module_type != "iframe":
+        return
+    src = data.get("src")
+    if not src:
+        return
+    allowlist = await load_allowlist(session)
+    if not is_allowed_iframe_src(str(src), allowlist):
+        raise ApplyError(
+            "iframe_host_not_allowed", f"iframe host is not allowlisted: {src}"
+        )
+
+
 # ---------------------------------------------------------------------------
 # create_module
 # ---------------------------------------------------------------------------
@@ -154,6 +171,7 @@ async def apply_create_module(
         raise ApplyError("module.unknown_type", str(exc)) from exc
     except Exception as exc:
         raise ApplyError("module.invalid_payload", str(exc)) from exc
+    await _assert_iframe_allowed(session, mtype, clean_data)
 
     # Reuse the provisional id baked into the payload.
     mod_id = payload.get("provisional_id") or new_id("mod")
@@ -215,11 +233,14 @@ async def apply_update_module(
             new_config = module_registry.validate_config(row.type, new_config)
         except Exception as exc:
             raise ApplyError("module.invalid_payload", str(exc)) from exc
+        await _assert_iframe_allowed(session, row.type, new_data)
 
     if "title" in patch:
         row.title = patch["title"]
     if "position" in patch:
         row.position = patch["position"]
+    if "grid" in patch:
+        row.grid = json.dumps(patch["grid"]) if patch["grid"] else None
     if "data" in patch:
         row.data = json.dumps(new_data)
     if "config" in patch:
@@ -921,6 +942,7 @@ _DISPATCH = {
     "update_module_data": apply_update_module,
     "update_module_config": apply_update_module,
     "update_module_meta": apply_update_module,
+    "update_module_capability": apply_update_module,
     "delete_module": apply_delete_module,
     "create_page": apply_create_page,
     "delete_page": apply_delete_page,

@@ -67,13 +67,14 @@ def _apply_update_patch(
     """Merge patch into a module dict (mirrors apply_update_module)."""
     out = copy.deepcopy(module)
     mtype = out["type"]
-    new_data = out["data"] if "data" not in patch else patch["data"]
-    new_config = out["config"] if "config" not in patch else patch["config"]
-    if "data" in patch or "config" in patch:
-        new_data = module_registry.validate_data(mtype, new_data)
-        new_config = module_registry.validate_config(mtype, new_config)
-        out["data"] = new_data
-        out["config"] = new_config
+    if "data" in patch:
+        out["data"] = module_registry.merge_and_validate_data(
+            mtype, out.get("data") or {}, patch["data"] or {}
+        )
+    if "config" in patch:
+        out["config"] = module_registry.merge_and_validate_config(
+            mtype, out.get("config") or {}, patch["config"] or {}
+        )
     if "title" in patch:
         out["title"] = patch["title"]
     if "position" in patch:
@@ -159,7 +160,12 @@ async def build_dashboard_preview(
             "highlight": highlight,
         }
 
-    if action in ("update_module_data", "update_module_config", "update_module_meta"):
+    if action in (
+        "update_module_data",
+        "update_module_config",
+        "update_module_meta",
+        "update_module_capability",
+    ):
         mod_id = payload.get("id") or request.target_id
         if not mod_id:
             return None

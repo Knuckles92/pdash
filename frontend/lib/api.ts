@@ -305,10 +305,12 @@ export type ApprovalActionType =
   | "update_module_data"
   | "update_module_config"
   | "update_module_meta"
+  | "update_module_capability"
   | "delete_module"
   | "create_page"
   | "delete_page"
   | "fire_action_button"
+  | "register_file"
   | "register_agent";
 
 export const APPROVAL_ACTION_TYPES: readonly ApprovalActionType[] = [
@@ -316,10 +318,12 @@ export const APPROVAL_ACTION_TYPES: readonly ApprovalActionType[] = [
   "update_module_data",
   "update_module_config",
   "update_module_meta",
+  "update_module_capability",
   "delete_module",
   "create_page",
   "delete_page",
   "fire_action_button",
+  "register_file",
   "register_agent",
 ] as const;
 

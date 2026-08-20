@@ -154,6 +154,8 @@ export function actionTypeLabel(action: string): string {
       return "Update config";
     case "update_module_meta":
       return "Update meta";
+    case "update_module_capability":
+      return "Change capability";
     case "delete_module":
       return "Delete module";
     case "create_page":
@@ -162,6 +164,8 @@ export function actionTypeLabel(action: string): string {
       return "Delete page";
     case "fire_action_button":
       return "Fire action";
+    case "register_file":
+      return "Register file";
     case "register_agent":
       return "Register agent";
     default:

@@ -111,7 +111,7 @@ def test_sticky_note_rich_fields_round_trip(admin_client: TestClient) -> None:
     assert create.json()["config"]["font"] == "normal"
 
 
-def test_sticky_note_checklist_item_rejects_extra_key(admin_client: TestClient) -> None:
+def test_sticky_note_checklist_item_ignores_extra_key(admin_client: TestClient) -> None:
     page_id = _corkboard_page_id(admin_client)
     resp = admin_client.post(
         "/api/v1/modules",
@@ -121,4 +121,7 @@ def test_sticky_note_checklist_item_rejects_extra_key(admin_client: TestClient) 
             "data": {"items": [{"text": "x", "done": False, "nope": 1}]},
         },
     )
-    assert resp.status_code >= 400
+    assert resp.status_code == 201, resp.text
+    items = resp.json()["data"]["items"]
+    assert items[0]["text"] == "x"
+    assert "nope" not in items[0]

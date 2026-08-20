@@ -42,14 +42,14 @@ class NoteFont(str, Enum):
 class ChecklistItem(BaseModel):
     """One row of a note's checklist."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     text: str = Field(default="", max_length=500)
     done: bool = False
 
 
 class Data(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     title: str = Field(default="", max_length=200)
     text: str = Field(default="", max_length=4000)
@@ -60,7 +60,7 @@ class Data(BaseModel):
 
 
 class Config(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     color: NoteColor = NoteColor.yellow
     pin_style: PinStyle = PinStyle.pin

@@ -14,7 +14,7 @@ export type ModuleAppearanceTheme = "default" | "tinted" | "solid" | "outline";
 
 export type ModuleAppearance = {
   theme?: ModuleAppearanceTheme;
-  color?: ColorToken | null;
+  color?: ColorToken | string | null;
 };
 
 export const MODULE_THEME_OPTIONS: Array<{
@@ -47,10 +47,13 @@ function normalizeTheme(value: unknown): ModuleAppearanceTheme {
     : "default";
 }
 
-function normalizeColor(value: unknown): ColorToken | null {
-  return typeof value === "string" && COLOR_TOKENS.includes(value as ColorToken)
-    ? (value as ColorToken)
-    : null;
+const HEX = /^#[0-9A-Fa-f]{6}$/;
+
+function normalizeColor(value: unknown): ColorToken | string | null {
+  if (typeof value !== "string") return null;
+  if (COLOR_TOKENS.includes(value as ColorToken)) return value as ColorToken;
+  if (HEX.test(value)) return value.toLowerCase();
+  return null;
 }
 
 export function moduleAppearanceFromConfig(

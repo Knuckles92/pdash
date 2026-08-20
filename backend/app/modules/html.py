@@ -27,7 +27,7 @@ _HTML_DESC = (
 
 
 class Data(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     html: str = Field(..., max_length=400_000, description=_HTML_DESC)
     title: str | None = Field(
@@ -38,7 +38,7 @@ class Data(BaseModel):
 
 
 class Config(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     # Heights apply in grid mode only; canvas pages render full-bleed.
     height_px: int = Field(default=640, ge=120, le=3000)

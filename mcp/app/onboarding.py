@@ -120,7 +120,7 @@ Reconnect after adding the bearer token.
 - Never retry a write that returned `pending`; poll `list_my_pending_requests`
   instead.
 - Call `whoami` after reconnecting to verify the active agent and permissions.
-- Call `get_module_schema` before `propose_module` or unfamiliar module updates.
+- `get_module_schema` is optional; rejected writes already name the failing field.
 - Honor `retry_after_ms` on rate limits and back off on service errors.
 """
 

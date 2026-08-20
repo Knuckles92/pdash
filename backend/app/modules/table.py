@@ -38,7 +38,7 @@ class _MobileLayout(str, Enum):
 
 
 class Column(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     id: str = Field(..., max_length=40)
     label: str = Field(..., max_length=80)
@@ -48,7 +48,7 @@ class Column(BaseModel):
 
 
 class Row(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     row_id: str | None = Field(default=None, max_length=80)
     severity: Severity | None = None
@@ -57,7 +57,7 @@ class Row(BaseModel):
 
 
 class Data(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     columns: list[Column] = Field(..., max_length=12)
     rows: list[Row] = Field(..., max_length=500)
@@ -65,7 +65,7 @@ class Data(BaseModel):
 
 
 class Config(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     empty_message: str | None = Field(default=None, max_length=200)
     row_density: _Density = _Density.normal

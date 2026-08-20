@@ -3,8 +3,8 @@
 Locks in the two surfaces (the ``canvas`` page type and the ``html`` module
 type), the 400KB body cap, the agent-facing theme-token docs in the schema,
 the ``type`` passthrough on ``propose-page``, and — critically — that html
-content updates always **prompt** (the migration-seeded built-in rule outranks
-the generic self-owned ``update_module_data`` auto-approve).
+the first html document still **prompts**; later owner content updates
+auto-apply (the 0010 html-always-prompt builtin is disabled by 0012).
 """
 
 from __future__ import annotations
@@ -66,7 +66,7 @@ def test_html_module_rejects_oversize_body(admin_client: TestClient) -> None:
     assert resp.status_code >= 400
 
 
-def test_html_module_rejects_extra_fields(admin_client: TestClient) -> None:
+def test_html_module_ignores_extra_fields(admin_client: TestClient) -> None:
     page_id = _canvas_page_id(admin_client)
     resp = admin_client.post(
         "/api/v1/modules",
@@ -76,7 +76,9 @@ def test_html_module_rejects_extra_fields(admin_client: TestClient) -> None:
             "data": {"html": VALID_HTML, "bogus": 1},
         },
     )
-    assert resp.status_code >= 400
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["data"]["html"] == VALID_HTML
+    assert "bogus" not in resp.json()["data"]
 
 
 def test_module_schema_documents_theme_tokens(admin_client: TestClient) -> None:
@@ -141,10 +143,9 @@ def test_propose_page_rejects_other_types(admin_client: TestClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_decide_html_update_prompts_despite_self_ownership(initialized_db) -> None:
-    # The 0010-seeded built-in rule (update_module_data + module_type=html →
-    # prompt) is more specific than the generic self-owned auto-approve, so
-    # agent HTML rewrites always reach the admin inbox by default.
+async def test_decide_html_update_auto_approves_for_owner(initialized_db) -> None:
+    # 0012 disables the html-always-prompt builtin, so owner HTML iterates
+    # fall through to update_module_data/self → auto_approve.
     from app.approval.engine import DecisionRequest, decide, reset_cache_for_tests
     from app.db import get_sessionmaker
 
@@ -163,7 +164,7 @@ async def test_decide_html_update_prompts_despite_self_ownership(initialized_db)
                     agent_owns_target=True,
                 ),
             )
-            assert html_decision.status == "prompt"
+            assert html_decision.status == "auto_approve"
             assert html_decision.rule_id is not None
 
             # Regression guard: other types keep the self-owned auto-approve.
@@ -183,9 +184,8 @@ async def test_decide_html_update_prompts_despite_self_ownership(initialized_db)
         reset_cache_for_tests()
 
 
-def test_agent_html_update_lands_pending(admin_client: TestClient) -> None:
-    # End-to-end through the internal surface: create (prompt → approve), then
-    # a data update on the agent's own html module must come back pending.
+def test_agent_html_update_auto_applies(admin_client: TestClient) -> None:
+    # First html document still prompts; after approval, owner iterates apply.
     agent_id, _ = register_agent(admin_client, name="html-bot")
     secret = get_service_secret()
     page_id = _canvas_page_id(admin_client)
@@ -215,5 +215,5 @@ def test_agent_html_update_lands_pending(admin_client: TestClient) -> None:
         },
         headers=internal_headers(agent_id, secret, idempotency_key="cv-5"),
     )
-    assert update.status_code == 202, update.text
-    assert update.json()["status"] == "pending"
+    assert update.status_code == 200, update.text
+    assert update.json()["status"] == "applied"

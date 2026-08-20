@@ -23,7 +23,7 @@ class _Format(str, Enum):
 
 
 class Point(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     # t = timestamp, v = value; kept terse because series carry up to 2000 points each
     t: Timestamp
@@ -31,7 +31,7 @@ class Point(BaseModel):
 
 
 class Series(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     id: str = Field(..., max_length=40)
     label: str = Field(..., max_length=80)
@@ -40,7 +40,7 @@ class Series(BaseModel):
 
 
 class YAxis(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     label: str | None = None
     min: float | None = None
@@ -50,13 +50,13 @@ class YAxis(BaseModel):
 
 
 class XAxis(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     label: str | None = None
 
 
 class Data(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     series: list[Series] = Field(..., max_length=6)
     window_start: Timestamp | None = None
@@ -64,7 +64,7 @@ class Data(BaseModel):
 
 
 class Config(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     chart_type: _ChartType = _ChartType.line
     y_axis: YAxis = Field(default_factory=YAxis)

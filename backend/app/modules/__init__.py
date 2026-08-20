@@ -89,4 +89,28 @@ def validate_config(module_type: str, config: Any) -> dict[str, Any]:
     return model.model_validate(config).model_dump(mode="json", exclude_none=True)
 
 
-__all__ = ["MODULE_TYPES", "REGISTRY", "schema_for", "validate_data", "validate_config"]
+def merge_and_validate_data(
+    module_type: str, existing: dict[str, Any] | None, incoming: dict[str, Any] | None
+) -> dict[str, Any]:
+    from ._common import deep_merge
+
+    return validate_data(module_type, deep_merge(existing or {}, incoming or {}))
+
+
+def merge_and_validate_config(
+    module_type: str, existing: dict[str, Any] | None, incoming: dict[str, Any] | None
+) -> dict[str, Any]:
+    from ._common import deep_merge
+
+    return validate_config(module_type, deep_merge(existing or {}, incoming or {}))
+
+
+__all__ = [
+    "MODULE_TYPES",
+    "REGISTRY",
+    "schema_for",
+    "validate_data",
+    "validate_config",
+    "merge_and_validate_data",
+    "merge_and_validate_config",
+]

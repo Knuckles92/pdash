@@ -28,7 +28,7 @@ class ProgressBar(BaseModel):
     [0, 100]% but the text value may legitimately exceed 100% (over-goal).
     """
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     id: str | None = Field(default=None, max_length=40)
     label: str = Field(..., max_length=80)
@@ -41,14 +41,14 @@ class ProgressBar(BaseModel):
 
 
 class Data(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     bars: list[ProgressBar] = Field(..., max_length=40)
     updated_at: Timestamp | None = None
 
 
 class Config(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     show_values: bool = True
     show_percent: bool = True

@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
-from pydantic import AnyUrl, BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
-from ._common import Appearance, Icon, Severity, Timestamp
+from ._common import Appearance, HttpOrMailtoUrl, Icon, Severity, Timestamp
 
 
 class Action(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     label: str = Field(..., max_length=60)
-    href: AnyUrl | None = None
+    href: HttpOrMailtoUrl | None = None
     action_target_id: str | None = Field(default=None, max_length=64)
 
 
 class Data(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     message: str = Field(..., max_length=2000)
     severity: Severity
@@ -28,7 +28,7 @@ class Data(BaseModel):
 
 
 class Config(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     dismissible: bool = True
     auto_dismiss_seconds: int | None = Field(default=None, ge=1, le=86400)

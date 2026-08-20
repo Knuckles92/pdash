@@ -25,7 +25,7 @@ class _Fit(str, Enum):
 
 
 class Data(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     file_id: str = Field(..., max_length=64)
     kind: _Kind
@@ -37,7 +37,7 @@ class Data(BaseModel):
 
 
 class Config(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     max_height_px: int = Field(default=480, ge=80, le=2000)
     fit: _Fit = _Fit.contain

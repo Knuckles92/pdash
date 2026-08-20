@@ -131,7 +131,7 @@ def test_progress_rejects_unknown_sort_value(admin_client: TestClient) -> None:
     assert resp.json()["code"] == "module.invalid_payload"
 
 
-def test_progress_rejects_extra_field(admin_client: TestClient) -> None:
+def test_progress_ignores_extra_field(admin_client: TestClient) -> None:
     page_id = _home_page_id(admin_client)
     resp = admin_client.post(
         "/api/v1/modules",
@@ -142,5 +142,7 @@ def test_progress_rejects_extra_field(admin_client: TestClient) -> None:
             "config": {},
         },
     )
-    assert resp.status_code == 400
-    assert resp.json()["code"] == "module.invalid_payload"
+    assert resp.status_code == 201, resp.text
+    bar = resp.json()["data"]["bars"][0]
+    assert bar["label"] == "X"
+    assert "bogus" not in bar

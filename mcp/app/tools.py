@@ -68,33 +68,36 @@ BOOTSTRAP_TOOLS: frozenset[str] = frozenset(
 
 
 class ProposeModuleArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     page_id: str
     type: str
     title: str | None = Field(default=None, max_length=200)
     data: dict[str, Any] = Field(default_factory=dict)
     config: dict[str, Any] = Field(default_factory=dict)
+    position: int | None = None
+    grid: dict[str, Any] | None = None
     permissions: dict[str, Any] | None = None
     idempotency_key: str | None = None
     rationale: str | None = Field(default=None, max_length=1000)
 
 
 class UpdateModuleArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     module_id: str
     data: dict[str, Any] | None = None
     config: dict[str, Any] | None = None
     title: str | None = Field(default=None, max_length=200)
     position: int | None = None
+    grid: dict[str, Any] | None = None
     expected_version: int | None = None
     idempotency_key: str | None = None
     rationale: str | None = Field(default=None, max_length=1000)
 
 
 class DeleteModuleArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     module_id: str
     expected_version: int | None = None
@@ -103,7 +106,7 @@ class DeleteModuleArgs(BaseModel):
 
 
 class ProposePageArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     name: str = Field(..., min_length=1, max_length=120)
     slug: str | None = Field(default=None, pattern=r"^[a-z0-9-]{1,40}$")
@@ -114,7 +117,7 @@ class ProposePageArgs(BaseModel):
 
 
 class FireActionArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     module_id: str  # the action_button module (server resolves to action_target_id)
     target_id: str | None = None  # optional override for direct action_target invocations
@@ -124,7 +127,7 @@ class FireActionArgs(BaseModel):
 
 
 class LogEntry(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     ts: str | None = None
     level: str | None = None
@@ -133,7 +136,7 @@ class LogEntry(BaseModel):
 
 
 class AppendLogArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     module_id: str
     entry: LogEntry
@@ -142,7 +145,7 @@ class AppendLogArgs(BaseModel):
 
 
 class ListMyModulesArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     page_id: str | None = None
     type: str | None = None
@@ -151,20 +154,20 @@ class ListMyModulesArgs(BaseModel):
 
 
 class GetModuleArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     module_id: str
 
 
 class ListPagesArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     limit: int = Field(default=50, ge=1, le=200)
     cursor: str | None = None
 
 
 class ListMyPendingRequestsArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     status_filter: str | None = None
     limit: int = Field(default=50, ge=1, le=200)
@@ -172,13 +175,13 @@ class ListMyPendingRequestsArgs(BaseModel):
 
 
 class GetModuleSchemaArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     type: str
 
 
 class ValidateModuleArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     type: str
     data: dict[str, Any] = Field(default_factory=dict)
@@ -186,7 +189,7 @@ class ValidateModuleArgs(BaseModel):
 
 
 class ModuleHealthArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     page_id: str | None = None
     only_broken: bool = False
@@ -195,13 +198,13 @@ class ModuleHealthArgs(BaseModel):
 
 
 class RenderPageArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     page_id: str
 
 
 class ScreenshotPageArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     page_id: str
     viewport_width: int | None = Field(default=None, ge=360, le=3840)
@@ -209,13 +212,13 @@ class ScreenshotPageArgs(BaseModel):
 
 
 class GetFileDropboxArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     page_id: str | None = None
 
 
 class RegisterFileArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     inbox_name: str = Field(..., min_length=1, max_length=255)
     display_name: str = Field(..., min_length=1, max_length=200)
@@ -226,14 +229,14 @@ class RegisterFileArgs(BaseModel):
 
 
 class ListMyFilesArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     limit: int = Field(default=50, ge=1, le=200)
     cursor: str | None = None
 
 
 class RequestRegistrationArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     display_name: str = Field(..., min_length=1, max_length=80)
     description: str | None = Field(default=None, max_length=500)
@@ -242,7 +245,7 @@ class RequestRegistrationArgs(BaseModel):
 
 
 class ClaimRegistrationArgs(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     claim_token: str = Field(..., min_length=8, max_length=200)
     registration_id: str | None = None
@@ -444,61 +447,42 @@ async def _require_agent(ctx: Context) -> AgentInfo:
 
 
 _DESC_PROPOSE_MODULE = """\
-Create a new module on a page. Use AFTER first calling get_module_schema(type)
-to learn the data/config shape; otherwise validation will reject your payload.
-Set per-widget color/theme with config.appearance, e.g.
-{theme:"tinted", color:"emerald"}.
+Create a new module on a page. Extra JSON keys are ignored. On a page you
+own, ordinary widgets (markdown, key_value, table, …) typically auto-apply;
+html/iframe/action_button creates still wait for admin approval. Home/system
+pages always prompt.
+
+Optional grid: {colspan: 1|2|3} (how many dashboard columns the widget spans).
+config.appearance: {theme:"tinted", color:"emerald"} or color:"#10b981".
 
 When to use:
-  - Adding a fresh module the agent owns.
-  - Never re-call to overwrite an existing module — use update_module instead;
-    you'd just end up with a duplicate (or a denied/pending request).
+  - Adding a fresh module. Never re-call to overwrite — use update_module.
 
-Returns one of:
-  - {status:"applied", module_id, module, applied_at, request_id} — rule
-    auto-approved and the module is live.
-  - {status:"pending", request_id, expires_at} — admin must approve. The
-    server already minted a provisional module_id you can reuse on success.
-    DO NOT retry; poll list_my_pending_requests instead.
-  - {status:"denied", reason, rule_id, request_id} — policy refused. Fix the
-    proposal or escalate; retrying as-is will be denied again.
+Returns:
+  - {status:"applied", module_id, module, applied_at, request_id}
+  - {status:"pending", request_id, expires_at} — DO NOT retry as a new write;
+    poll list_my_pending_requests.
+  - {status:"denied", reason, rule_id, request_id}
 
-Idempotency:
-  - Pass idempotency_key for safe retries. If omitted, the MCP server
-    auto-generates one and dedupes rapid retries with the same args for ~60s.
-
-Errors (MCP-level, not payload):
-  - auth_required / agent_disabled — re-key or contact admin.
-  - not_found (page) — verify page_id with list_pages.
-  - invalid_params — schema validation failed; re-fetch with get_module_schema.
-  - rate_limit — honor data.retry_after_ms; do not retry sooner.
-  - service_unavailable — backend down; retry with backoff.
+invalid_params includes per-field errors[]. Honor retry_after_ms on rate_limit.
 """
 
 _DESC_UPDATE_MODULE = """\
-Modify an existing module's data, config, title, or position. Wholesale
-replace on data/config (pass full new objects, not patches). Per-widget
-color/theme lives at config.appearance.
+Modify an existing module's data, config, title, position, or grid.
+data/config are merged onto the stored document (omit fields you are not
+changing). Extra keys are ignored. Owner content/config/title updates
+typically auto-apply; changing iframe src, action_target_id, table columns,
+sandbox loosening, or confirm true→false still prompts.
 
 When to use:
-  - Updating a module the agent owns. Owner data-only updates typically
-    auto-apply via the built-in self-owner rule.
-  - Pass expected_version (from get_module/list_my_modules) to safely
-    short-circuit if the module has since been edited by someone else.
+  - Updating a module you own. Pass expected_version to avoid 409s.
 
 Returns:
   - {status:"applied", module, applied_at, request_id}
-  - {status:"pending", request_id, expires_at} — DO NOT retry.
+  - {status:"pending", request_id, expires_at} — DO NOT retry as a new write.
   - {status:"denied", reason, rule_id, request_id}
 
-Idempotency:
-  - Same rules as propose_module. Auto-generated when omitted.
-
-Errors:
-  - not_found — module_id is gone or invisible to you.
-  - conflict — expected_version stale. Re-fetch with get_module and retry.
-  - invalid_params — payload violates the type's schema.
-  - rate_limit / service_unavailable — honor retry_after_ms; backoff.
+invalid_params includes per-field errors[]. Honor retry_after_ms.
 """
 
 _DESC_DELETE_MODULE = """\
@@ -534,7 +518,7 @@ type:
     app-like surface (sandboxed iframe; no pdash session/API access). After
     the page is approved, propose one `html` module on it — see
     get_module_schema("html") for the injected --pdash-* theme tokens.
-    Content updates on html modules always require admin approval.
+    The first html document prompts; later content updates typically auto-apply.
 
 Returns:
   - {status:"applied", page, request_id, applied_at} — rare.
@@ -551,8 +535,7 @@ mcp-tool, or agent message) bound to a module.
 When to use:
   - Triggering a side-effect the admin has explicitly wired up. Look up the
     module first with get_module to inspect the payload schema (if any) and
-    confirm it's an action_button.
-  - DO NOT use to call other agents' code — that's not what this is for.
+    confirm it's an action_button. Firing a button you own typically auto-applies.
 
 Returns:
   - {status:"applied", result, request_id} where result is the execution
@@ -650,8 +633,7 @@ Errors: rate_limit, service_unavailable.
 
 _DESC_VALIDATE_MODULE = """\
 Dry-run: check whether a data/config payload is valid for a module type WITHOUT
-writing anything. Call this to confirm a widget is well-formed before
-propose_module/update_module, so you don't burn a write on an invalid payload.
+writing anything. Optional — writes already return the same per-field errors.
 
 Args: type, data (object), config (object).
 Returns: {ok: bool, type_known: bool, errors: [{section:"data"|"config", loc,
@@ -724,20 +706,19 @@ note (e.g. "put this on the ops page, not home" or "too noisy, batch these").
 READ it before re-proposing — adjust your request to follow the guidance
 rather than re-submitting an identical write that will be denied again.
 
-DO NOT retry pending writes — wait for them to resolve here. Honor
-retry_after_ms on rate_limit errors; don't poll faster than once a minute.
+DO NOT retry pending writes as new writes — wait for them to resolve here.
+Polling every ~5s is fine in an interactive session. Honor retry_after_ms.
 """
 
 _DESC_GET_MODULE_SCHEMA = """\
 Get the JSON Schema for a module type's data + config payloads, plus
 example payloads and the default permissions block.
 
-Call BEFORE propose_module or update_module to avoid invalid_params.
-Cache the result for the session.
-Every config schema includes appearance for per-widget theme/color.
+Optional — structured 400s already name the failing field. Cache for the session.
+Every config schema includes appearance (named color or #RRGGBB).
 
-Args: type — one of: markdown, key_value, table, timeseries, log_stream,
-link_list, iframe, action_button, notification, file.
+Args: type — markdown, key_value, table, timeseries, log_stream, link_list,
+iframe, action_button, notification, file, sticky_note, progress, html.
 Returns: {data_schema, config_schema, examples, permissions_default}.
 Errors: not_found (unknown type), rate_limit.
 """
@@ -882,6 +863,8 @@ def register_tools(mcp: FastMCP) -> None:
         title: str | None = None,
         data: dict[str, Any] | None = None,
         config: dict[str, Any] | None = None,
+        position: int | None = None,
+        grid: dict[str, Any] | None = None,
         permissions: dict[str, Any] | None = None,
         idempotency_key: str | None = None,
         rationale: str | None = None,
@@ -895,6 +878,8 @@ def register_tools(mcp: FastMCP) -> None:
             title=title,
             data=data or {},
             config=config or {},
+            position=position,
+            grid=grid,
             permissions=permissions,
             idempotency_key=idempotency_key,
             rationale=rationale,
@@ -908,6 +893,10 @@ def register_tools(mcp: FastMCP) -> None:
         }
         if args.title is not None:
             body["title"] = args.title
+        if args.position is not None:
+            body["position"] = args.position
+        if args.grid is not None:
+            body["grid"] = args.grid
         if args.permissions is not None:
             body["permissions"] = args.permissions
         if args.rationale is not None:
@@ -926,6 +915,7 @@ def register_tools(mcp: FastMCP) -> None:
         config: dict[str, Any] | None = None,
         title: str | None = None,
         position: int | None = None,
+        grid: dict[str, Any] | None = None,
         expected_version: int | None = None,
         idempotency_key: str | None = None,
         rationale: str | None = None,
@@ -939,6 +929,7 @@ def register_tools(mcp: FastMCP) -> None:
             config=config,
             title=title,
             position=position,
+            grid=grid,
             expected_version=expected_version,
             idempotency_key=idempotency_key,
             rationale=rationale,
@@ -953,10 +944,12 @@ def register_tools(mcp: FastMCP) -> None:
             patch["title"] = args.title
         if args.position is not None:
             patch["position"] = args.position
+        if args.grid is not None:
+            patch["grid"] = args.grid
         if not patch:
             raise _mcp_error(
                 _INVALID_PARAMS,
-                "update_module requires at least one of data/config/title/position",
+                "update_module requires at least one of data/config/title/position/grid",
             )
         body: dict[str, Any] = {"id": args.module_id, "patch": patch}
         if args.rationale is not None:
@@ -1069,7 +1062,10 @@ def register_tools(mcp: FastMCP) -> None:
                     _INVALID_PARAMS,
                     f"module {args.module_id} has no action_target_id in data",
                 )
-        body: dict[str, Any] = {"target_id": resolved_target}
+        body: dict[str, Any] = {
+            "target_id": resolved_target,
+            "module_id": args.module_id,
+        }
         if args.payload is not None:
             body["payload"] = args.payload
         if args.rationale is not None:

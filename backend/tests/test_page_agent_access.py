@@ -24,6 +24,7 @@ MANAGED_ACTION_TYPES = {
     "update_module_data",
     "update_module_config",
     "update_module_meta",
+    "update_module_capability",
     "delete_module",
 }
 

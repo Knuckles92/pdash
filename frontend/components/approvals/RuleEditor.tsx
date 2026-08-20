@@ -60,10 +60,12 @@ const ACTION_LABELS: Record<string, string> = {
   update_module_data: "Update module data",
   update_module_config: "Update module settings",
   update_module_meta: "Move or rename module",
+  update_module_capability: "Change capability fields",
   delete_module: "Delete module",
   create_page: "Create page",
   delete_page: "Delete page",
   fire_action_button: "Run action",
+  register_file: "Register file",
   register_agent: "Register agent",
 };
 

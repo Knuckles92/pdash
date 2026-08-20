@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import AnyUrl, BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
-from ._common import Appearance
+from ._common import Appearance, HttpUrl
 
 
 class _ReferrerPolicy(str, Enum):
@@ -28,14 +28,14 @@ class _SandboxFlag(str, Enum):
 
 
 class Data(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
-    src: AnyUrl
+    src: HttpUrl
     title: str | None = Field(default=None, max_length=200)
 
 
 class Config(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     height_px: int = Field(default=480, ge=120, le=2000)
     mobile_height_px: int = Field(default=320, ge=120, le=2000)

@@ -34,6 +34,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .. import modules as module_registry
 from ..approval import lifecycle
 from ..approval.apply import ApplyError, apply_append_log
+from ..approval.classify import classify_update
 from ..approval.engine import DecisionRequest, decide
 from ..approval.expiry import compute_expires_at
 from ..approval.orchestrator import submit_request
@@ -53,6 +54,7 @@ from ..models import (
     utcnow_iso,
 )
 from ..modules import MODULE_TYPES, health
+from ..modules._common import deep_merge
 from ..schemas import (
     AppendLogIn,
     DeleteModuleIn,
@@ -66,8 +68,10 @@ from ..schemas import (
     ValidateModuleIn,
     WhoAmIOut,
 )
+from ..services.agent_permissions import enforce_permissions, parse_permissions
 from ..services.audit import write_event
 from ..services.etag import parse_if_match
+from ..services.iframe_src import assert_iframe_src_allowed
 from ..services.files import (
     FilePathError,
     classify_kind,
@@ -316,11 +320,18 @@ async def whoami(
     agent: Annotated[CallingAgent, Depends(calling_agent)],
 ) -> WhoAmIOut:
     await _rate_limit(agent.id, kind="read")
+    raw = json.loads(agent.permissions or "{}")
+    parsed = parse_permissions(raw)
     return WhoAmIOut(
         agent={
             "id": agent.id,
             "display_name": agent.display_name,
-            "permissions": json.loads(agent.permissions or "{}"),
+            "permissions": {
+                **raw,
+                "allowed_module_types": parsed.allowed_module_types,
+                "allowed_page_ids": parsed.allowed_page_ids,
+                "can_fire_action": parsed.can_fire_action,
+            },
         }
     )
 
@@ -632,6 +643,7 @@ async def module_health(
 async def validate_module(
     body: ValidateModuleIn,
     agent: Annotated[CallingAgent, Depends(calling_agent)],
+    session: Annotated[AsyncSession, Depends(read_session)],
 ) -> dict:
     """Validate a proposed ``data``/``config`` against a type schema, no side effects.
 
@@ -640,7 +652,27 @@ async def validate_module(
     ``{ok, type_known, errors:[{section, loc, msg, type}]}``.
     """
     await _rate_limit(agent.id, kind="read")
-    return health.validate_payload(body.type, body.data, body.config)
+    result = health.validate_payload(body.type, body.data, body.config)
+    if result["ok"] and body.type == "iframe":
+        src = (body.data or {}).get("src")
+        if src:
+            from ..services.iframe_src import is_allowed_iframe_src, load_allowlist
+
+            allowlist = await load_allowlist(session)
+            if not is_allowed_iframe_src(str(src), allowlist):
+                result = {
+                    "ok": False,
+                    "type_known": True,
+                    "errors": [
+                        {
+                            "section": "data",
+                            "loc": "src",
+                            "msg": f"iframe host is not allowlisted: {src}",
+                            "type": "iframe_host_not_allowed",
+                        }
+                    ],
+                }
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -775,8 +807,13 @@ async def propose_module(
         raise not_found("page.not_found", body.page_id)
     if body.type not in MODULE_TYPES:
         raise bad_request("module.unknown_type", f"Unknown module type: {body.type}")
+    enforce_permissions(
+        agent.permissions, module_type=body.type, page_id=body.page_id
+    )
     clean_data = _clean_or_raise("data", body.type, body.data)
     clean_config = _clean_or_raise("config", body.type, body.config)
+    if body.type == "iframe" and clean_data.get("src"):
+        await assert_iframe_src_allowed(session, str(clean_data["src"]))
 
     # Mint a provisional module_id so the agent can echo it back later.
     provisional_id = new_id("mod")
@@ -800,7 +837,9 @@ async def propose_module(
         proposed_payload=proposed_payload,
         module_type=body.type,
         page_id=body.page_id,
-        agent_owns_target=True,  # creator owns their own creation
+        agent_owns_target=(
+            page.owner_kind == "agent" and page.owner_id == agent.id
+        ),
         idempotency_key=idem_key,
         rationale=body.rationale,
     )
@@ -825,13 +864,13 @@ async def propose_module(
 # ---------------------------------------------------------------------------
 
 
-def _action_type_for_patch(patch_dict: dict[str, Any]) -> str:
-    if "data" in patch_dict:
-        return "update_module_data"
-    if "config" in patch_dict:
-        return "update_module_config"
-    # title / position / page_id all count as "meta"
-    return "update_module_meta"
+def _action_type_for_patch(
+    module_type: str,
+    existing_data: dict[str, Any],
+    existing_config: dict[str, Any],
+    patch_dict: dict[str, Any],
+) -> str:
+    return classify_update(module_type, existing_data, existing_config, patch_dict)
 
 
 @router.post("/update-module")
@@ -862,14 +901,30 @@ async def update_module(
     patch_dict = body.patch.model_dump(exclude_none=True)
     if not patch_dict:
         raise bad_request("module.empty_patch", "patch must have at least one field")
-    # If `data`/`config` are being changed, re-validate now (against the merged
-    # view, but only the changed key gets sent in proposed_payload).
+    enforce_permissions(
+        agent.permissions, module_type=mod.type, page_id=mod.page_id
+    )
+    existing_data = json.loads(mod.data or "{}")
+    existing_config = json.loads(mod.config or "{}")
     if "data" in patch_dict:
-        patch_dict["data"] = _clean_or_raise("data", mod.type, patch_dict["data"])
+        patch_dict["data"] = _clean_or_raise(
+            "data", mod.type, deep_merge(existing_data, patch_dict["data"] or {})
+        )
     if "config" in patch_dict:
-        patch_dict["config"] = _clean_or_raise("config", mod.type, patch_dict["config"])
+        patch_dict["config"] = _clean_or_raise(
+            "config",
+            mod.type,
+            deep_merge(existing_config, patch_dict["config"] or {}),
+        )
 
-    action_type = _action_type_for_patch(patch_dict)
+    if mod.type == "iframe":
+        src = (patch_dict.get("data") or existing_data).get("src")
+        if src:
+            await assert_iframe_src_allowed(session, str(src))
+
+    action_type = _action_type_for_patch(
+        mod.type, existing_data, existing_config, patch_dict
+    )
     proposed_payload = {"id": body.id, "patch": patch_dict}
     agent_owns_target = mod.owner_kind == "agent" and mod.owner_id == agent.id
 
@@ -930,6 +985,9 @@ async def delete_module(
                 f"Module {body.id} version {mod.version}, client expected {expected}",
             )
 
+    enforce_permissions(
+        agent.permissions, module_type=mod.type, page_id=mod.page_id
+    )
     agent_owns_target = mod.owner_kind == "agent" and mod.owner_id == agent.id
     proposed_payload = {"id": body.id}
     result = await submit_request(
@@ -1209,6 +1267,34 @@ async def append_log(
     return resp
 
 
+async def _agent_owns_fire_target(
+    session: AsyncSession,
+    agent_id: str,
+    target_id: str,
+    module_id: str | None,
+) -> bool:
+    """True if the agent owns an action_button bound to this target."""
+    if module_id:
+        mod = await session.get(Module, module_id)
+        if mod is None or mod.deleted_at is not None or mod.type != "action_button":
+            return False
+        data = json.loads(mod.data or "{}")
+        if data.get("action_target_id") != target_id:
+            return False
+        return mod.owner_kind == "agent" and mod.owner_id == agent_id
+    stmt = select(Module).where(
+        Module.type == "action_button",
+        Module.owner_kind == "agent",
+        Module.owner_id == agent_id,
+        Module.deleted_at.is_(None),
+    )
+    for mod in (await session.execute(stmt)).scalars():
+        data = json.loads(mod.data or "{}")
+        if data.get("action_target_id") == target_id:
+            return True
+    return False
+
+
 # ---------------------------------------------------------------------------
 # fire-action
 # ---------------------------------------------------------------------------
@@ -1226,10 +1312,14 @@ async def fire_action(
     if cached is not None:
         return cached
 
+    enforce_permissions(agent.permissions, fire=True)
     target = await session.get(ActionTarget, body.target_id)
     if target is None or target.deleted_at is not None:
         raise not_found("action_target.not_found", body.target_id)
 
+    owns = await _agent_owns_fire_target(
+        session, agent.id, body.target_id, body.module_id
+    )
     payload = {"target_id": body.target_id, "payload": body.payload or {}}
     result = await submit_request(
         session,
@@ -1238,7 +1328,7 @@ async def fire_action(
         target_kind="action_target",
         target_id=body.target_id,
         proposed_payload=payload,
-        agent_owns_target=False,  # action targets aren't owned by agents
+        agent_owns_target=owns,
         idempotency_key=idem_key,
         rationale=body.rationale,
     )

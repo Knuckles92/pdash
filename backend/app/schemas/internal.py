@@ -28,6 +28,7 @@ class UpdateModulePatch(BaseModel):
     config: dict[str, Any] | None = None
     title: str | None = Field(default=None, max_length=200)
     position: int | None = None
+    grid: dict[str, Any] | None = None
     page_id: str | None = None
 
 
@@ -69,6 +70,7 @@ class FireActionIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     target_id: str
+    module_id: str | None = None
     payload: dict[str, Any] | None = None
     rationale: str | None = Field(default=None, max_length=1000)
 

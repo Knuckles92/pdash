@@ -15,7 +15,7 @@ class _Order(str, Enum):
 
 
 class Entry(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     t: Timestamp
     message: str = Field(..., max_length=2000)
@@ -25,14 +25,14 @@ class Entry(BaseModel):
 
 
 class Data(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     entries: list[Entry] = Field(..., max_length=1000)
     last_appended_at: Timestamp | None = None
 
 
 class Config(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     ring_buffer_size: int = Field(default=200, ge=20, le=1000)
     order: _Order = _Order.newest_first

@@ -214,12 +214,22 @@ async def patch_module(
     if expected_version is not None and expected_version != row.version:
         raise precondition_failed("module.etag_mismatch", "Module version mismatch")
 
-    # Re-validate data/config if either is being changed.
-    new_data = json.loads(row.data) if body.data is None else body.data
-    new_config = json.loads(row.config) if body.config is None else body.config
+    existing_data = json.loads(row.data)
+    existing_config = json.loads(row.config)
+    new_data = existing_data
+    new_config = existing_config
     if body.data is not None or body.config is not None:
-        clean_data, clean_config = _validate_payload(row.type, new_data, new_config)
-        new_data, new_config = clean_data, clean_config
+        try:
+            if body.data is not None:
+                new_data = module_registry.merge_and_validate_data(
+                    row.type, existing_data, body.data
+                )
+            if body.config is not None:
+                new_config = module_registry.merge_and_validate_config(
+                    row.type, existing_config, body.config
+                )
+        except Exception as exc:
+            raise bad_request("module.invalid_payload", str(exc)) from exc
 
     if body.title is not None:
         row.title = body.title

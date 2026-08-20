@@ -25,7 +25,7 @@ class _ValueFormat(str, Enum):
 class KeyValueField(BaseModel):
     """A single key/value field."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     key: str = Field(..., max_length=80)
     value: str | float | bool | None = None
@@ -36,14 +36,14 @@ class KeyValueField(BaseModel):
 
 
 class Data(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     fields: list[KeyValueField] = Field(..., max_length=40)
     updated_at: Timestamp | None = None
 
 
 class Config(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     layout: _Layout = _Layout.two_column
     show_icons: bool = True

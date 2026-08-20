@@ -157,11 +157,12 @@ async def test_register_traversal_is_invalid_params(
 
 
 @pytest.mark.asyncio
-async def test_register_rejects_unknown_arg(
+async def test_register_ignores_unknown_arg(
     mcp_backend_client, admin: AdminSession
 ) -> None:
     _, key = register_agent(admin, name="mcp-reg-extra")
     mcp = build_mcp_for_tests()
+    # extra keys are ignored at the MCP arg layer; missing file still 400s
     with pytest.raises(Exception):
         await call_tool(
             mcp,

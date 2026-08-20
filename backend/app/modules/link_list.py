@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import AnyUrl, BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
-from ._common import Appearance, Icon, Severity, Timestamp
+from ._common import Appearance, HttpOrMailtoUrl, Icon, Severity, Timestamp
 
 
 class _Layout(str, Enum):
@@ -16,10 +16,10 @@ class _Layout(str, Enum):
 
 
 class Link(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     label: str = Field(..., max_length=120)
-    href: AnyUrl
+    href: HttpOrMailtoUrl
     description: str | None = Field(default=None, max_length=300)
     icon: Icon | None = None
     severity: Severity | None = None
@@ -27,14 +27,14 @@ class Link(BaseModel):
 
 
 class Data(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     links: list[Link] = Field(..., max_length=50)
     updated_at: Timestamp | None = None
 
 
 class Config(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     layout: _Layout = _Layout.list
     show_descriptions: bool = True

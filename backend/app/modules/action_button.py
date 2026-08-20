@@ -17,7 +17,7 @@ class _Style(str, Enum):
 
 
 class LastResult(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     fired_at: Timestamp
     ok: bool
@@ -26,7 +26,7 @@ class LastResult(BaseModel):
 
 
 class Data(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     label: str = Field(..., max_length=80)
     action_target_id: str = Field(..., max_length=64)
@@ -37,7 +37,7 @@ class Data(BaseModel):
 
 
 class Config(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     confirm: bool = True
     confirm_text: str | None = Field(default=None, max_length=200)

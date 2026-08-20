@@ -36,6 +36,7 @@ def test_list_default_rules_seeded(admin_client: TestClient) -> None:
         "update_module_data",
         "update_module_config",
         "update_module_meta",
+        "update_module_capability",
         "create_module",
         "delete_module",
         "create_page",
