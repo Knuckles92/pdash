@@ -87,7 +87,15 @@ raw curl unless debugging.
      }
    }
 
-6. The full tool set is now unlocked. Every write goes through my approval engine.`;
+6. The full tool set is now unlocked. Every write goes through the approval
+   engine and returns status=applied|pending|denied. Never retry pending as a new
+   write; poll list_my_pending_requests about every 5s.
+   After reconnect, call whoami once. Empty permissions means unrestricted.
+   On a page you own, ordinary widgets (markdown, key_value, table, …) typically
+   auto-apply. First html/iframe/action_button, home/system, deletes, and
+   capability changes (iframe src, button retarget, table columns, sandbox
+   loosen, confirm true→false) still pending. Extra JSON keys are ignored;
+   update_module merges data/config. get_module_schema is optional.`;
 }
 
 const REFRESH_MS = 5000;

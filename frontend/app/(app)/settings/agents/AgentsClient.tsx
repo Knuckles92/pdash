@@ -439,8 +439,9 @@ export function AgentsClient({ initialAgents }: Props) {
             </ol>
           </div>
           <p className="text-xs text-[var(--muted-fg)]">
-            Either way the agent authenticates with its key and every write flows through the
-            approval engine, appearing in your inbox to approve or deny.
+            Either way the agent authenticates with its key and every write is classified by
+            the approval engine. Ordinary updates on a page they own typically auto-apply;
+            new or capability-shaped writes still land in Approvals.
           </p>
         </div>
       </Dialog>

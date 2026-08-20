@@ -27,9 +27,10 @@ the MCP tools:
 http://127.0.0.1:8090/mcp-skill/SKILL.md
 ```
 
-The skill route is unauthenticated and contains only setup guidance. It points
-the agent at the sibling `/mcp` endpoint, then walks through
-`onboarding` -> `request_registration` -> admin approval -> `claim_registration`.
+The skill route is unauthenticated. It points the agent at the sibling `/mcp`
+endpoint, walks through `onboarding` -> `request_registration` -> admin
+approval -> `claim_registration`, then the post-key working rules (what
+auto-applies vs still pending, merge-on-update, don't retry pending).
 
 In production both paths are served through Caddy, so an agent on another
 tailnet device connects to `https://<host>.<tailnet>.ts.net/mcp` (and reads the

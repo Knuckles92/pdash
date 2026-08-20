@@ -34,11 +34,16 @@ def onboarding_payload() -> dict[str, Any]:
         ],
         "notes": [
             "Gated tools return auth_required until step 5 completes - that is expected.",
-            "Writes flow through an approval engine: tool results use "
-            "status=applied|pending|denied. Never retry a 'pending' write - poll "
-            "list_my_pending_requests instead.",
-            "Once registered, call whoami and get_module_schema to learn your permissions "
-            "and the module shapes.",
+            "Writes return status=applied|pending|denied. Never retry a pending write as a "
+            "new write; poll list_my_pending_requests about every 5s.",
+            "Once registered, call whoami once. Empty permissions means unrestricted; "
+            "otherwise honor allowed_module_types, allowed_page_ids, can_fire_action.",
+            "On a page you own, ordinary widgets typically auto-apply. First html/iframe/"
+            "action_button, home/system pages, deletes, and capability changes "
+            "(iframe src, button retarget, table columns, sandbox loosen, confirm true→false) "
+            "still pending. Extra JSON keys are ignored; update_module merges data/config.",
+            "get_module_schema is optional — 400s already name the failing field. "
+            "list_module_schemas lists every type (including html, sticky_note, progress, file).",
         ],
     }
 
@@ -117,11 +122,40 @@ Reconnect after adding the bearer token.
   expected.
 - Every write goes through the admin approval engine and returns
   `status="applied"`, `status="pending"`, or `status="denied"`.
-- Never retry a write that returned `pending`; poll `list_my_pending_requests`
-  instead.
-- Call `whoami` after reconnecting to verify the active agent and permissions.
-- `get_module_schema` is optional; rejected writes already name the failing field.
+- Never retry a write that returned `pending` as a new write; poll
+  `list_my_pending_requests` about every 5 seconds.
+- Call `whoami` after reconnecting. Empty `permissions` means unrestricted;
+  otherwise honor `allowed_module_types`, `allowed_page_ids`, `can_fire_action`.
+- Extra JSON keys are ignored. `update_module` merges `data`/`config` — send
+  only the fields you are changing. `grid.colspan` is 1, 2, or 3. URLs without
+  a scheme get `https://`. Icons accept PascalCase or snake_case.
+- `get_module_schema` is optional; rejected writes already name the failing
+  field. Use `list_module_schemas` to discover types (`html`, `sticky_note`,
+  `progress`, `file` included).
 - Honor `retry_after_ms` on rate limits and back off on service errors.
+
+## What typically auto-applies (after the admin has said yes once)
+
+On a page you own (`list_pages` → `owned: true`):
+
+- Creating ordinary widgets (markdown, key_value, table, timeseries, …)
+- Updating content, appearance, title, position, grid
+- Iterating an already-approved `html` document
+- Firing an `action_button` you own
+- `append_log` on a log_stream you own
+
+Still pending until the admin approves:
+
+- `propose_page` (including `type=canvas`)
+- First `html`, `iframe`, or `action_button` on a page
+- Any write on home / system pages
+- Iframe `src` change, `action_target_id` retarget, table **column** changes
+  (row updates auto-apply), sandbox loosening, `confirm: true → false`
+- `delete_module` / `delete_page`
+
+Canvas: `propose_page(type=canvas)`, then one `html` module (both pending);
+later HTML/CSS edits typically auto-apply. The html iframe is sandboxed
+(`allow-scripts` without `allow-same-origin`) — it cannot call the pdash API.
 """
 
 

@@ -24,6 +24,10 @@ async def test_onboarding_needs_no_key(mcp_backend_client: BackendClient) -> Non
     assert isinstance(result, dict)
     assert result["steps"]
     assert "auth_model" in result
+    notes = " ".join(result.get("notes") or [])
+    assert "ordinary widgets typically auto-apply" in notes
+    assert "list_my_pending_requests about every 5s" in notes
+    assert "get_module_schema is optional" in notes
 
 
 @pytest.mark.asyncio

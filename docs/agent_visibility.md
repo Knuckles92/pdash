@@ -8,6 +8,12 @@ fixes themselves, which go through the normal `update_module` write path. All of
 it is built on the internal surface (`backend/app/api/internal.py`) and exposed
 as MCP tools (`mcp/app/tools.py`).
 
+Owner content/config/title updates typically **auto-apply**. Still pending:
+iframe `src`, `action_target_id`, table **column** changes, sandbox loosening,
+and `confirm: true→false`. Extra keys are ignored; updates merge onto stored
+`data`/`config`. `validate_module` / `get_module_schema` are optional — writes
+already return per-field `errors`.
+
 ## The tools
 
 | Tool | What it answers | Backend endpoint |
@@ -104,8 +110,9 @@ uvicorn app.main:app --host 0.0.0.0 --port 9000
 ## Notes & limits
 
 - Reads are single-tenant: an agent may read any live module/page (so it can see
-  admin-owned widgets on a shared page), but `owned` tells it what it can edit
-  without approval.
+  admin-owned widgets on a shared page). `owned` on a page means ordinary writes
+  typically auto-apply; first `html`/`iframe`/`action_button` and capability
+  fields still prompt.
 - `render_page`'s ASCII layout mirrors the frontend grid
   (`grid-cols-1 lg:2 xl:3`, colspan 1/2/3, pinned notifications first) but is a
   sketch, not pixels — use `screenshot_page` for fidelity.

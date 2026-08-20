@@ -87,6 +87,10 @@ async def test_skill_file_is_open_and_points_at_mcp(mcp_server: FastMCP) -> None
     assert "Do not call the\nMCP endpoint with raw curl, WebFetch" in body
     assert "Do not call `request_registration` again while waiting." in body
     assert "Never retry a write that returned `pending`" in body
+    assert "list_my_pending_requests` about every 5 seconds" in body
+    assert "What typically auto-applies" in body
+    assert "First `html`, `iframe`, or `action_button`" in body
+    assert "grid.colspan` is 1, 2, or 3" in body
 
 
 @pytest.mark.asyncio

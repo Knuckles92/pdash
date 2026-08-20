@@ -66,7 +66,10 @@ def build_server() -> FastMCP:
             "the key. Use MCP tools, not raw HTTP. All write tools route through the "
             "approval engine; responses use status=applied/pending/denied. Do NOT "
             "retry pending responses as new writes; poll list_my_pending_requests "
-            "(~5s). Honor retry_after_ms on rate-limit errors."
+            "(~5s). On a page you own, ordinary widgets typically auto-apply; first "
+            "html/iframe/action_button and capability changes still pending. Extra "
+            "keys ignored; update_module merges. Honor retry_after_ms on rate-limit "
+            "errors."
         ),
         host=settings.mcp_host,
         port=settings.mcp_port,

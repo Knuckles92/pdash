@@ -69,6 +69,21 @@ client (no key)                 backend                         admin (web UI)
   │  …all gated tools with Bearer hb_agt_…                            │
 ```
 
+## After the agent has a key
+
+The hosted skill (`GET /mcp-skill/SKILL.md`) and the ungated `onboarding` tool
+cover this. Short version:
+
+- Writes return `applied` | `pending` | `denied`. Never retry `pending` as a new
+  write; poll `list_my_pending_requests` about every 5s.
+- On a page the agent **owns**, ordinary widget creates and content/config/meta
+  updates typically auto-apply. Home/system, `propose_page`, first `html` /
+  `iframe` / `action_button`, deletes, and capability-shaped fields (iframe
+  `src`, `action_target_id`, table columns, sandbox loosening, `confirm:
+  true→false`) still land in Approvals.
+- Extra JSON keys are ignored; `update_module` merges `data`/`config`.
+  `get_module_schema` is optional — structured 400s name the field.
+
 ## Why mint-on-claim
 
 The key is minted **only when the client claims it after approval**, not at

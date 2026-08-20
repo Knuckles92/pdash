@@ -591,7 +591,8 @@ Fetch the full current state of one module by id. Use to:
     into update_module.
 
 You can read ANY live module (not only your own); the response includes
-"owned" (bool) telling you whether you can edit it without admin approval.
+"owned" (bool). Owner content/config updates typically auto-apply; capability
+fields (iframe src, action_target_id, table columns, …) still prompt.
 
 Args: module_id.
 Returns: the module object (list_my_modules shape) plus "owned" and "health".
@@ -604,30 +605,37 @@ List every dashboard page, so you can find a page_id to place a widget on
 
 Args: limit (1-200, default 50), cursor.
 Returns: {items: [{id, slug, name, type, owned, module_count,
-my_module_count}], next_cursor}. "owned" means you can edit modules on it
-without admin approval; "my_module_count" is how many modules there you own.
+my_module_count}], next_cursor}. "owned" means this is your page — ordinary
+widget creates/updates typically auto-apply; first html/iframe/action_button
+and capability changes still prompt. "my_module_count" is how many modules
+there you own.
 
 Errors: rate_limit, service_unavailable.
 """
 
 _DESC_WHOAMI = """\
-Return your own agent identity and capabilities: id, display_name, and the
-permissions block the admin granted you. Call this once at the start of a
-session to learn who you are and what you're allowed to do.
+Return your own agent identity and capabilities. Call this once at the start
+of a session.
 
 Args: none.
-Returns: {agent: {id, display_name, permissions}}.
+Returns: {agent: {id, display_name, permissions}}. permissions includes
+allowed_module_types, allowed_page_ids, can_fire_action — all unrestricted
+when empty/null (except can_fire_action defaults true). Honor any populated
+lists; writes outside them return 403 agent.permission_denied.
 Errors: rate_limit, service_unavailable.
 """
 
 _DESC_LIST_MODULE_SCHEMAS = """\
 List the JSON Schema for EVERY module type at once — use this to discover what
-widget types exist and their data/config shapes before building one. Prefer
-get_module_schema(type) when you already know the single type you want.
+widget types exist (markdown, key_value, table, timeseries, log_stream,
+link_list, iframe, action_button, notification, file, sticky_note, progress,
+html). Prefer get_module_schema(type) when you already know the type.
+Extra keys on payloads are ignored; schema is optional because writes return
+per-field errors.
 
 Args: none.
 Returns: {types: [...], items: [{type, data_schema, config_schema, ...}]}.
-Every config schema includes appearance for per-widget theme/color.
+Every config schema includes appearance (named color or #RRGGBB).
 Errors: rate_limit, service_unavailable.
 """
 
@@ -1409,8 +1417,10 @@ def register_tools(mcp: FastMCP) -> None:
         if status == "approved":
             out["next_step"] = (
                 "Approved. Save api_key (shown ONCE), add it to your MCP client config as "
-                "'Authorization: Bearer <api_key>' in headers, and reconnect. You can now use the "
-                "full tool set; every write goes through the approval engine."
+                "'Authorization: Bearer <api_key>' in headers, and reconnect. Writes return "
+                "applied|pending|denied — never retry pending. On a page you own, ordinary "
+                "widgets typically auto-apply; first html/iframe/action_button and capability "
+                "changes still pending. Call whoami once."
             )
         elif status == "pending":
             out["next_step"] = (

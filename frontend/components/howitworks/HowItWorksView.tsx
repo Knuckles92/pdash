@@ -62,11 +62,11 @@ const STEPS = [
   },
   {
     title: "Create a page & add modules",
-    body: "Make a dashboard page and drop in modules. Agents can also propose new modules for you to approve.",
+    body: "Make a dashboard page and drop in modules. On a page the agent owns, ordinary widgets typically auto-apply; first html/iframe/action_button and home/system still wait in Approvals.",
   },
   {
     title: "Approve the first change",
-    body: "When an agent proposes a write, it appears in Approvals. Decide it once — then add a rule so similar writes decide themselves.",
+    body: "New pages, first html/iframe/buttons, and capability-shaped writes (iframe src, button retarget, table columns) land in Approvals. Decide them once — then add a rule if you want similar writes to decide themselves.",
   },
 ] as const;
 
