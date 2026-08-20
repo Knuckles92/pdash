@@ -499,6 +499,7 @@ export function ApprovalsView({
     agents,
     selectedIds: selected,
     busyIds,
+    bulkBusy,
     onToggleSelect: toggleSelect,
     onApprove: (id, withRule) => handleDecision(id, "approve", withRule),
     onDeny: (id, withRule) => handleDecision(id, "deny", withRule),
