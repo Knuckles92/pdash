@@ -10,7 +10,14 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import modules as module_registry
-from ..models import ActionTarget, AgentRegistrationRequest, ApprovalRequest, Module, Page, utcnow_iso
+from ..models import (
+    ActionTarget,
+    AgentRegistrationRequest,
+    ApprovalRequest,
+    Module,
+    Page,
+    utcnow_iso,
+)
 from ..services.redact import redact
 
 

@@ -66,7 +66,7 @@ def _is_capability(
     elif module_type == "action_button":
         if old_data.get("action_target_id") != new_data.get("action_target_id"):
             return True
-        if old_config.get("confirm") is True and new_config.get("confirm") is False:
+        if old_config.get("confirm", True) is True and new_config.get("confirm") is False:
             return True
     elif module_type == "table":
         if _columns_identity(old_data.get("columns")) != _columns_identity(

@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
-
 from _phase3_helpers import (
     get_service_secret,
     home_page_id,
     internal_headers,
     register_agent,
 )
+from fastapi.testclient import TestClient
 
 
 def _owned_page(admin_client: TestClient, agent_id: str, slug: str) -> str:

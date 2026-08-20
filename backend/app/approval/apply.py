@@ -49,7 +49,6 @@ from ..auth.secrets import get_kv
 from ..config import get_settings
 from ..errors import ProblemDetail
 from ..events.publish import publish_after_commit
-from ..services.iframe_src import is_allowed_iframe_src, load_allowlist
 from ..ids import new_id
 from ..models import (
     ActionTarget,
@@ -68,6 +67,7 @@ from ..services.files import (
     resolve_inbox_file,
     stat_and_sha256,
 )
+from ..services.iframe_src import is_allowed_iframe_src, load_allowlist
 from . import lifecycle
 
 

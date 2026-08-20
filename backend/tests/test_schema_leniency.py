@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import pytest
+from pydantic import TypeAdapter, ValidationError
+
 from app.modules import merge_and_validate_data, validate_config, validate_data
 from app.modules._common import Appearance, Icon
-from pydantic import TypeAdapter, ValidationError
-import pytest
 
 
 def test_extra_keys_ignored_on_markdown() -> None:

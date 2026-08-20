@@ -10,9 +10,8 @@ auto-apply (the 0010 html-always-prompt builtin is disabled by 0012).
 from __future__ import annotations
 
 import pytest
-from fastapi.testclient import TestClient
-
 from _phase3_helpers import get_service_secret, internal_headers, register_agent
+from fastapi.testclient import TestClient
 
 VALID_HTML = "<!doctype html><html><head></head><body><h1>hi</h1></body></html>"
 

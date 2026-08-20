@@ -71,7 +71,6 @@ from ..schemas import (
 from ..services.agent_permissions import enforce_permissions, parse_permissions
 from ..services.audit import write_event
 from ..services.etag import parse_if_match
-from ..services.iframe_src import assert_iframe_src_allowed
 from ..services.files import (
     FilePathError,
     classify_kind,
@@ -81,6 +80,7 @@ from ..services.files import (
     resolve_inbox_file,
     stat_and_sha256,
 )
+from ..services.iframe_src import assert_iframe_src_allowed
 from ..services.rate_limit import consume as rl_consume
 from . import _agent_idem
 from .internal_auth import CallingAgent, calling_agent
