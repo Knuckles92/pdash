@@ -87,10 +87,30 @@ body {
   background: var(--bg);
   color: var(--fg);
   min-height: 100vh;
+  min-height: 100dvh;
   font-family: var(--font-sans);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Phone chrome: header + bottom nav, including iOS safe areas.
+   Canvas pages pin between these so dashboards go full-bleed. */
+:root {
+  --app-header-h: 0px;
+  --app-nav-h: 0px;
+}
+@media (max-width: 767.98px) {
+  :root {
+    --app-header-h: calc(3.25rem + env(safe-area-inset-top, 0px));
+    --app-nav-h: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+.app-mobile-header {
+  padding-top: env(safe-area-inset-top, 0px);
+  min-height: var(--app-header-h);
 }
 
 * {

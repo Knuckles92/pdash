@@ -106,7 +106,7 @@ export function TableModule({ data, config }: { data: TableData; config: TableCo
   const cols = data.columns ?? [];
   const rows = data.rows ?? [];
   const density = densityRowClass[config.row_density ?? "normal"];
-  const mobileLayout = config.mobile_layout ?? "scroll";
+  const mobileLayout = config.mobile_layout ?? "card-stack";
 
   if (rows.length === 0) {
     return (
@@ -199,19 +199,26 @@ function DesktopTable({
 }
 
 function CardRow({ row, cols }: { row: TableRow; cols: TableColumn[] }) {
+  const visible = cols.filter((c) => !c.hide_on_mobile);
+  const [titleCol, ...rest] = visible;
   return (
     <div
       className={cn(
-        "rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 flex flex-col gap-1.5",
+        "rounded-xl border border-[var(--border)] bg-[var(--card)] p-3.5 flex flex-col gap-2",
         row.severity && SEVERITY_ROW[row.severity],
       )}
     >
-      {cols.map((c) => (
-        <div key={c.id} className="flex items-center justify-between gap-3 text-sm">
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]/80">
+      {titleCol && (
+        <div className="text-[15px] font-semibold leading-snug">
+          {renderCell(titleCol, row.cells?.[titleCol.id] ?? null)}
+        </div>
+      )}
+      {rest.map((c) => (
+        <div key={c.id} className="flex items-start justify-between gap-3 text-sm">
+          <span className="shrink-0 pt-0.5 text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted-fg)]">
             {c.label}
           </span>
-          <span className="text-right">{renderCell(c, row.cells?.[c.id] ?? null)}</span>
+          <span className="min-w-0 text-right">{renderCell(c, row.cells?.[c.id] ?? null)}</span>
         </div>
       ))}
     </div>

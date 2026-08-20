@@ -15,7 +15,7 @@ export function MobileCommandButton() {
       size="icon"
       onClick={toggle}
       aria-label="Open command palette"
-      className="md:hidden"
+      className="md:hidden size-11"
     >
       <Search className="size-4" />
     </Button>

@@ -78,7 +78,7 @@ export function Sheet({
     >
       <div
         className={cn(
-          "absolute flex flex-col border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-lg)]",
+          "absolute flex flex-col border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-lg)] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
           sideClasses[side],
           className,
         )}
