@@ -66,8 +66,8 @@ export function HtmlModule({
   const frameClass = cn(
     "w-full",
     fill
-      ? "h-full rounded-none border-0 bg-[var(--bg)] md:rounded-lg md:border md:border-[var(--border)] md:bg-[var(--card)]"
-      : "h-[var(--html-h-mobile)] rounded-lg border border-[var(--border)] bg-[var(--card)] md:h-[var(--html-h-desktop)]",
+      ? "block h-full min-h-0 rounded-none border-0 bg-[var(--bg)]"
+      : "block h-[var(--html-h-mobile)] rounded-lg border border-[var(--border)] bg-[var(--card)] md:h-[var(--html-h-desktop)]",
   );
   const frameStyle = fill
     ? undefined

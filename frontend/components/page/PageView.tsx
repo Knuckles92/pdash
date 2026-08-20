@@ -128,7 +128,7 @@ export function PageView({ page, modules, iframeAllowlist }: Props) {
       <div
         className={cn(
           "flex min-w-0 flex-col gap-5",
-          isCanvasView && "max-md:h-full max-md:gap-0",
+          isCanvasView && "max-md:h-full max-md:min-h-0 max-md:gap-0",
         )}
       >
         <header className="hidden flex-col gap-1 md:flex">
