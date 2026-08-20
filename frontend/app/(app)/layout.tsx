@@ -1,10 +1,8 @@
 import type { ReactNode } from "react";
 
 import { CommandPaletteProvider } from "@/components/layout/CommandPaletteProvider";
-import { MobileCommandButton } from "@/components/layout/MobileCommandButton";
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { BottomNav } from "@/components/nav/BottomNav";
-import { MobilePagesDrawer } from "@/components/nav/MobilePagesDrawer";
+import { MobileAppHeader } from "@/components/nav/MobileAppHeader";
 import { PagesProvider } from "@/components/nav/PagesProvider";
 import { Sidebar } from "@/components/nav/Sidebar";
 import { api } from "@/lib/api";
@@ -19,18 +17,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <CommandPaletteProvider>
       <PagesProvider initialPages={pages}>
-        <div className="flex min-h-screen">
+        <div className="flex min-h-dvh md:min-h-screen">
           <Sidebar />
-          <div className="flex-1 flex flex-col min-w-0">
-            <header className="md:hidden sticky top-0 z-40 flex items-center justify-between border-b border-[var(--border)] bg-[var(--bg)]/85 p-3 backdrop-blur">
-              <MobilePagesDrawer />
-              <span className="font-mono text-sm font-medium">pdash</span>
-              <div className="flex items-center">
-                <ThemeToggle className="text-[var(--muted-fg)]" />
-                <MobileCommandButton />
-              </div>
-            </header>
-            <main className="flex-1 p-4 pb-24 md:p-6 md:pb-8 lg:px-8">
+          <div className="flex min-h-dvh min-w-0 flex-1 flex-col md:min-h-screen">
+            <MobileAppHeader />
+            <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-4 pb-[calc(var(--app-nav-h)+0.75rem)] md:p-6 md:pb-8 lg:px-8">
               <div className="mx-auto w-full max-w-[1400px]">{children}</div>
             </main>
             <BottomNav />

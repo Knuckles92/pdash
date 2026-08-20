@@ -39,7 +39,7 @@ export function CanvasView({
   }
 
   return (
-    <div className="h-[calc(100dvh-11rem)] min-h-[480px]">
+    <div className="h-full min-h-0 md:h-[calc(100dvh-11rem)] md:min-h-[480px]">
       <HtmlModule
         data={htmlModule.data as HtmlData}
         config={htmlModule.config as HtmlConfig}

@@ -54,10 +54,11 @@ export function BottomNav() {
 
   return (
     <nav
-      className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--card)]/90 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+      className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--card)]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md"
       aria-label="Primary navigation"
+      style={{ minHeight: "var(--app-nav-h)" }}
     >
-      <ul className={cn("grid", items.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
+      <ul className={cn("grid h-14", items.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
         {items.map((it) => {
           const Icon = it.icon;
           const active = it.match(activePath);
@@ -67,7 +68,7 @@ export function BottomNav() {
                 href={it.href}
                 onNavigate={() => setPendingPath(it.href)}
                 className={cn(
-                  "relative flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium",
+                  "relative flex min-h-14 flex-col items-center justify-center gap-0.5 py-1.5 text-[10px] font-medium",
                   "featured" in it && it.featured
                     ? "text-[var(--accent)]"
                     : active
