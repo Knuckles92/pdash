@@ -64,8 +64,10 @@ export function HtmlModule({
   const heightMobile = config.mobile_height_px ?? 480;
 
   const frameClass = cn(
-    "w-full rounded-lg border border-[var(--border)] bg-[var(--card)]",
-    fill ? "h-full" : "h-[var(--html-h-mobile)] md:h-[var(--html-h-desktop)]",
+    "w-full",
+    fill
+      ? "h-full rounded-none border-0 bg-[var(--bg)] md:rounded-lg md:border md:border-[var(--border)] md:bg-[var(--card)]"
+      : "h-[var(--html-h-mobile)] rounded-lg border border-[var(--border)] bg-[var(--card)] md:h-[var(--html-h-desktop)]",
   );
   const frameStyle = fill
     ? undefined

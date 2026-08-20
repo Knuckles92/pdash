@@ -1,5 +1,5 @@
 import { Toaster } from "sonner";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import type { ReactNode } from "react";
 
@@ -37,6 +37,21 @@ const plexMono = localFont({
 export const metadata: Metadata = {
   title: "pdash",
   description: "Self-hosted command center",
+  appleWebApp: {
+    capable: true,
+    title: "pdash",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f7f9" },
+    { media: "(prefers-color-scheme: dark)", color: "#101216" },
+  ],
 };
 
 export const dynamic = "force-dynamic";
@@ -54,7 +69,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="min-h-screen font-sans antialiased">
         <RealtimeProvider>
           {children}
-          <Toaster richColors closeButton position="bottom-right" />
+          <Toaster
+            richColors
+            closeButton
+            position="bottom-center"
+            offset={{ bottom: "calc(var(--app-nav-h, 0px) + 12px)" }}
+          />
         </RealtimeProvider>
       </body>
     </html>
